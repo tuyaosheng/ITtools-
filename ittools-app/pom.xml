@@ -31,5 +31,22 @@
   </dependencies>
   <build><plugins>
     <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
+    <!-- Surefire (default binding) runs *Test/*Tests/*TestCase/Test* during the
+         "test" phase. Failsafe runs *IT/*ITCase/IT* during "integration-test" +
+         "verify", so plain `mvn verify` (and CI) actually exercises the
+         Testcontainers-backed *IT classes instead of silently skipping them.
+         Version is managed by spring-boot-starter-parent's pluginManagement. -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-failsafe-plugin</artifactId>
+      <executions>
+        <execution>
+          <goals>
+            <goal>integration-test</goal>
+            <goal>verify</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
   </plugins></build>
 </project>
