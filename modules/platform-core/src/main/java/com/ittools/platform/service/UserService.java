@@ -112,6 +112,7 @@ public class UserService {
         Klass k = u.getKlass();
         return new UserView(u.getId(), u.getRole().name(), u.getName(), u.getLoginName(), u.getStudentNo(),
                 u.getXjh(), k == null ? null : k.getId(), k == null ? null : k.getName(),
-                u.isGraduated(), u.isEnabled());
+                u.isGraduated(), u.isEnabled(),
+                u.getEnrollYear() == null ? null : u.getEnrollYear().getId());
     }
 }

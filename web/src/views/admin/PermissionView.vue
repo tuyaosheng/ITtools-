@@ -80,6 +80,8 @@ async function toggle(row: PermissionItem, value: boolean) {
     })
     enabledMap[row.id] = value
     ElMessage.success('已更新')
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
   } finally {
     togglingId.value = null
   }

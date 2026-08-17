@@ -231,14 +231,13 @@ async function openEdit(row: UserItem) {
   form.xjh = row.xjh ?? ''
   form.classId = row.classId ?? undefined
   form.password = ''
-  // UserView (the list endpoint) does not expose the student's current
-  // enrollYearId, only classId/className - so the year select starts
-  // empty and the admin must re-pick it to change the class. If they
-  // submit without touching it, the pre-filled classId is still sent
-  // (see submit()), but enrollYearId is omitted, which per the backend's
-  // FULL-REPLACE semantics clears the stored enrollYearId.
-  formClasses.value = []
-  form.enrollYearId = undefined
+  // Fix round 1: UserView now returns enrollYearId (backend change), so the
+  // edit dialog can pre-fill the year select and load its classes - without
+  // this, submitting an unrelated edit (e.g. renaming a student) would omit
+  // enrollYearId and, per the backend's FULL-REPLACE semantics, silently
+  // clear the student's stored enrollment year.
+  form.enrollYearId = row.enrollYearId ?? undefined
+  formClasses.value = form.enrollYearId ? await adminApi.classes.list(form.enrollYearId) : []
   dialogVisible.value = true
 }
 
@@ -280,42 +279,61 @@ async function submit() {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     await load()
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
   } finally {
     saving.value = false
   }
 }
 
 async function remove(row: UserItem) {
-  await adminApi.users.remove(row.id)
-  ElMessage.success('已删除')
-  await load()
+  try {
+    await adminApi.users.remove(row.id)
+    ElMessage.success('已删除')
+    await load()
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
+  }
 }
 
 async function resetPassword(row: UserItem) {
+  let value: string
   try {
-    const { value } = await ElMessageBox.prompt(`为 ${row.name} 设置新密码`, '重置密码', {
+    ;({ value } = await ElMessageBox.prompt(`为 ${row.name} 设置新密码`, '重置密码', {
       inputType: 'password',
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       inputValidator: (v: string) => (!!v && v.length >= 6) || '密码至少 6 位'
-    })
+    }))
+  } catch {
+    return // cancelled
+  }
+  try {
     await adminApi.users.resetPassword(row.id, value)
     ElMessage.success('密码已重置')
-  } catch {
-    // cancelled
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
   }
 }
 
 async function toggleGraduate(row: UserItem, value: boolean) {
-  await adminApi.users.graduate(row.id, value)
-  row.graduated = value
-  ElMessage.success('已更新')
+  try {
+    await adminApi.users.graduate(row.id, value)
+    row.graduated = value
+    ElMessage.success('已更新')
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
+  }
 }
 
 async function toggleEnabled(row: UserItem, value: boolean) {
-  await adminApi.users.enabled(row.id, value)
-  row.enabled = value
-  ElMessage.success('已更新')
+  try {
+    await adminApi.users.enabled(row.id, value)
+    row.enabled = value
+    ElMessage.success('已更新')
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
+  }
 }
 </script>
 

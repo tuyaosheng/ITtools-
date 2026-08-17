@@ -143,15 +143,21 @@ async function submit() {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     await load()
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
   } finally {
     saving.value = false
   }
 }
 
 async function remove(row: ClassItem) {
-  await adminApi.classes.remove(row.id)
-  ElMessage.success('已删除')
-  await load()
+  try {
+    await adminApi.classes.remove(row.id)
+    ElMessage.success('已删除')
+    await load()
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
+  }
 }
 </script>
 

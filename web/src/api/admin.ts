@@ -42,6 +42,7 @@ export interface UserItem {
   className: string | null
   graduated: boolean
   enabled: boolean
+  enrollYearId: number | null
 }
 
 export interface CreateUserBody {

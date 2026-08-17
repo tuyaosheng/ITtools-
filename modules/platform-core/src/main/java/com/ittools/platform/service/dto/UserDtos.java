@@ -11,7 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *    serializer introspects standard bean getters, not record-style fluent
  *    accessors, so it's a plain immutable class with bean getters
  *    (getId()/getRole()/getName()/getLoginName()/getStudentNo()/getXjh()/
- *    getClassId()/getClassName()/isGraduated()/isEnabled()).
+ *    getClassId()/getClassName()/isGraduated()/isEnabled()/getEnrollYearId()).
+ *    enrollYearId was added (Task 13 fix round 1) so the admin UI's edit
+ *    dialog can round-trip it on PUT /admin/users/{id} - without it, an
+ *    unrelated edit (e.g. renaming a student) silently wiped their
+ *    enrollment year via UpdateUserCommand's full-replace semantics.
  *  - CreateUserCommand/UpdateUserCommand/ResetPasswordCommand are
  *    @RequestBody (DESERIALIZED from JSON) - they need
  *    @JsonCreator/@JsonProperty on an all-args constructor, exactly like
@@ -33,9 +37,11 @@ public class UserDtos {
         private final String className;
         private final boolean graduated;
         private final boolean enabled;
+        private final Long enrollYearId;
 
         public UserView(Long id, String role, String name, String loginName, String studentNo,
-                         String xjh, Long classId, String className, boolean graduated, boolean enabled) {
+                         String xjh, Long classId, String className, boolean graduated, boolean enabled,
+                         Long enrollYearId) {
             this.id = id;
             this.role = role;
             this.name = name;
@@ -46,6 +52,7 @@ public class UserDtos {
             this.className = className;
             this.graduated = graduated;
             this.enabled = enabled;
+            this.enrollYearId = enrollYearId;
         }
 
         public Long getId() { return id; }
@@ -58,6 +65,7 @@ public class UserDtos {
         public String getClassName() { return className; }
         public boolean isGraduated() { return graduated; }
         public boolean isEnabled() { return enabled; }
+        public Long getEnrollYearId() { return enrollYearId; }
     }
 
     public static class CreateUserCommand {
