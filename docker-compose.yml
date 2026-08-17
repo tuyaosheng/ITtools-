@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ittools
+      POSTGRES_USER: ittools
+      POSTGRES_PASSWORD: ittools
+    ports: ["5432:5432"]
+    volumes: ["ittools-db:/var/lib/postgresql/data"]
+  app:
+    build: .
+    depends_on: [db]
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/ittools
+      DB_USER: ittools
+      DB_PASSWORD: ittools
+    ports: ["8080:8080"]
+volumes:
+  ittools-db:
