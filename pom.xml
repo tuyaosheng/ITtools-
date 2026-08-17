@@ -20,20 +20,4 @@
     <module>modules/platform-core</module>
     <module>ittools-app</module>
   </modules>
-  <build>
-    <pluginManagement>
-      <plugins>
-        <!-- Prevent "-Dtest=<Class>" reactor builds from failing when a
-             module pulled in via -am (e.g. platform-core) has no matching
-             tests of its own. -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
-            <failIfNoTests>false</failIfNoTests>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
 </project>
