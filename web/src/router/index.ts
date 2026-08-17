@@ -5,8 +5,10 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', redirect: '/admin' },
-    { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
-    { path: '/admin', name: 'admin', component: () => import('../views/AdminView.vue'), meta: { requiresAuth: true } }
+    { path: '/login', name: 'login', component: () => import('../views/login/LoginView.vue') },
+    { path: '/admin', name: 'admin', component: () => import('../views/AdminView.vue'), meta: { requiresAuth: true } },
+    { path: '/teacher', name: 'teacher', component: () => import('../views/ComingSoonView.vue'), meta: { requiresAuth: true } },
+    { path: '/student', name: 'student', component: () => import('../views/ComingSoonView.vue'), meta: { requiresAuth: true } }
   ]
 })
 
