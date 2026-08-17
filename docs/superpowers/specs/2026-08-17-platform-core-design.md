@@ -278,4 +278,19 @@ web/
 
 ## 12. 变更记录
 - 2026-08-17：初稿，经与用户逐项确认（技术栈 Java+Spring、数据库 PostgreSQL 16、前端 Vue SPA、Session 认证、全新建库不迁数据、评分规则现代化重设计、单校 LAN 单租户）后定稿。
+
+---
+
+## 部署安全须知 / 后续项（final review）
+
+- 种子管理员 `admin` / `admin123` 仅用于开发引导；**生产部署前必须修改默认管理员密码**（后续可加"首次登录强制改密"）。
+- 记录以下非阻断后续项（final review 判定）：
+  1. 为 `/api/admin/**` 的 403 加 `ApiResponse` 信封（`AccessDeniedHandler`）；
+  2. `create`/`resetPassword` 及 module-permission 的输入校验（null/无效 scope → 400 而非 500）；
+  3. `module_permission(scope, scope_ref_id, permission_id)` 唯一索引；
+  4. 新增 `GET /api/admin/module-permissions` 供 `PermissionView` 反映持久化开关状态；
+  5. `UserService.list` 分页；
+  6. 抽取 4 个 admin IT 共用的 `adminSession` 测试助手；
+  7. 清理未使用的 `web/.env.production`；
+  8. 明确"已毕业(graduated)但 enabled 的学生是否仍可登录"的策略（当前仍可登录）。
 - 2026-08-17：追加 §8.0 前端设计原则——界面现代化重设计但功能等价（贯穿全平台），应用户要求。

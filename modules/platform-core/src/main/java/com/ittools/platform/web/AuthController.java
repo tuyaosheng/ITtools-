@@ -47,6 +47,11 @@ public class AuthController {
     public ApiResponse<Map<String, Object>> login(@RequestBody LoginRequest req,
                                                     HttpServletRequest request, HttpServletResponse response) {
         AppUserDetails ud = provider.authenticate(req);
+        // Session fixation: rotate the session id right after authentication
+        // succeeds and before the SecurityContext is persisted, so a login
+        // never reuses a pre-existing (potentially attacker-seeded) session.
+        request.getSession(true);      // ensure a session exists
+        request.changeSessionId();     // rotate id to prevent session fixation
         Authentication auth = new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
         SecurityContext ctx = SecurityContextHolder.createEmptyContext();
         ctx.setAuthentication(auth);
