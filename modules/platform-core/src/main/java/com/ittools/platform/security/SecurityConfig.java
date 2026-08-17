@@ -31,6 +31,14 @@ public class SecurityConfig {
             .authorizeRequests(a -> a
                     .antMatchers("/api/auth/**", "/api/public/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
+                    // The SPA shell + its static assets are public at the HTTP layer -
+                    // actual access control happens against the /api/** endpoints the
+                    // SPA calls once loaded, and client-side router guards redirect
+                    // unauthenticated users to /login. Without this, anyRequest()
+                    // .authenticated() below would 401 "/", "/admin/**" etc. before
+                    // SpaForwardController/static resource resolution ever runs.
+                    .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
+                            "/assets/**", "/favicon.ico").permitAll()
                     .anyRequest().authenticated())
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .formLogin(f -> f.disable())

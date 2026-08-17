@@ -29,8 +29,79 @@
     <dependency><groupId>org.testcontainers</groupId><artifactId>postgresql</artifactId><scope>test</scope></dependency>
     <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
   </dependencies>
+  <properties>
+    <!-- Set -Dskip.frontend.build=true to skip the npm install+build steps
+         below (but NOT the web/dist -> static copy step). Used by the
+         Dockerfile's maven build stage, which already has web/dist built by
+         an earlier node stage and has no node/npm available itself. -->
+    <skip.frontend.build>false</skip.frontend.build>
+  </properties>
   <build><plugins>
     <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
+    <!-- Builds web/ (Vue SPA) so a single `mvn package`/`verify` produces the
+         full app (API + SPA in one jar) and StaticResourceIT has a real
+         index.html to serve during the integration-test phase. Bound to
+         generate-resources so it runs before compile/test-compile/test.
+         Downloads a pinned, project-local Node/npm (does not touch/require
+         anything on the host PATH) so the build is reproducible on any
+         machine/CI runner. Skippable via -Dskip.frontend.build=true for the
+         Docker build stage, which reuses web/dist already produced by an
+         earlier node:20-alpine stage. -->
+    <plugin>
+      <groupId>com.github.eirslett</groupId>
+      <artifactId>frontend-maven-plugin</artifactId>
+      <version>1.15.0</version>
+      <configuration>
+        <workingDirectory>${project.basedir}/../web</workingDirectory>
+        <skip>${skip.frontend.build}</skip>
+      </configuration>
+      <executions>
+        <execution>
+          <id>install-node-and-npm</id>
+          <phase>generate-resources</phase>
+          <goals><goal>install-node-and-npm</goal></goals>
+          <configuration><nodeVersion>v20.18.1</nodeVersion></configuration>
+        </execution>
+        <execution>
+          <id>npm-ci</id>
+          <phase>generate-resources</phase>
+          <goals><goal>npm</goal></goals>
+          <configuration><arguments>ci</arguments></configuration>
+        </execution>
+        <execution>
+          <id>npm-build</id>
+          <phase>generate-resources</phase>
+          <goals><goal>npm</goal></goals>
+          <configuration><arguments>run build</arguments></configuration>
+        </execution>
+      </executions>
+    </plugin>
+    <!-- Copies web/dist into target/classes/static (after the frontend-maven-plugin
+         executions above, since plugin executions bound to the same phase run
+         in declaration order). Always runs (never skipped) - even when the
+         npm build itself is skipped (Docker stage), web/dist must already
+         exist on disk (copied there from the node stage) for this to find.
+         Spring Boot serves classpath:/static at the web root, so this is what
+         makes GET / return index.html. -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-resources-plugin</artifactId>
+      <executions>
+        <execution>
+          <id>copy-spa-dist</id>
+          <phase>generate-resources</phase>
+          <goals><goal>copy-resources</goal></goals>
+          <configuration>
+            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+            <resources>
+              <resource>
+                <directory>${project.basedir}/../web/dist</directory>
+              </resource>
+            </resources>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
     <!-- Surefire (default binding) runs *Test/*Tests/*TestCase/Test* during the
          "test" phase. Failsafe runs *IT/*ITCase/IT* during "integration-test" +
          "verify", so plain `mvn verify` (and CI) actually exercises the

@@ -16,6 +16,7 @@ target/
 # Node / Vue
 web/node_modules/
 web/dist/
+web/node/
 npm-debug.log*
 yarn-error.log*
 
