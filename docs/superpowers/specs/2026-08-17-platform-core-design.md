@@ -53,19 +53,24 @@
 
 ## 3. 技术选型
 
+> **版本适配原则（用户指示 2026-08-17）**：以本地已装版本为准，反向选择适配的框架版本。本地 JDK 为 **Java 8 (1.8.0_221)**，故后端锁定 **Spring Boot 2.7.18**（支持 Java 8 的最后一条线）。仅当某功能因版本实现不了时才停下确认——经评估，本子项目全部功能在此栈上均可实现，无功能丢失。
+
 | 层 | 选择 | 说明 |
 |---|---|---|
-| 语言/运行时 | Java 17+（LTS） | |
-| 后端框架 | Spring Boot 3.x | Web、Security、Validation |
-| 持久化 | Spring Data JPA (Hibernate) | |
-| 数据库 | **PostgreSQL 16** | 原生 Windows/Linux 支持 |
-| Schema 版本 | **Flyway** | 版本化迁移脚本，可重复部署 |
+| 语言/运行时 | **Java 8 (1.8.0_221)** | 本地版本，决定后端上限 |
+| 后端框架 | **Spring Boot 2.7.18** | Web、Security、Validation；javax.* 命名空间 |
+| 持久化 | Spring Data JPA (Hibernate 5.6) | javax.persistence |
+| 数据库 | **PostgreSQL 16** | 容器 postgres:16（非本地安装） |
+| Schema 版本 | **Flyway**（SB 2.7 管理版本 8.5.x） | 版本化迁移脚本 |
 | 实时通信 | Spring WebSocket (STOMP) | 基础设施在本层预留，具体功能在子项目 2/6 |
-| 前端 | **Vue 3 + Vite + Element Plus** | SPA，Pinia 状态、Vue Router、axios |
-| 认证 | Spring Security 表单登录 + 服务端 Session | session cookie |
-| 构建 | Maven（多模块） | |
-| 部署 | Docker + Docker Compose（app + postgres） | |
+| 前端 | **Vue 3 + Vite + Element Plus** | SPA，Pinia、Vue Router、axios；Node 24/npm 11 |
+| 认证 | Spring Security 5.7/5.8（SecurityFilterChain） + 服务端 Session | session cookie |
+| 构建 | Maven 3.6.1（多模块） | SB 2.7 需 Maven 3.5+ |
+| 部署 | Docker 28 + Docker Compose（app + postgres） | |
 | 编码 | 全程 UTF-8 | 摆脱 GB2312 |
+
+**Java 8 语言约束**（不丢功能，仅写法降级）：不用 `record`（改普通类）、`var`、switch 表达式、`List.of()`；Spring Security 用 5.x 写法（`antMatchers`、`@EnableGlobalMethodSecurity(prePostEnabled=true)`）。
+> 迁移提示：将来若本地安装 JDK 17+，可平滑升级到 Spring Boot 3.x / jakarta.* 命名空间。
 
 ---
 
