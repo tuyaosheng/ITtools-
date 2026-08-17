@@ -6,7 +6,18 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/admin' },
     { path: '/login', name: 'login', component: () => import('../views/login/LoginView.vue') },
-    { path: '/admin', name: 'admin', component: () => import('../views/AdminView.vue'), meta: { requiresAuth: true } },
+    {
+      path: '/admin',
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/admin/school-years' },
+        { path: 'school-years', name: 'admin-school-years', component: () => import('../views/admin/SchoolYearView.vue') },
+        { path: 'classes', name: 'admin-classes', component: () => import('../views/admin/ClassView.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('../views/admin/UserView.vue') },
+        { path: 'permissions', name: 'admin-permissions', component: () => import('../views/admin/PermissionView.vue') }
+      ]
+    },
     { path: '/teacher', name: 'teacher', component: () => import('../views/ComingSoonView.vue'), meta: { requiresAuth: true } },
     { path: '/student', name: 'student', component: () => import('../views/ComingSoonView.vue'), meta: { requiresAuth: true } }
   ]
