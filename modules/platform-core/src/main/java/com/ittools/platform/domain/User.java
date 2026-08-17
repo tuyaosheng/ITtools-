@@ -27,7 +27,7 @@ public class User {
     private boolean graduated = false;
     private boolean enabled = true;
     @Column(name = "created_at", updatable = false, insertable = false) private OffsetDateTime createdAt;
-    @Column(name = "updated_at", insertable = false) private OffsetDateTime updatedAt;
+    @Column(name = "updated_at", insertable = false, updatable = false) private OffsetDateTime updatedAt;
 
     public Long getId() { return id; }
     public Role getRole() { return role; } public void setRole(Role v) { this.role = v; }
@@ -40,4 +40,6 @@ public class User {
     public SchoolYear getEnrollYear() { return enrollYear; } public void setEnrollYear(SchoolYear v) { this.enrollYear = v; }
     public boolean isGraduated() { return graduated; } public void setGraduated(boolean v) { this.graduated = v; }
     public boolean isEnabled() { return enabled; } public void setEnabled(boolean v) { this.enabled = v; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }
