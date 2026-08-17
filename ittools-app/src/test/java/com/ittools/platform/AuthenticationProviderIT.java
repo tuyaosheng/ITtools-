@@ -62,4 +62,42 @@ class AuthenticationProviderIT extends AbstractPostgresIT {
         LoginRequest req = new LoginRequest("ADMIN",null,null,null,null,"admin","admin123");
         assertThat(provider.authenticate(req).role()).isEqualTo(Role.ADMIN);
     }
+
+    @Test
+    void teacherLoginSucceeds() {
+        User t = new User();
+        t.setRole(Role.TEACHER); t.setName("王老师"); t.setLoginName("teacher1");
+        t.setPasswordHash(encoder.encode("tpw123"));
+        users.save(t);
+
+        LoginRequest req = new LoginRequest("TEACHER",null,null,null,null,"teacher1","tpw123");
+        assertThat(provider.authenticate(req).role()).isEqualTo(Role.TEACHER);
+    }
+
+    @Test
+    void disabledAccountRejected() {
+        User u = new User();
+        u.setRole(Role.TEACHER); u.setName("已禁用"); u.setLoginName("disabled1");
+        u.setPasswordHash(encoder.encode("dpw123")); u.setEnabled(false);
+        users.save(u);
+
+        LoginRequest req = new LoginRequest("TEACHER",null,null,null,null,"disabled1","dpw123");
+        assertThatThrownBy(() -> provider.authenticate(req))
+            .isInstanceOf(org.springframework.security.authentication.DisabledException.class)
+            .isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+    }
+
+    @Test
+    void unknownUserRejected() {
+        LoginRequest req = new LoginRequest("STUDENT_XJH",null,null,null,"NOSUCHXJH",null,"whatever");
+        assertThatThrownBy(() -> provider.authenticate(req))
+            .isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+    }
+
+    @Test
+    void nullLoginTypeRejected() {
+        LoginRequest req = new LoginRequest(null,null,null,null,null,null,"whatever");
+        assertThatThrownBy(() -> provider.authenticate(req))
+            .isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+    }
 }

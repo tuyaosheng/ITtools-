@@ -5,6 +5,7 @@ import com.ittools.platform.domain.User;
 import com.ittools.platform.repository.KlassRepository;
 import com.ittools.platform.repository.UserRepository;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,7 +38,7 @@ public class MultiLoginAuthenticationProvider {
     public AppUserDetails authenticate(LoginRequest req) throws AuthenticationException {
         User u = resolve(req).orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
         if (!u.isEnabled()) {
-            throw new BadCredentialsException("账号已禁用");
+            throw new DisabledException("账号已禁用");
         }
         if (!encoder.matches(req.password(), u.getPasswordHash())) {
             throw new BadCredentialsException("密码错误");
@@ -49,6 +50,12 @@ public class MultiLoginAuthenticationProvider {
 
     private Optional<User> resolve(LoginRequest req) {
         String loginType = req.loginType();
+        if (loginType == null) {
+            // A malformed request body (e.g. Task 6 deserializing bad JSON)
+            // must resolve to "unknown user" -> UsernameNotFoundException,
+            // never an NPE from switch(null).
+            return Optional.empty();
+        }
         switch (loginType) {
             case "STUDENT_NAME":
                 return classes.findAll().stream()
