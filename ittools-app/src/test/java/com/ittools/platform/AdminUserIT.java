@@ -130,6 +130,47 @@ class AdminUserIT extends AbstractPostgresIT {
         assertThat(users.findById(id).isPresent()).isFalse();
     }
 
+    // Fix round 1: closes a test blind spot. Every other test in this class
+    // creates users WITHOUT a classId, so view()'s
+    // `k == null ? null : k.getName()` never actually dereferences a lazy
+    // Klass - the @Transactional(readOnly = true) on UserService.list()
+    // was correct but unexercised by any test. This is the exact class of
+    // bug (LazyInitializationException under open-in-view: false) that has
+    // hit Tasks 5, 9, and 10 before. This test creates a real school year +
+    // class + class-linked STUDENT, then hits GET /api/admin/users?classId=
+    // through the real HTTP endpoint (not a direct service call), so the
+    // Hibernate session is genuinely closed by the time the controller
+    // layer would serialize the response if list() were not transactional -
+    // if @Transactional(readOnly = true) were removed from list(), this
+    // test would fail with a 500 (LazyInitializationException surfaces
+    // unhandled, per KlassService's doc comment).
+    @Test
+    void listByClassIdResolvesLazyClassNameWithoutSession() {
+        HttpHeaders sess = adminSession();
+
+        ResponseEntity<String> year = rest.exchange("/api/admin/school-years", HttpMethod.POST,
+                new HttpEntity<>("{\"yearCode\":\"2061\",\"label\":\"2061级\",\"active\":true}", sess), String.class);
+        assertThat(year.getStatusCode()).isEqualTo(HttpStatus.OK);
+        long yearId = Long.parseLong(year.getBody().replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        ResponseEntity<String> klass = rest.exchange("/api/admin/classes", HttpMethod.POST,
+                new HttpEntity<>("{\"schoolYearId\":" + yearId + ",\"name\":\"8班\",\"displayOrder\":1}", sess), String.class);
+        assertThat(klass.getStatusCode()).isEqualTo(HttpStatus.OK);
+        long classId = Long.parseLong(klass.getBody().replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        ResponseEntity<String> create = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"张同学\",\"loginName\":\"zhang\",\"classId\":" + classId + "}", sess),
+                String.class);
+        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> list = rest.exchange("/api/admin/users?classId=" + classId, HttpMethod.GET,
+                new HttpEntity<>(sess), String.class);
+        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(list.getBody()).contains("张同学");
+        assertThat(list.getBody()).contains("8班");
+        assertThat(list.getBody()).doesNotContain("\"className\":null");
+    }
+
     @Test
     void anonymousForbidden() {
         ResponseEntity<String> r = rest.getForEntity("/api/admin/users", String.class);

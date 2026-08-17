@@ -100,6 +100,14 @@ public class UserDtos {
         public String password() { return password; }
     }
 
+    /**
+     * FULL-REPLACE semantics: {@link com.ittools.platform.service.UserService#update}
+     * overwrites classId/enrollYearId unconditionally, so omitting
+     * {@code classId} or {@code enrollYearId} in the request body CLEARS
+     * (nulls out) the user's current class/enrollment rather than leaving it
+     * unchanged. Callers (the frontend) must always send the complete
+     * object on PUT, not a partial patch.
+     */
     public static class UpdateUserCommand {
         private final String name;
         private final String loginName;

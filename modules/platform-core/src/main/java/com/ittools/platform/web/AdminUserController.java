@@ -43,6 +43,11 @@ public class AdminUserController {
         return ApiResponse.ok(svc.create(c));
     }
 
+    /**
+     * FULL-REPLACE semantics: omitting classId/enrollYearId clears the
+     * user's current class/enrollment (see UpdateUserCommand's Javadoc) -
+     * the frontend must always submit the complete object.
+     */
     @PutMapping("/{id}")
     public ApiResponse<UserView> update(@PathVariable Long id, @RequestBody UpdateUserCommand c) {
         return ApiResponse.ok(svc.update(id, c));
