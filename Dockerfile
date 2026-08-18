@@ -31,5 +31,5 @@ RUN mvn -q -DskipTests -Dskip.frontend.build=true package
 # ---- Stage 3: runtime -------------------------------------------------------
 FROM eclipse-temurin:8-jre
 COPY --from=build /src/ittools-app/target/ittools-app-*.jar /app.jar
-EXPOSE 8080
+EXPOSE 8300
 ENTRYPOINT ["java","-jar","/app.jar"]

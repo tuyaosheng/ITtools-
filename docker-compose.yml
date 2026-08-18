@@ -23,6 +23,6 @@ services:
       DB_URL: jdbc:postgresql://db:5432/ittools
       DB_USER: ittools
       DB_PASSWORD: ittools
-    ports: ["8080:8080"]
+    ports: ["8300:8300"]
 volumes:
   ittools-db:
