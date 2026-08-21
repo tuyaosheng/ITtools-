@@ -6,13 +6,15 @@
 
 **Architecture:** Maven multi-module monolith. `ittools-app` is the Spring Boot bootstrap; `platform-core` is a library module holding user/class/year/auth/permission domain, service, repository, and web layers. PostgreSQL schema is versioned by Flyway. Frontend is an independent Vite/Vue 3 SPA served same-origin, authenticated via server-side session cookie.
 
-**Tech Stack:** Java 17, Spring Boot 3.3.x (Web, Security, Data JPA, Validation), PostgreSQL 16, Flyway, Hibernate, Maven, JUnit 5, Testcontainers, Vue 3, Vite, Pinia, Vue Router, Element Plus, axios, Vitest.
+**Tech Stack:** **Java 8**, **Spring Boot 2.7.18** (Web, Security, Data JPA, Validation; javax.* namespace), PostgreSQL 16, Flyway (SB-managed 8.5.x), Hibernate 5.6, Maven 3.6.1, JUnit 5, Testcontainers (SB-managed BOM), Vue 3, Vite, Pinia, Vue Router, Element Plus, axios, Vitest.
+
+> **Version adaptation (user directive 2026-08-17):** Adapt framework versions to the LOCALLY installed toolchain. Local JDK is **Java 8 (1.8.0_221)**, so the backend targets **Spring Boot 2.7.18** — Spring Boot 3.x is NOT permitted (it requires Java 17). The illustrative code in tasks below was drafted against Java 17/Spring Boot 3; implementers MUST translate it per the **Java 8 Adaptation Rules** immediately after Global Constraints. No platform-core feature is lost by this — only language/API syntax changes.
 
 **Spec:** `docs/superpowers/specs/2026-08-17-platform-core-design.md`
 
 ## Global Constraints
 
-- Java version floor: **17**. Spring Boot **3.3.x**.
+- Runtime: **Java 8 (1.8.0_221)**. Framework: **Spring Boot 2.7.18**. Spring Boot 3.x is forbidden (needs Java 17). Maven **3.6.1**.
 - Database: **PostgreSQL 16** only. All schema changes via **Flyway** migrations under `ittools-app/src/main/resources/db/migration`. No `spring.jpa.hibernate.ddl-auto` beyond `validate`.
 - Encoding: **UTF-8** everywhere (source files, DB, HTTP).
 - Passwords stored as **BCrypt** hashes; never plaintext, never logged.
@@ -23,6 +25,27 @@
 - API prefix `/api`. Auth via session cookie `JSESSIONID`; CSRF enabled (double-submit `XSRF-TOKEN` cookie).
 - Integration tests that touch the DB use **Testcontainers PostgreSQL 16**, not H2.
 - TDD: every behavior task writes the failing test first. Frequent commits (one per task minimum).
+
+## Java 8 / Spring Boot 2.7 Adaptation Rules (BINDING — applies to every task)
+
+The task code below is illustrative of **structure, field contracts, and behavior**. Translate every snippet to Java 8 / Spring Boot 2.7 as you implement. These rules are binding; the reviewer enforces them.
+
+1. **No `record`.** Every DTO/record shown (`ApiResponse`, `LoginRequest`, all `*View`/`*Command`/`*Option`/`*Dtos`) becomes a plain `final class` with: private final fields, an all-args constructor (same parameter order as the record), and getters named `field()` **kept identical** to the record accessor names (e.g. `userId()`, `role()`, `yearCode()`) so all call sites in the plan still compile. Add `equals`/`hashCode` only where tests need them. (Alternatively use Lombok `@Value` with `@Accessors(fluent = true)` — but plain classes are preferred; do not add Lombok unless a task already lists it.)
+2. **Namespace:** `javax.persistence.*` (NOT `jakarta.persistence.*`), `javax.servlet.*` (NOT `jakarta.servlet.*`), `javax.validation.*`.
+3. **No `var`** — use explicit types (in tests too).
+4. **No switch expressions** (`case X ->`) — use a classic `switch` statement with `break`/`return`, or an `if/else` chain. Affects `MultiLoginAuthenticationProvider.resolve`.
+5. **No `List.of()` / `Map.of()`** — use `java.util.Arrays.asList(...)`, `Collections.singletonList(...)`, or `new ArrayList<>()`. Affects `AppUserDetails.getAuthorities`, permission stubs.
+6. **Streams/lambdas/`Optional`** are fine (Java 8). But `Stream.toList()` is Java 16+ — use `.collect(Collectors.toList())` everywhere a task shows `.toList()`.
+7. **Spring Security 5.7/5.8 API** (not Security 6):
+   - Use `.antMatchers(...)` NOT `.requestMatchers(...)`.
+   - Use `@EnableGlobalMethodSecurity(prePostEnabled = true)` NOT `@EnableMethodSecurity`.
+   - Keep the `SecurityFilterChain` bean style (supported since 5.7); do not use the deprecated `WebSecurityConfigurerAdapter`.
+   - `CookieCsrfTokenRepository.withHttpOnlyFalse()`, `HttpStatusEntryPoint`, `HttpSessionSecurityContextRepository` all exist in 5.x — keep as shown.
+8. **Text blocks** (`"""`) are Java 15+ — none are required; use normal strings.
+9. **Dockerfile (Task 15):** base images `maven:3.8-eclipse-temurin-8` (build) and `eclipse-temurin:8-jre` (runtime), NOT the `-17` images shown.
+10. **POM:** parent `spring-boot-starter-parent` version `2.7.18`; `<java.version>8</java.version>`; Flyway artifact is `flyway-core` only (no `flyway-database-postgresql` — that split is a Flyway 9+/SB3 thing; SB 2.7 bundles Postgres support in `flyway-core`).
+
+If applying a rule reveals that a specific behavior genuinely cannot be expressed on this stack, STOP and report it (per user directive) rather than silently dropping the behavior.
 
 ---
 

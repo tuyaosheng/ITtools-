@@ -1,0 +1,11 @@
+.git
+.superpowers
+docs
+*.log
+target
+web/node_modules
+web/dist
+web/node
+.idea
+*.iml
+.vscode

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: ittools
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ittools}
+    username: ${DB_USER:ittools}
+    password: ${DB_PASSWORD:ittools}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+server:
+  port: ${SERVER_PORT:8300}
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
