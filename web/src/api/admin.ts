@@ -90,6 +90,38 @@ export interface ModulePermissionBody {
   enabled: boolean
 }
 
+export interface ImportRowError {
+  row: number
+  message: string
+}
+
+export interface ImportResult {
+  total: number
+  imported: number
+  failed: number
+  errors: ImportRowError[]
+}
+
+function uploadFile(url: string, file: File): Promise<ImportResult> {
+  const fd = new FormData()
+  fd.append('file', file)
+  // axios sets the multipart Content-Type (with boundary) from the FormData;
+  // the http interceptor still attaches the X-XSRF-TOKEN header for the POST.
+  return unwrap(http.post(url, fd))
+}
+
+async function downloadTemplate(url: string, filename: string): Promise<void> {
+  const resp = await http.get(url, { responseType: 'blob' })
+  const blobUrl = window.URL.createObjectURL(resp.data as Blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(blobUrl)
+}
+
 export const adminApi = {
   years: {
     list: (): Promise<SchoolYearItem[]> => unwrap(http.get('/admin/school-years')),
@@ -119,5 +151,13 @@ export const adminApi = {
     list: (): Promise<PermissionItem[]> => unwrap(http.get('/admin/permissions')),
     upsertModulePermission: (body: ModulePermissionBody): Promise<void> =>
       unwrap(http.put('/admin/module-permissions', body))
+  },
+  imports: {
+    students: (file: File): Promise<ImportResult> => uploadFile('/admin/import/students', file),
+    teachers: (file: File): Promise<ImportResult> => uploadFile('/admin/import/teachers', file),
+    downloadStudentTemplate: (): Promise<void> =>
+      downloadTemplate('/admin/import/students/template', 'students_template.xlsx'),
+    downloadTeacherTemplate: (): Promise<void> =>
+      downloadTemplate('/admin/import/teachers/template', 'teachers_template.xlsx')
   }
 }

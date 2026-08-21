@@ -15,7 +15,8 @@ const router = createRouter({
         { path: 'school-years', name: 'admin-school-years', component: () => import('../views/admin/SchoolYearView.vue') },
         { path: 'classes', name: 'admin-classes', component: () => import('../views/admin/ClassView.vue') },
         { path: 'users', name: 'admin-users', component: () => import('../views/admin/UserView.vue') },
-        { path: 'permissions', name: 'admin-permissions', component: () => import('../views/admin/PermissionView.vue') }
+        { path: 'permissions', name: 'admin-permissions', component: () => import('../views/admin/PermissionView.vue') },
+        { path: 'import', name: 'admin-import', component: () => import('../views/admin/ImportView.vue') }
       ]
     },
     { path: '/teacher', name: 'teacher', component: () => import('../views/ComingSoonView.vue'), meta: { requiresAuth: true } },

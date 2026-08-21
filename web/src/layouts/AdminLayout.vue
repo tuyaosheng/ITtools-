@@ -37,7 +37,8 @@ const menuItems = [
   { path: '/admin/school-years', label: '年级管理' },
   { path: '/admin/classes', label: '班级管理' },
   { path: '/admin/users', label: '用户管理' },
-  { path: '/admin/permissions', label: '权限管理' }
+  { path: '/admin/permissions', label: '权限管理' },
+  { path: '/admin/import', label: '批量导入' }
 ]
 
 const activePath = computed(() => route.path)
