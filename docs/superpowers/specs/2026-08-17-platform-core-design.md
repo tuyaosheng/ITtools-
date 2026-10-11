@@ -294,3 +294,12 @@ web/
   7. 清理未使用的 `web/.env.production`；
   8. 明确"已毕业(graduated)但 enabled 的学生是否仍可登录"的策略（当前仍可登录）。
 - 2026-08-17：追加 §8.0 前端设计原则——界面现代化重设计但功能等价（贯穿全平台），应用户要求。
+- 2026-10-12：**Python 操作题服务端评测**（子项目 4）。学生在浏览器内用 Brython（Web Worker，可强制终止）运行调试；提交评分时服务端以
+  `ittools.python.runner` 指定的方式运行：
+  - `docker`（默认，推荐）：每次评测 `docker run --rm` 一个 `python:3.12-alpine` 一次性容器——`--network none`、只读根文件系统、
+    256MB 内存、1 CPU、64 进程上限、`--cap-drop ALL`、`no-new-privileges`、nobody 用户；每个测试点单独子进程限时。
+    需要应用所在主机能执行 `docker` 命令并预先拉取镜像（`docker pull python:3.12-alpine`，机房内网无外网时尤其要提前拉好）。
+  - **用 docker compose 部署时**，应用容器本身没有 Docker：需要在运行镜像中安装 docker CLI 并挂载 `/var/run/docker.sock`。
+    挂载 docker.sock 等于把宿主机 root 权限交给应用容器，属于需要明确接受的权衡；替代方案是把应用直接部署在宿主机上（不进容器）。
+    未配置时提交评分会提示“无法启动 Python 评测环境”，其它功能不受影响。
+  - `local`：直接调用本机 python，无隔离，**仅限开发**；`disabled`：关闭服务端评测。

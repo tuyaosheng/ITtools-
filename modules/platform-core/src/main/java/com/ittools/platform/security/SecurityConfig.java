@@ -40,7 +40,7 @@ public class SecurityConfig {
                     // .authenticated() below would 401 "/", "/admin/**" etc. before
                     // SpaForwardController/static resource resolution ever runs.
                     .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
-                            "/assets/**", "/favicon.ico").permitAll()
+                            "/assets/**", "/pyrunner/**", "/favicon.ico").permitAll()
                     .anyRequest().authenticated())
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     .accessDeniedHandler((req, resp, ex) -> {

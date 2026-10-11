@@ -34,3 +34,6 @@ Thumbs.db
 
 # Runtime uploads
 data/
+
+# Brython runtime copied from node_modules at dev/build time
+web/public/pyrunner/brython*.js

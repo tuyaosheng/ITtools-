@@ -14,6 +14,7 @@ const menu = [
   { path: '/student/showcase', label: '精华作品' },
   { path: '/student/tests', label: '在线测验' },
   { path: '/student/practice', label: '刷题练习' },
+  { path: '/student/python', label: 'Python 练习' },
   { path: '/student/resources', label: '学习资源' },
   { path: '/student/disk', label: '我的网盘' },
   { path: '/student/notes', label: '学习笔记' },

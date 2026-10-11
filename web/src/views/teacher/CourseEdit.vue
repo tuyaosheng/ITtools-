@@ -70,6 +70,12 @@
             </el-select>
             <span class="muted ml">在“题库与试卷”中编辑试卷</span>
           </el-form-item>
+          <el-form-item v-if="current.pageType === 'PYTHON'" label="Python 题目">
+            <el-select v-model="current.refId" filterable clearable placeholder="从 Python 题库中选择" class="w240">
+              <el-option v-for="p in pyProblems" :key="p.id" :label="p.title + (p.mine ? '' : '（共享）')" :value="p.id" />
+            </el-select>
+            <span class="muted ml">在“Python 题库”中编辑题目和测试点</span>
+          </el-form-item>
           <el-form-item v-if="['HOMEWORK', 'QUIZ'].includes(current.pageType)" label="分值">
             <el-input-number v-model="current.score" :min="0" :max="1000" />
           </el-form-item>
@@ -111,6 +117,7 @@ const pages = ref<any[]>([])
 const current = ref<any>(null)
 const saving = ref(false)
 const papers = ref<any[]>([])
+const pyProblems = ref<any[]>([])
 const startVisible = ref(false)
 const isOwner = computed(() => course.value && course.value.teacherId === auth.user?.userId)
 
@@ -185,6 +192,12 @@ onMounted(async () => {
     papers.value = await api.get('/teacher/quiz/papers')
   } catch {
     papers.value = []
+  }
+  try {
+    const [mine, shared] = await Promise.all([api.get('/teacher/python/problems'), api.get('/teacher/python/problems', { shared: true })])
+    pyProblems.value = [...mine.map((p: any) => ({ ...p, mine: true })), ...shared]
+  } catch {
+    pyProblems.value = []
   }
 })
 </script>

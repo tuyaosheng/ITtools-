@@ -41,6 +41,12 @@ export const pageTypes: Record<string, PageTypeDef> = {
     desc: '教师发起抢答，学生抢先作答',
     student: defineAsyncComponent(() => import('../views/interact/StudentAnswerFirstPage.vue')),
     teacher: defineAsyncComponent(() => import('../views/interact/TeacherAnswerFirstPanel.vue'))
+  },
+  PYTHON: {
+    label: 'Python 操作题',
+    desc: '学生在线编写运行 Python，按测试点自动评分',
+    student: defineAsyncComponent(() => import('../views/python/StudentPythonPage.vue')),
+    teacher: defineAsyncComponent(() => import('../views/python/TeacherPythonPanel.vue'))
   }
 }
 

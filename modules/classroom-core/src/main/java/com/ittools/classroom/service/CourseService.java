@@ -20,7 +20,7 @@ import static com.ittools.platform.db.Sql.p;
 @Service
 public class CourseService {
     public static final List<String> PAGE_TYPES = Arrays.asList(
-            "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST");
+            "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST", "PYTHON");
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;
@@ -112,7 +112,7 @@ public class CourseService {
                 p("t", teacherId, "term", termId != null ? termId : src.get("termId"), "src", sourceId), Long.class);
         jdbc.update("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id) "
                         + "SELECT :id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, "
-                        + "CASE WHEN page_type = 'QUIZ' THEN ref_id ELSE NULL END FROM course_page WHERE course_id = :src ORDER BY seq",
+                        + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END FROM course_page WHERE course_id = :src ORDER BY seq",
                 p("id", id, "src", sourceId));
         return get(id);
     }

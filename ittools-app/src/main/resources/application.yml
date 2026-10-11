@@ -18,6 +18,13 @@ spring:
 ittools:
   storage:
     root: ${STORAGE_ROOT:data/storage}
+  # Python 操作题服务端评测：docker（一次性隔离容器，生产推荐）| local（直接调用本机 python，仅限开发）| disabled
+  python:
+    runner: ${PYTHON_RUNNER:docker}
+    image: ${PYTHON_IMAGE:python:3.12-alpine}
+    docker-cmd: ${PYTHON_DOCKER_CMD:docker}
+    local-cmd: ${PYTHON_LOCAL_CMD:python}
+    max-concurrent: ${PYTHON_MAX_CONCURRENT:4}
 server:
   port: ${SERVER_PORT:8300}
   servlet:
