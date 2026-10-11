@@ -47,6 +47,24 @@ export const pageTypes: Record<string, PageTypeDef> = {
     desc: '学生在线编写运行 Python，按测试点自动评分',
     student: defineAsyncComponent(() => import('../views/python/StudentPythonPage.vue')),
     teacher: defineAsyncComponent(() => import('../views/python/TeacherPythonPanel.vue'))
+  },
+  GROUPING: {
+    label: '分组与组长',
+    desc: '学生自由选择小组、推选组长',
+    student: defineAsyncComponent(() => import('../views/groups/StudentGroupingPage.vue')),
+    teacher: defineAsyncComponent(() => import('../views/groups/TeacherGroupManager.vue'))
+  },
+  GROUP_WORK: {
+    label: '小组合作',
+    desc: '设置研究主题、组内分工、资源交流、组员互评，组长提交小组成果',
+    student: defineAsyncComponent(() => import('../views/groups/StudentGroupWork.vue')),
+    teacher: defineAsyncComponent(() => import('../views/groups/TeacherGroupWorkPanel.vue'))
+  },
+  GROUP_SHOW: {
+    label: '小组成果展示',
+    desc: '展示各组成果，组间互相评分',
+    student: defineAsyncComponent(() => import('../views/groups/StudentGroupShow.vue')),
+    teacher: defineAsyncComponent(() => import('../views/groups/TeacherGroupWorkPanel.vue'))
   }
 }
 

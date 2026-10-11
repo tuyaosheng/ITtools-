@@ -224,7 +224,12 @@ public class LessonService {
         Map<String, Object> ws = lab.workstationByIp(ip);
         String pc = (String) ws.get("pcName");
         Integer group = 0;
-        if (l.get("groupModelId") != null && pc != null) {
+        // 加载历史分组时记下的预分组优先，其次按机位分组模型
+        List<Integer> preset = jdbc.queryForList("SELECT group_no FROM lesson_group_preset WHERE lesson_id = :l AND student_id = :s",
+                p("l", lessonId, "s", studentId), Integer.class);
+        if (!preset.isEmpty()) {
+            group = preset.get(0);
+        } else if (l.get("groupModelId") != null && pc != null) {
             Integer g = lab.groupNoByPcName(((Number) l.get("groupModelId")).longValue()).get(pc);
             if (g != null) group = g;
         }
