@@ -48,7 +48,9 @@ const router = createRouter({
         { path: 'resources', component: () => import('../views/teacher/ResourceView.vue') },
         { path: 'lesson-plans', component: () => import('../views/teacher/LessonPlanView.vue') },
         { path: 'reflections', component: () => import('../views/teacher/ReflectionView.vue') },
-        { path: 'disk', component: () => import('../views/common/DiskView.vue') }
+        { path: 'disk', component: () => import('../views/common/DiskView.vue') },
+        { path: 'messages', component: () => import('../views/teacher/MessageView.vue') },
+        { path: 'qa', component: () => import('../views/teacher/TeacherQa.vue') }
       ]
     },
     {
@@ -68,7 +70,9 @@ const router = createRouter({
         { path: 'resources', component: () => import('../views/student/StudentResources.vue') },
         { path: 'disk', component: () => import('../views/common/DiskView.vue') },
         { path: 'notes', component: () => import('../views/student/StudentNotes.vue') },
-        { path: 'electives', component: () => import('../views/student/StudentElectives.vue') }
+        { path: 'electives', component: () => import('../views/student/StudentElectives.vue') },
+        { path: 'messages', component: () => import('../views/student/StudentMessages.vue') },
+        { path: 'qa', component: () => import('../views/student/StudentQa.vue') }
       ]
     }
   ]

@@ -3,9 +3,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import RoleLayout from './RoleLayout.vue'
+import { useNoticeStore } from '../stores/notices'
 
-const menu = [
+const notices = useNoticeStore()
+let timer: number | undefined
+onMounted(() => {
+  notices.refresh()
+  timer = window.setInterval(() => notices.refresh(), 60000)
+})
+onBeforeUnmount(() => window.clearInterval(timer))
+
+const menu = computed(() => [
   { path: '/teacher/home', label: '工作台' },
   { path: '/teacher/courses', label: '我的课程' },
   { path: '/teacher/lessons', label: '上课记录' },
@@ -19,6 +29,8 @@ const menu = [
   { path: '/teacher/reflections', label: '学习心得' },
   { path: '/teacher/disk', label: '教师网盘' },
   { path: '/teacher/classes', label: '我的班级' },
-  { path: '/teacher/timetable', label: '课表' }
-]
+  { path: '/teacher/timetable', label: '课表' },
+  { path: '/teacher/messages', label: '系统消息', badge: notices.unreadMessages || undefined },
+  { path: '/teacher/qa', label: '师生答疑', badge: notices.pendingQuestions || undefined }
+])
 </script>

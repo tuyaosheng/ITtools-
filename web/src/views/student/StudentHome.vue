@@ -3,6 +3,11 @@
     <el-card shadow="never" class="hero">
       <h2>你好，{{ auth.user?.displayName }}</h2>
       <p class="sub">祝你今天学习愉快！</p>
+      <el-alert v-if="notices.unreadMessages" type="warning" :closable="false" show-icon class="notice">
+        <template #title>
+          你有 {{ notices.unreadMessages }} 条未读系统消息，<el-link type="primary" @click="router.push('/student/messages')">去查看</el-link>
+        </template>
+      </el-alert>
     </el-card>
 
     <el-card shadow="never">
@@ -28,10 +33,12 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useNoticeStore } from '../../stores/notices'
 import { api } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 
 const router = useRouter()
+const notices = useNoticeStore()
 const auth = useAuthStore()
 const lesson = ref<any>(null)
 
@@ -62,4 +69,5 @@ onMounted(async () => {
 .current { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .course { font-size: 20px; font-weight: 600; }
 .meta { color: #909399; margin-top: 6px; }
+.notice { margin-top: 8px; }
 </style>
