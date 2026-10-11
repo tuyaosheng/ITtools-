@@ -15,6 +15,8 @@ const menu = [
   { path: '/teacher/rubrics', label: '评价量规' },
   { path: '/teacher/resources', label: '资源库' },
   { path: '/teacher/lesson-plans', label: '教案' },
+  { path: '/teacher/reflections', label: '学习心得' },
+  { path: '/teacher/disk', label: '教师网盘' },
   { path: '/teacher/classes', label: '我的班级' },
   { path: '/teacher/timetable', label: '课表' }
 ]

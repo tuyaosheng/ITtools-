@@ -17,6 +17,7 @@ const menu = [
   { path: '/student/resources', label: '学习资源' },
   { path: '/student/disk', label: '我的网盘' },
   { path: '/student/notes', label: '学习笔记' },
+  { path: '/student/electives', label: '走班选课' },
   { path: '/student/records', label: '学习记录' }
 ]
 

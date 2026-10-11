@@ -1,5 +1,6 @@
 package com.ittools.platform.web;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ApiResponse<Void>> bad(RuntimeException e) {
         return ResponseEntity.badRequest().body(ApiResponse.<Void>error(400, e.getMessage()));
+    }
+
+    /** 兜底：外键/唯一约束冲突不应以 500 暴露给前端。 */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> conflict(DataIntegrityViolationException e) {
+        return ResponseEntity.badRequest().body(ApiResponse.<Void>error(400, "数据仍被其他记录引用或与已有数据重复，操作未执行"));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

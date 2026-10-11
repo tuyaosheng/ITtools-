@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-const soon = () => import('../views/ComingSoonView.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +20,7 @@ const router = createRouter({
         { path: 'lab-groups', name: 'admin-lab-groups', component: () => import('../views/admin/LabGroupView.vue') },
         { path: 'class-seats', name: 'admin-class-seats', component: () => import('../views/admin/ClassSeatView.vue') },
         { path: 'teaching', name: 'admin-teaching', component: () => import('../views/admin/TeachingAdminView.vue') },
+        { path: 'electives', name: 'admin-electives', component: () => import('../views/admin/ElectiveView.vue') },
         { path: 'settings', name: 'admin-settings', component: () => import('../views/admin/SettingsView.vue') },
         { path: 'users', name: 'admin-users', component: () => import('../views/admin/UserView.vue') },
         { path: 'permissions', name: 'admin-permissions', component: () => import('../views/admin/PermissionView.vue') },
@@ -44,8 +44,10 @@ const router = createRouter({
         { path: 'quiz', component: () => import('../views/quiz/QuizBankView.vue') },
         { path: 'tests', component: () => import('../views/quiz/TestManageView.vue') },
         { path: 'rubrics', component: () => import('../views/teacher/RubricView.vue') },
-        { path: 'resources', component: soon },
-        { path: 'lesson-plans', component: soon }
+        { path: 'resources', component: () => import('../views/teacher/ResourceView.vue') },
+        { path: 'lesson-plans', component: () => import('../views/teacher/LessonPlanView.vue') },
+        { path: 'reflections', component: () => import('../views/teacher/ReflectionView.vue') },
+        { path: 'disk', component: () => import('../views/common/DiskView.vue') }
       ]
     },
     {
@@ -61,9 +63,10 @@ const router = createRouter({
         { path: 'showcase', component: () => import('../views/student/Showcase.vue') },
         { path: 'tests', component: () => import('../views/student/StudentTests.vue') },
         { path: 'practice', component: () => import('../views/student/PracticeView.vue') },
-        { path: 'resources', component: soon },
-        { path: 'disk', component: soon },
-        { path: 'notes', component: soon }
+        { path: 'resources', component: () => import('../views/student/StudentResources.vue') },
+        { path: 'disk', component: () => import('../views/common/DiskView.vue') },
+        { path: 'notes', component: () => import('../views/student/StudentNotes.vue') },
+        { path: 'electives', component: () => import('../views/student/StudentElectives.vue') }
       ]
     }
   ]

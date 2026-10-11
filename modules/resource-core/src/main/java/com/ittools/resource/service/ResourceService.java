@@ -184,7 +184,14 @@ public class ResourceService {
                 p("id", id), String.class);
         jdbc.update("UPDATE lesson_plan SET " + kind + "_path = :fp, " + kind + "_name = :fn WHERE id = :id",
                 p("fp", sf.getRelPath(), "fn", sf.getOriginalName(), "id", id));
-        if (!old.isEmpty()) storage.delete(old.get(0));
+        if (!old.isEmpty()) deletePlanFileIfUnused(old.get(0));
+    }
+
+    /** 复制的教案与原教案共用附件文件，只有不再被任何教案引用时才删除物理文件。 */
+    private void deletePlanFileIfUnused(String path) {
+        if (path == null) return;
+        Long refs = jdbc.queryForObject("SELECT COUNT(*) FROM lesson_plan WHERE doc_path = :p OR ppt_path = :p", p("p", path), Long.class);
+        if (refs == null || refs == 0) storage.delete(path);
     }
 
     @Transactional
@@ -192,8 +199,8 @@ public class ResourceService {
         requirePlanOwner(teacherId, id);
         Map<String, Object> r = jdbc.queryForMap("SELECT doc_path, ppt_path FROM lesson_plan WHERE id = :id", p("id", id));
         jdbc.update("DELETE FROM lesson_plan WHERE id = :id", p("id", id));
-        storage.delete((String) r.get("doc_path"));
-        storage.delete((String) r.get("ppt_path"));
+        deletePlanFileIfUnused((String) r.get("doc_path"));
+        deletePlanFileIfUnused((String) r.get("ppt_path"));
     }
 
     @Transactional(readOnly = true)

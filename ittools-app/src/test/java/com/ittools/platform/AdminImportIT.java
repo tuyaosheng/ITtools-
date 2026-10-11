@@ -98,6 +98,7 @@ class AdminImportIT extends AbstractPostgresIT {
         body.add("file", fileRes);
         ResponseEntity<String> resp = rest.exchange("/api/admin/import/students",
             HttpMethod.POST, new HttpEntity<>(body, h), String.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        // 匿名且未带 CSRF token 的写请求会先被 CsrfFilter 以 403 拒绝，到不了认证环节；两者都算拒绝
+        assertThat(resp.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
     }
 }

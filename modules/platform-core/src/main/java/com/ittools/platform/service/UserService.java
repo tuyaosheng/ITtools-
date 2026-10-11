@@ -10,6 +10,7 @@ import com.ittools.platform.service.dto.UserDtos.CreateUserCommand;
 import com.ittools.platform.service.dto.UserDtos.ResetPasswordCommand;
 import com.ittools.platform.service.dto.UserDtos.UpdateUserCommand;
 import com.ittools.platform.service.dto.UserDtos.UserView;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,7 +90,13 @@ public class UserService {
 
     @Transactional
     public void delete(Long id) {
-        users.deleteById(id);
+        try {
+            users.deleteById(id);
+            users.flush();
+        } catch (DataIntegrityViolationException e) {
+            // 原系统删除教师会连带丢失其全部教学数据；新库用外键保护，已有课程/作业等记录的账号只能停用
+            throw new IllegalStateException("该用户已有课程、作业等教学记录，不能删除，可改为停用账号");
+        }
     }
 
     @Transactional
