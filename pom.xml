@@ -18,6 +18,13 @@
   </properties>
   <modules>
     <module>modules/platform-core</module>
+    <module>modules/lab-core</module>
+    <module>modules/classroom-core</module>
+    <module>modules/grading-core</module>
+    <module>modules/homework-core</module>
+    <module>modules/quiz-core</module>
+    <module>modules/interact-core</module>
+    <module>modules/resource-core</module>
     <module>ittools-app</module>
   </modules>
 </project>

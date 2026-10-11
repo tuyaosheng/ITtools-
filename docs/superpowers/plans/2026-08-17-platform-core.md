@@ -1,55 +1,55 @@
-# Platform-Core Implementation Plan
+# Platform-Core（平台基座）实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **面向智能体执行者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现本计划。步骤使用 checkbox（`- [ ]`）语法进行跟踪。
 
-**Goal:** Build the platform foundation for the ITtools rewrite — a modular-monolith Spring Boot app + Vue 3 SPA + PostgreSQL that delivers three-entrance authentication and admin management of users, classes, school years, and role/module permissions.
+**目标：** 为 ITtools 重写项目搭建平台基座——一个模块化单体的 Spring Boot 应用 + Vue 3 单页应用 + PostgreSQL，提供三入口认证以及用户、班级、学年、角色/模块权限的管理端功能。
 
-**Architecture:** Maven multi-module monolith. `ittools-app` is the Spring Boot bootstrap; `platform-core` is a library module holding user/class/year/auth/permission domain, service, repository, and web layers. PostgreSQL schema is versioned by Flyway. Frontend is an independent Vite/Vue 3 SPA served same-origin, authenticated via server-side session cookie.
+**架构：** Maven 多模块单体。`ittools-app` 是 Spring Boot 启动模块；`platform-core` 是一个库模块，承载用户/班级/学年/认证/权限的领域层、服务层、仓储层和 Web 层。PostgreSQL 数据库结构由 Flyway 做版本管理。前端是一个独立的 Vite/Vue 3 单页应用，同源部署，通过服务端会话 cookie 完成鉴权。
 
-**Tech Stack:** **Java 8**, **Spring Boot 2.7.18** (Web, Security, Data JPA, Validation; javax.* namespace), PostgreSQL 16, Flyway (SB-managed 8.5.x), Hibernate 5.6, Maven 3.6.1, JUnit 5, Testcontainers (SB-managed BOM), Vue 3, Vite, Pinia, Vue Router, Element Plus, axios, Vitest.
+**技术栈：** **Java 8**，**Spring Boot 2.7.18**（Web、Security、Data JPA、Validation；javax.* 命名空间），PostgreSQL 16，Flyway（Spring Boot 托管的 8.5.x），Hibernate 5.6，Maven 3.6.1，JUnit 5，Testcontainers（Spring Boot 托管的 BOM），Vue 3，Vite，Pinia，Vue Router，Element Plus，axios，Vitest。
 
-> **Version adaptation (user directive 2026-08-17):** Adapt framework versions to the LOCALLY installed toolchain. Local JDK is **Java 8 (1.8.0_221)**, so the backend targets **Spring Boot 2.7.18** — Spring Boot 3.x is NOT permitted (it requires Java 17). The illustrative code in tasks below was drafted against Java 17/Spring Boot 3; implementers MUST translate it per the **Java 8 Adaptation Rules** immediately after Global Constraints. No platform-core feature is lost by this — only language/API syntax changes.
+> **版本适配（用户指令，2026-08-17）：** 将框架版本适配为本地已安装的工具链。本地 JDK 为 **Java 8（1.8.0_221）**，因此后端目标框架为 **Spring Boot 2.7.18**——不允许使用 Spring Boot 3.x（它需要 Java 17）。以下任务中的示例代码是按 Java 17/Spring Boot 3 起草的；实现者**必须**依照紧跟在全局约束之后的 **Java 8 适配规则** 进行转换。这一转换不会丢失任何 platform-core 功能——只涉及语言/API 语法上的变化。
 
-**Spec:** `docs/superpowers/specs/2026-08-17-platform-core-design.md`
+**设计文档：** `docs/superpowers/specs/2026-08-17-platform-core-design.md`
 
-## Global Constraints
+## 全局约束
 
-- Runtime: **Java 8 (1.8.0_221)**. Framework: **Spring Boot 2.7.18**. Spring Boot 3.x is forbidden (needs Java 17). Maven **3.6.1**.
-- Database: **PostgreSQL 16** only. All schema changes via **Flyway** migrations under `ittools-app/src/main/resources/db/migration`. No `spring.jpa.hibernate.ddl-auto` beyond `validate`.
-- Encoding: **UTF-8** everywhere (source files, DB, HTTP).
-- Passwords stored as **BCrypt** hashes; never plaintext, never logged.
-- All SQL parameterized (JPA / bound parameters). No string-concatenated SQL — ever.
-- Package base: `com.ittools`. Module package: `com.ittools.platform`.
-- Roles are exactly: `ADMIN`, `TEACHER`, `STUDENT` (enforced by DB CHECK + Java enum).
-- REST responses use envelope `{ "code": int, "message": string, "data": <payload> }`; `code` 0 = success.
-- API prefix `/api`. Auth via session cookie `JSESSIONID`; CSRF enabled (double-submit `XSRF-TOKEN` cookie).
-- Integration tests that touch the DB use **Testcontainers PostgreSQL 16**, not H2.
-- TDD: every behavior task writes the failing test first. Frequent commits (one per task minimum).
+- 运行时：**Java 8（1.8.0_221）**。框架：**Spring Boot 2.7.18**。禁止使用 Spring Boot 3.x（需要 Java 17）。Maven **3.6.1**。
+- 数据库：仅使用 **PostgreSQL 16**。所有数据库结构变更均通过 **Flyway** 迁移脚本完成，存放于 `ittools-app/src/main/resources/db/migration`。`spring.jpa.hibernate.ddl-auto` 不得超出 `validate`。
+- 编码：全程使用 **UTF-8**（源文件、数据库、HTTP）。
+- 密码以 **BCrypt** 哈希存储；绝不明文存储，绝不记录到日志。
+- 所有 SQL 均参数化（JPA / 绑定参数）。绝不使用字符串拼接的 SQL——任何情况下都不允许。
+- 包基础路径：`com.ittools`。模块包：`com.ittools.platform`。
+- 角色只能是以下三种：`ADMIN`、`TEACHER`、`STUDENT`（由数据库 CHECK 约束 + Java 枚举共同强制）。
+- REST 响应统一使用信封结构 `{ "code": int, "message": string, "data": <payload> }`；`code` 为 0 表示成功。
+- API 前缀为 `/api`。鉴权通过会话 cookie `JSESSIONID`；启用 CSRF（双重提交 `XSRF-TOKEN` cookie）。
+- 涉及数据库的集成测试使用 **Testcontainers PostgreSQL 16**，不使用 H2。
+- TDD：每个行为类任务都先写失败的测试。频繁提交（每个任务至少提交一次）。
 
-## Java 8 / Spring Boot 2.7 Adaptation Rules (BINDING — applies to every task)
+## Java 8 / Spring Boot 2.7 适配规则（约束性规则——适用于每一个任务）
 
-The task code below is illustrative of **structure, field contracts, and behavior**. Translate every snippet to Java 8 / Spring Boot 2.7 as you implement. These rules are binding; the reviewer enforces them.
+下文任务中的代码用于示意**结构、字段契约与行为**。实现时须将每段代码转换为 Java 8 / Spring Boot 2.7 写法。这些规则具有约束力；评审人将据此核查。
 
-1. **No `record`.** Every DTO/record shown (`ApiResponse`, `LoginRequest`, all `*View`/`*Command`/`*Option`/`*Dtos`) becomes a plain `final class` with: private final fields, an all-args constructor (same parameter order as the record), and getters named `field()` **kept identical** to the record accessor names (e.g. `userId()`, `role()`, `yearCode()`) so all call sites in the plan still compile. Add `equals`/`hashCode` only where tests need them. (Alternatively use Lombok `@Value` with `@Accessors(fluent = true)` — but plain classes are preferred; do not add Lombok unless a task already lists it.)
-2. **Namespace:** `javax.persistence.*` (NOT `jakarta.persistence.*`), `javax.servlet.*` (NOT `jakarta.servlet.*`), `javax.validation.*`.
-3. **No `var`** — use explicit types (in tests too).
-4. **No switch expressions** (`case X ->`) — use a classic `switch` statement with `break`/`return`, or an `if/else` chain. Affects `MultiLoginAuthenticationProvider.resolve`.
-5. **No `List.of()` / `Map.of()`** — use `java.util.Arrays.asList(...)`, `Collections.singletonList(...)`, or `new ArrayList<>()`. Affects `AppUserDetails.getAuthorities`, permission stubs.
-6. **Streams/lambdas/`Optional`** are fine (Java 8). But `Stream.toList()` is Java 16+ — use `.collect(Collectors.toList())` everywhere a task shows `.toList()`.
-7. **Spring Security 5.7/5.8 API** (not Security 6):
-   - Use `.antMatchers(...)` NOT `.requestMatchers(...)`.
-   - Use `@EnableGlobalMethodSecurity(prePostEnabled = true)` NOT `@EnableMethodSecurity`.
-   - Keep the `SecurityFilterChain` bean style (supported since 5.7); do not use the deprecated `WebSecurityConfigurerAdapter`.
-   - `CookieCsrfTokenRepository.withHttpOnlyFalse()`, `HttpStatusEntryPoint`, `HttpSessionSecurityContextRepository` all exist in 5.x — keep as shown.
-8. **Text blocks** (`"""`) are Java 15+ — none are required; use normal strings.
-9. **Dockerfile (Task 15):** base images `maven:3.8-eclipse-temurin-8` (build) and `eclipse-temurin:8-jre` (runtime), NOT the `-17` images shown.
-10. **POM:** parent `spring-boot-starter-parent` version `2.7.18`; `<java.version>8</java.version>`; Flyway artifact is `flyway-core` only (no `flyway-database-postgresql` — that split is a Flyway 9+/SB3 thing; SB 2.7 bundles Postgres support in `flyway-core`).
+1. **不使用 `record`。** 文中出现的每个 DTO/record（`ApiResponse`、`LoginRequest`，以及所有 `*View`/`*Command`/`*Option`/`*Dtos`）都应改写为一个普通的 `final class`：私有 final 字段、一个全参构造函数（参数顺序与 record 相同），以及命名为 `field()` 的 getter——**必须与 record 的访问器名称保持一致**（例如 `userId()`、`role()`、`yearCode()`），以确保计划中所有调用点仍能编译通过。仅在测试需要时才添加 `equals`/`hashCode`。（也可以改用 Lombok 的 `@Value` 配合 `@Accessors(fluent = true)`——但优先使用普通类；除非某个任务已经列出 Lombok，否则不要额外引入。）
+2. **命名空间：** 使用 `javax.persistence.*`（而非 `jakarta.persistence.*`）、`javax.servlet.*`（而非 `jakarta.servlet.*`）、`javax.validation.*`。
+3. **不使用 `var`**——使用显式类型（测试代码中也一样）。
+4. **不使用 switch 表达式**（`case X ->`）——使用带 `break`/`return` 的经典 `switch` 语句，或 `if/else` 链。影响到 `MultiLoginAuthenticationProvider.resolve`。
+5. **不使用 `List.of()` / `Map.of()`**——使用 `java.util.Arrays.asList(...)`、`Collections.singletonList(...)` 或 `new ArrayList<>()`。影响到 `AppUserDetails.getAuthorities`、权限相关的桩代码。
+6. **Stream/lambda/`Optional`** 均可正常使用（Java 8 支持）。但 `Stream.toList()` 是 Java 16+ 的特性——凡是任务中出现 `.toList()` 的地方一律改为 `.collect(Collectors.toList())`。
+7. **Spring Security 5.7/5.8 API**（不是 Security 6）：
+   - 使用 `.antMatchers(...)`，而不是 `.requestMatchers(...)`。
+   - 使用 `@EnableGlobalMethodSecurity(prePostEnabled = true)`，而不是 `@EnableMethodSecurity`。
+   - 保留 `SecurityFilterChain` bean 的写法（自 5.7 起支持）；不要使用已废弃的 `WebSecurityConfigurerAdapter`。
+   - `CookieCsrfTokenRepository.withHttpOnlyFalse()`、`HttpStatusEntryPoint`、`HttpSessionSecurityContextRepository` 在 5.x 中均存在——按原样保留。
+8. **文本块**（`"""`）是 Java 15+ 特性——本计划中不需要用到；使用普通字符串即可。
+9. **Dockerfile（任务 15）：** 基础镜像使用 `maven:3.8-eclipse-temurin-8`（构建阶段）和 `eclipse-temurin:8-jre`（运行阶段），而不是文中展示的 `-17` 镜像。
+10. **POM：** 父级 `spring-boot-starter-parent` 版本为 `2.7.18`；`<java.version>8</java.version>`；Flyway 依赖只用 `flyway-core`（不需要 `flyway-database-postgresql`——那是 Flyway 9+/SB3 才有的拆分；SB 2.7 的 `flyway-core` 已自带 Postgres 支持）。
 
-If applying a rule reveals that a specific behavior genuinely cannot be expressed on this stack, STOP and report it (per user directive) rather than silently dropping the behavior.
+如果在应用某条规则时发现某个行为确实无法在这套技术栈上实现，请停下来并报告（依用户指令），而不要悄悄丢弃该行为。
 
 ---
 
-## File Structure
+## 文件结构
 
 ```
 ittools/
@@ -95,23 +95,23 @@ ittools/
       └─ views/admin/{SchoolYearView,ClassView,UserView,PermissionView}.vue
 ```
 
-**Responsibilities:** `domain` = JPA entities only. `repository` = Spring Data interfaces. `service` = business rules + transactions + DTO mapping (the module's public surface). `web` = HTTP controllers + envelope + validation. `security` = authentication/authorization wiring. Frontend `api` = transport, `stores` = session state, `views` = screens.
+**职责划分：** `domain` = 仅 JPA 实体。`repository` = Spring Data 接口。`service` = 业务规则 + 事务 + DTO 映射（该模块对外的公共接口层）。`web` = HTTP 控制器 + 响应信封 + 校验。`security` = 认证/鉴权相关配置。前端的 `api` = 传输层，`stores` = 会话状态，`views` = 页面。
 
 ---
 
-## Task 1: Maven multi-module skeleton + app boots
+## 任务 1：Maven 多模块骨架 + 应用可启动
 
-**Files:**
-- Create: `pom.xml`, `ittools-app/pom.xml`, `modules/platform-core/pom.xml`
-- Create: `ittools-app/src/main/java/com/ittools/IttoolsApplication.java`
-- Create: `ittools-app/src/main/resources/application.yml`
-- Test: `ittools-app/src/test/java/com/ittools/ContextSmokeTest.java`
+**文件：**
+- 新建：`pom.xml`、`ittools-app/pom.xml`、`modules/platform-core/pom.xml`
+- 新建：`ittools-app/src/main/java/com/ittools/IttoolsApplication.java`
+- 新建：`ittools-app/src/main/resources/application.yml`
+- 测试：`ittools-app/src/test/java/com/ittools/ContextSmokeTest.java`
 
-**Interfaces:**
-- Consumes: nothing (first task).
-- Produces: bootable Spring Boot app `IttoolsApplication`; Maven reactor with modules `ittools-app`, `modules/platform-core`.
+**接口：**
+- 依赖：无（首个任务）。
+- 产出：可启动的 Spring Boot 应用 `IttoolsApplication`；包含 `ittools-app`、`modules/platform-core` 两个模块的 Maven reactor。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `ittools-app/src/test/java/com/ittools/ContextSmokeTest.java`:
 ```java
@@ -132,14 +132,14 @@ class ContextSmokeTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=ContextSmokeTest`
-Expected: FAIL — no `pom.xml` / no `IttoolsApplication` class yet (compile/reactor error).
+运行：`mvn -q -pl ittools-app test -Dtest=ContextSmokeTest`
+预期结果：失败 — 尚无 `pom.xml`、也无 `IttoolsApplication` 类（编译/reactor 错误）。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
-Parent `pom.xml`:
+父级 `pom.xml`：
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -224,7 +224,7 @@ public class IttoolsApplication {
 }
 ```
 
-`application.yml` (minimal for now):
+`application.yml`（目前先保持最小配置）：
 ```yaml
 spring:
   application:
@@ -246,12 +246,12 @@ server:
       force: true
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=ContextSmokeTest`
-Expected: PASS (context loads with DB auto-config excluded).
+运行：`mvn -q -pl ittools-app -am test -Dtest=ContextSmokeTest`
+预期结果：通过（在排除数据库自动配置的情况下上下文正常加载）。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add pom.xml ittools-app modules
@@ -260,19 +260,19 @@ git commit -m "chore: maven multi-module skeleton + bootable app"
 
 ---
 
-## Task 2: Postgres via docker-compose + Testcontainers IT base + Flyway runs
+## 任务 2：通过 docker-compose 引入 Postgres + Testcontainers 集成测试基类 + Flyway 跑通
 
-**Files:**
-- Create: `docker-compose.yml`
-- Create: `ittools-app/src/test/java/com/ittools/support/AbstractPostgresIT.java`
-- Create: `ittools-app/src/main/resources/db/migration/V1__schema.sql` (empty-but-valid placeholder table)
-- Test: `ittools-app/src/test/java/com/ittools/FlywayMigrationIT.java`
+**文件：**
+- 新建：`docker-compose.yml`
+- 新建：`ittools-app/src/test/java/com/ittools/support/AbstractPostgresIT.java`
+- 新建：`ittools-app/src/main/resources/db/migration/V1__schema.sql`（内容为空但有效的占位表）
+- 测试：`ittools-app/src/test/java/com/ittools/FlywayMigrationIT.java`
 
-**Interfaces:**
-- Consumes: `IttoolsApplication`.
-- Produces: `AbstractPostgresIT` (base class starting a shared Postgres 16 container and wiring `spring.datasource.*`); a running Flyway migration chain.
+**接口：**
+- 依赖：`IttoolsApplication`。
+- 产出：`AbstractPostgresIT`（基类，启动一个共享的 Postgres 16 容器并注入 `spring.datasource.*`）；一条可正常运行的 Flyway 迁移链。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AbstractPostgresIT.java`:
 ```java
@@ -320,14 +320,14 @@ class FlywayMigrationIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=FlywayMigrationIT`
-Expected: FAIL — no `V1__schema.sql`, Flyway finds no migrations / table missing.
+运行：`mvn -q -pl ittools-app test -Dtest=FlywayMigrationIT`
+预期结果：失败 — 没有 `V1__schema.sql`，Flyway 找不到迁移脚本 / 表不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
-`V1__schema.sql` (temporary bootstrap content, replaced in Task 3):
+`V1__schema.sql`（临时的启动占位内容，会在任务 3 中被替换）：
 ```sql
 -- placeholder; real schema lands in Task 3
 CREATE TABLE app_bootstrap (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY);
@@ -356,12 +356,12 @@ volumes:
   ittools-db:
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=FlywayMigrationIT`
-Expected: PASS — Flyway applied V1, history row present.
+运行：`mvn -q -pl ittools-app -am test -Dtest=FlywayMigrationIT`
+预期结果：通过 — Flyway 已应用 V1，存在历史记录行。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add docker-compose.yml ittools-app/src
@@ -370,18 +370,18 @@ git commit -m "test: postgres testcontainers base + flyway smoke"
 
 ---
 
-## Task 3: Schema V1 (school_year, klass, users, permissions) + seed V2
+## 任务 3：V1 数据库结构（school_year、klass、users、permissions）+ V2 种子数据
 
-**Files:**
-- Modify: `ittools-app/src/main/resources/db/migration/V1__schema.sql` (replace placeholder)
-- Create: `ittools-app/src/main/resources/db/migration/V2__seed.sql`
-- Test: `ittools-app/src/test/java/com/ittools/SchemaShapeIT.java`
+**文件：**
+- 修改：`ittools-app/src/main/resources/db/migration/V1__schema.sql`（替换占位内容）
+- 新建：`ittools-app/src/main/resources/db/migration/V2__seed.sql`
+- 测试：`ittools-app/src/test/java/com/ittools/SchemaShapeIT.java`
 
-**Interfaces:**
-- Consumes: Flyway chain from Task 2.
-- Produces: tables `school_year, klass, users, permission, role_permission, module_permission`; seed permission rows and one seed admin (`login_name='admin'`).
+**接口：**
+- 依赖：任务 2 产出的 Flyway 迁移链。
+- 产出：`school_year, klass, users, permission, role_permission, module_permission` 各张表；权限种子数据行以及一个种子管理员账号（`login_name='admin'`）。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `SchemaShapeIT.java`:
 ```java
@@ -421,12 +421,12 @@ class SchemaShapeIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=SchemaShapeIT`
-Expected: FAIL — tables/seed absent.
+运行：`mvn -q -pl ittools-app test -Dtest=SchemaShapeIT`
+预期结果：失败 — 表/种子数据均不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `V1__schema.sql`:
 ```sql
@@ -486,7 +486,7 @@ CREATE TABLE module_permission (
 );
 ```
 
-`V2__seed.sql` (BCrypt hash below is for password `admin123` — cost 10):
+`V2__seed.sql`（下方 BCrypt 哈希对应密码 `admin123` — cost 10）：
 ```sql
 INSERT INTO permission(code, name, module) VALUES
   ('ADMIN_USERS',   '用户管理',   'platform'),
@@ -501,14 +501,14 @@ INSERT INTO users(role, name, login_name, password_hash)
   VALUES ('ADMIN', '系统管理员', 'admin',
           '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy');
 ```
-> Note: regenerate the hash with `new BCryptPasswordEncoder().encode("admin123")` if the literal above does not verify in your Spring version; the value shown is the canonical BCrypt example digest for `admin123`.
+> 说明：如果上面这个字面量在你的 Spring 版本中验证不通过，用 `new BCryptPasswordEncoder().encode("admin123")` 重新生成哈希值；这里给出的值是 `admin123` 的一个规范 BCrypt 示例摘要。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=SchemaShapeIT`
-Expected: PASS (3 tests).
+运行：`mvn -q -pl ittools-app -am test -Dtest=SchemaShapeIT`
+预期结果：通过（3 个测试）。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add ittools-app/src/main/resources/db/migration ittools-app/src/test
@@ -517,22 +517,22 @@ git commit -m "feat(db): core schema + platform permission seed + admin"
 
 ---
 
-## Task 4: Domain entities + repositories (school_year, klass, users)
+## 任务 4：领域实体 + 仓储层（school_year、klass、users）
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/domain/{Role,SchoolYear,Klass,User}.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/repository/{SchoolYearRepository,KlassRepository,UserRepository}.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/UserRepositoryIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/domain/{Role,SchoolYear,Klass,User}.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/repository/{SchoolYearRepository,KlassRepository,UserRepository}.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/UserRepositoryIT.java`
 
-**Interfaces:**
-- Consumes: schema from Task 3.
-- Produces:
-  - enum `Role { ADMIN, TEACHER, STUDENT }`
-  - `@Entity User` fields: `Long id; Role role; String name; String loginName; String studentNo; String xjh; String passwordHash; Klass klass; SchoolYear enrollYear; boolean graduated; boolean enabled;`
-  - `UserRepository extends JpaRepository<User,Long>` with `Optional<User> findByLoginName(String)`, `Optional<User> findByXjh(String)`, `Optional<User> findByKlass_IdAndNameAndRole(Long classId, String name, Role role)`, `List<User> findByKlass_Id(Long)`.
-  - `SchoolYearRepository`, `KlassRepository` (`List<Klass> findBySchoolYear_IdOrderByDisplayOrderAscNameAsc(Long)`).
+**接口：**
+- 依赖：任务 3 产出的数据库结构。
+- 产出：
+  - 枚举 `Role { ADMIN, TEACHER, STUDENT }`
+  - `@Entity User` 字段：`Long id; Role role; String name; String loginName; String studentNo; String xjh; String passwordHash; Klass klass; SchoolYear enrollYear; boolean graduated; boolean enabled;`
+  - `UserRepository extends JpaRepository<User,Long>`，包含 `Optional<User> findByLoginName(String)`、`Optional<User> findByXjh(String)`、`Optional<User> findByKlass_IdAndNameAndRole(Long classId, String name, Role role)`、`List<User> findByKlass_Id(Long)`。
+  - `SchoolYearRepository`、`KlassRepository`（`List<Klass> findBySchoolYear_IdOrderByDisplayOrderAscNameAsc(Long)`）。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `UserRepositoryIT.java`:
 ```java
@@ -572,12 +572,12 @@ class UserRepositoryIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=UserRepositoryIT`
-Expected: FAIL — entities/repositories not defined (compile error).
+运行：`mvn -q -pl ittools-app test -Dtest=UserRepositoryIT`
+预期结果：失败 — 实体/仓储尚未定义（编译错误）。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `Role.java`:
 ```java
@@ -675,7 +675,7 @@ public class User {
 }
 ```
 
-Repositories:
+仓储接口：
 ```java
 package com.ittools.platform.repository;
 import com.ittools.platform.domain.*;
@@ -705,12 +705,12 @@ public interface KlassRepository extends JpaRepository<Klass, Long> {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=UserRepositoryIT`
-Expected: PASS.
+运行：`mvn -q -pl ittools-app -am test -Dtest=UserRepositoryIT`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -719,22 +719,22 @@ git commit -m "feat(platform): core entities + repositories"
 
 ---
 
-## Task 5: BCrypt encoder + multi-login authentication provider
+## 任务 5：BCrypt 编码器 + 多入口登录认证提供者
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/security/{AppUserDetails,LoginRequest,MultiLoginAuthenticationProvider}.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/security/SecurityBeans.java` (PasswordEncoder bean)
-- Test: `ittools-app/src/test/java/com/ittools/platform/AuthenticationProviderIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/security/{AppUserDetails,LoginRequest,MultiLoginAuthenticationProvider}.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/security/SecurityBeans.java`（PasswordEncoder bean）
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AuthenticationProviderIT.java`
 
-**Interfaces:**
-- Consumes: `UserRepository`, `Role`, `User`.
-- Produces:
-  - `record LoginRequest(String loginType, String yearCode, String className, String name, String xjh, String loginName, String password)` — `loginType ∈ {STUDENT_NAME, STUDENT_XJH, TEACHER, ADMIN}`.
-  - `AppUserDetails implements UserDetails` exposing `Long userId()`, `Role role()`, granted authority `ROLE_<role>`.
-  - `MultiLoginAuthenticationProvider` (a `@Component`) resolving `LoginRequest` → authenticated `AppUserDetails` using `PasswordEncoder`.
-  - `@Bean PasswordEncoder passwordEncoder()` = `BCryptPasswordEncoder`.
+**接口：**
+- 依赖：`UserRepository`、`Role`、`User`。
+- 产出：
+  - `record LoginRequest(String loginType, String yearCode, String className, String name, String xjh, String loginName, String password)` — `loginType ∈ {STUDENT_NAME, STUDENT_XJH, TEACHER, ADMIN}`。
+  - `AppUserDetails implements UserDetails`，暴露 `Long userId()`、`Role role()`，授予权限 `ROLE_<role>`。
+  - `MultiLoginAuthenticationProvider`（一个 `@Component`），使用 `PasswordEncoder` 将 `LoginRequest` 解析为已认证的 `AppUserDetails`。
+  - `@Bean PasswordEncoder passwordEncoder()` = `BCryptPasswordEncoder`。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AuthenticationProviderIT.java`:
 ```java
@@ -796,12 +796,12 @@ class AuthenticationProviderIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AuthenticationProviderIT`
-Expected: FAIL — security classes absent.
+运行：`mvn -q -pl ittools-app test -Dtest=AuthenticationProviderIT`
+预期结果：失败 — 安全相关类尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `SecurityBeans.java`:
 ```java
@@ -908,12 +908,12 @@ public class MultiLoginAuthenticationProvider {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AuthenticationProviderIT`
-Expected: PASS (4 tests). If `adminSeedLoginSucceeds` fails on the seed hash, regenerate V2 hash as noted in Task 3.
+运行：`mvn -q -pl ittools-app -am test -Dtest=AuthenticationProviderIT`
+预期结果：通过（4 个测试）。如果 `adminSeedLoginSucceeds` 因种子哈希不匹配而失败，按任务 3 中所述重新生成 V2 哈希。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main/java/com/ittools/platform/security ittools-app/src/test
@@ -922,25 +922,25 @@ git commit -m "feat(auth): bcrypt + multi-login authentication provider"
 
 ---
 
-## Task 6: Security config, ApiResponse envelope, auth endpoints (login/logout/me)
+## 任务 6：安全配置、ApiResponse 信封、认证相关接口（login/logout/me）
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/ApiResponse.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/GlobalExceptionHandler.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/security/SecurityConfig.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/AuthController.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/AuthEndpointIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/ApiResponse.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/GlobalExceptionHandler.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/security/SecurityConfig.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/AuthController.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AuthEndpointIT.java`
 
-**Interfaces:**
-- Consumes: `MultiLoginAuthenticationProvider`, `AppUserDetails`.
-- Produces:
-  - `ApiResponse<T>` static factories `ok(T)`, `error(int, String)`.
-  - `POST /api/auth/login` (JSON `LoginRequest`) → sets session, returns `{userId, name, role, permissions[]}`.
-  - `POST /api/auth/logout` → invalidates session.
-  - `GET /api/auth/me` → current principal or 401.
-  - `SecurityConfig`: `/api/auth/**` and `/api/public/**` permitAll; everything else authenticated; CSRF via `CookieCsrfTokenRepository.withHttpOnlyFalse()`.
+**接口：**
+- 依赖：`MultiLoginAuthenticationProvider`、`AppUserDetails`。
+- 产出：
+  - `ApiResponse<T>` 的静态工厂方法 `ok(T)`、`error(int, String)`。
+  - `POST /api/auth/login`（请求体为 JSON 形式的 `LoginRequest`）→ 建立会话，返回 `{userId, name, role, permissions[]}`。
+  - `POST /api/auth/logout` → 使会话失效。
+  - `GET /api/auth/me` → 返回当前登录用户信息，未登录则返回 401。
+  - `SecurityConfig`：`/api/auth/**` 与 `/api/public/**` 全部放行；其余接口均需认证；CSRF 通过 `CookieCsrfTokenRepository.withHttpOnlyFalse()` 实现。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AuthEndpointIT.java`:
 ```java
@@ -978,12 +978,12 @@ class AuthEndpointIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AuthEndpointIT`
-Expected: FAIL — endpoints/security config absent (likely 404/500).
+运行：`mvn -q -pl ittools-app test -Dtest=AuthEndpointIT`
+预期结果：失败 — 接口/安全配置均不存在（大概率返回 404/500）。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `ApiResponse.java`:
 ```java
@@ -1108,14 +1108,14 @@ public class AuthController {
     }
 }
 ```
-> Add `import org.springframework.security.core.annotation.AuthenticationPrincipal;`
+> 需要添加 `import org.springframework.security.core.annotation.AuthenticationPrincipal;`
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AuthEndpointIT`
-Expected: PASS. (Requires `LookupService.permissionCodesForRole` from Task 7 — implement Task 7 first if compile fails, or stub the method returning `List.of()` then flesh out in Task 7.)
+运行：`mvn -q -pl ittools-app -am test -Dtest=AuthEndpointIT`
+预期结果：通过。（需要任务 7 中的 `LookupService.permissionCodesForRole`——如果编译失败，先实现任务 7，或者先让该方法返回 `List.of()` 作为桩实现，之后在任务 7 中补全。）
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -1124,23 +1124,23 @@ git commit -m "feat(auth): security config + login/logout/me endpoints"
 
 ---
 
-## Task 7: LookupService + public login-dropdown endpoints
+## 任务 7：LookupService + 公开的登录下拉框接口
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/LookupService.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/repository/{PermissionRepository,RolePermissionRepository}.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/PublicLookupController.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/dto/LookupDtos.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/PublicLookupIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/LookupService.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/repository/{PermissionRepository,RolePermissionRepository}.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/PublicLookupController.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/dto/LookupDtos.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/PublicLookupIT.java`
 
-**Interfaces:**
-- Consumes: `SchoolYearRepository`, `KlassRepository`, `UserRepository`, `PermissionRepository`.
-- Produces:
-  - `LookupService.permissionCodesForRole(Role)` → `List<String>`.
-  - `LookupService.activeYears()`, `classesOf(Long yearId)`, `studentsOf(Long classId)` returning DTO records `YearOption(id, yearCode, label)`, `ClassOption(id, name)`, `StudentOption(id, name)`.
-  - `GET /api/public/school-years`, `GET /api/public/classes?yearId=`, `GET /api/public/students?classId=`.
+**接口：**
+- 依赖：`SchoolYearRepository`、`KlassRepository`、`UserRepository`、`PermissionRepository`。
+- 产出：
+  - `LookupService.permissionCodesForRole(Role)` → `List<String>`。
+  - `LookupService.activeYears()`、`classesOf(Long yearId)`、`studentsOf(Long classId)`，返回 DTO record `YearOption(id, yearCode, label)`、`ClassOption(id, name)`、`StudentOption(id, name)`。
+  - `GET /api/public/school-years`、`GET /api/public/classes?yearId=`、`GET /api/public/students?classId=`。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `PublicLookupIT.java`:
 ```java
@@ -1175,14 +1175,14 @@ class PublicLookupIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=PublicLookupIT`
-Expected: FAIL — endpoint/service missing.
+运行：`mvn -q -pl ittools-app test -Dtest=PublicLookupIT`
+预期结果：失败 — 接口/服务均不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
-`PermissionRepository.java` / `RolePermissionRepository.java`:
+`PermissionRepository.java` / `RolePermissionRepository.java`：
 ```java
 package com.ittools.platform.repository;
 import com.ittools.platform.domain.Permission;
@@ -1193,7 +1193,7 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
     List<String> codesForRole(String role);
 }
 ```
-> `Permission` and `RolePermission` entities: add them mirroring the schema (`Permission{id,code,name,module}`, `@Entity RolePermission{@EmbeddedId or @IdClass (role, permissionId)}`). Include their creation in this task's implementation.
+> `Permission` 与 `RolePermission` 实体：按数据库结构对应创建（`Permission{id,code,name,module}`，`@Entity RolePermission{@EmbeddedId or @IdClass (role, permissionId)}`）。在本任务的实现中一并创建它们。
 
 `LookupDtos.java`:
 ```java
@@ -1263,12 +1263,12 @@ public class PublicLookupController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=PublicLookupIT,AuthEndpointIT`
-Expected: PASS (and AuthEndpointIT now fully green with real permissions).
+运行：`mvn -q -pl ittools-app -am test -Dtest=PublicLookupIT,AuthEndpointIT`
+预期结果：通过（此时 AuthEndpointIT 也应完全变绿，使用真实的权限数据）。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -1277,22 +1277,22 @@ git commit -m "feat(platform): lookup service + public login dropdown endpoints"
 
 ---
 
-## Task 8: Admin SchoolYear CRUD
+## 任务 8：管理端 SchoolYear（学年）CRUD
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/SchoolYearService.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/AdminSchoolYearController.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/dto/SchoolYearDtos.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/AdminSchoolYearIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/SchoolYearService.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/AdminSchoolYearController.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/dto/SchoolYearDtos.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AdminSchoolYearIT.java`
 
-**Interfaces:**
-- Consumes: `SchoolYearRepository`, security (ADMIN role).
-- Produces:
-  - DTOs `SchoolYearView(Long id,String yearCode,String label,boolean active)`, `SchoolYearCommand(String yearCode,String label,boolean active)`.
-  - `SchoolYearService`: `list()`, `create(cmd)`, `update(id,cmd)`, `delete(id)`.
-  - Endpoints under `/api/admin/school-years` (GET list, POST, PUT/{id}, DELETE/{id}), ADMIN-only.
+**接口：**
+- 依赖：`SchoolYearRepository`、安全权限（ADMIN 角色）。
+- 产出：
+  - DTO：`SchoolYearView(Long id,String yearCode,String label,boolean active)`、`SchoolYearCommand(String yearCode,String label,boolean active)`。
+  - `SchoolYearService`：`list()`、`create(cmd)`、`update(id,cmd)`、`delete(id)`。
+  - `/api/admin/school-years` 下的接口（GET 列表、POST、PUT/{id}、DELETE/{id}），仅限 ADMIN。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AdminSchoolYearIT.java`:
 ```java
@@ -1342,12 +1342,12 @@ class AdminSchoolYearIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AdminSchoolYearIT`
-Expected: FAIL — endpoints missing.
+运行：`mvn -q -pl ittools-app test -Dtest=AdminSchoolYearIT`
+预期结果：失败 — 接口尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `SchoolYearDtos.java`:
 ```java
@@ -1413,12 +1413,12 @@ public class AdminSchoolYearController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AdminSchoolYearIT`
-Expected: PASS.
+运行：`mvn -q -pl ittools-app -am test -Dtest=AdminSchoolYearIT`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -1427,22 +1427,22 @@ git commit -m "feat(admin): school year CRUD"
 
 ---
 
-## Task 9: Admin Klass CRUD
+## 任务 9：管理端 Klass（班级）CRUD
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/KlassService.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/AdminKlassController.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/dto/KlassDtos.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/AdminKlassIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/KlassService.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/AdminKlassController.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/dto/KlassDtos.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AdminKlassIT.java`
 
-**Interfaces:**
-- Consumes: `KlassRepository`, `SchoolYearRepository`, admin session helper (copy the `adminSession()` helper from Task 8 into this test class — do not share test infra across tasks).
-- Produces:
-  - DTOs `KlassView(Long id,Long schoolYearId,String yearLabel,String name,int displayOrder)`, `KlassCommand(Long schoolYearId,String name,int displayOrder)`.
-  - `KlassService`: `listByYear(Long yearId)`, `create(cmd)`, `update(id,cmd)`, `delete(id)`.
-  - Endpoints `/api/admin/classes` (GET `?yearId=`, POST, PUT/{id}, DELETE/{id}), ADMIN-only.
+**接口：**
+- 依赖：`KlassRepository`、`SchoolYearRepository`、管理员会话辅助方法（将任务 8 中的 `adminSession()` 辅助方法复制一份到本测试类中——不要在多个任务之间共享测试基础设施）。
+- 产出：
+  - DTO：`KlassView(Long id,Long schoolYearId,String yearLabel,String name,int displayOrder)`、`KlassCommand(Long schoolYearId,String name,int displayOrder)`。
+  - `KlassService`：`listByYear(Long yearId)`、`create(cmd)`、`update(id,cmd)`、`delete(id)`。
+  - `/api/admin/classes` 接口（GET `?yearId=`、POST、PUT/{id}、DELETE/{id}），仅限 ADMIN。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AdminKlassIT.java`:
 ```java
@@ -1489,12 +1489,12 @@ class AdminKlassIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AdminKlassIT`
-Expected: FAIL — endpoints missing.
+运行：`mvn -q -pl ittools-app test -Dtest=AdminKlassIT`
+预期结果：失败 — 接口尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `KlassDtos.java`:
 ```java
@@ -1564,12 +1564,12 @@ public class AdminKlassController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AdminKlassIT`
-Expected: PASS.
+运行：`mvn -q -pl ittools-app -am test -Dtest=AdminKlassIT`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -1578,26 +1578,26 @@ git commit -m "feat(admin): class CRUD"
 
 ---
 
-## Task 10: Admin User CRUD (create/edit/delete/reset-password/graduate/enable)
+## 任务 10：管理端 User（用户）CRUD（创建/编辑/删除/重置密码/毕业/启停用）
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/UserService.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/AdminUserController.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/dto/UserDtos.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/AdminUserIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/UserService.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/AdminUserController.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/dto/UserDtos.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AdminUserIT.java`
 
-**Interfaces:**
-- Consumes: `UserRepository`, `KlassRepository`, `SchoolYearRepository`, `PasswordEncoder`.
-- Produces:
-  - DTOs:
+**接口：**
+- 依赖：`UserRepository`、`KlassRepository`、`SchoolYearRepository`、`PasswordEncoder`。
+- 产出：
+  - DTO：
     - `UserView(Long id,String role,String name,String loginName,String studentNo,String xjh,Long classId,String className,boolean graduated,boolean enabled)`
     - `CreateUserCommand(String role,String name,String loginName,String studentNo,String xjh,Long classId,Long enrollYearId,String password)`
     - `UpdateUserCommand(String name,String loginName,String studentNo,String xjh,Long classId,Long enrollYearId)`
     - `ResetPasswordCommand(String password)`
-  - `UserService`: `list(String roleFilter, Long classId)`, `create(cmd)`, `update(id,cmd)`, `delete(id)`, `resetPassword(id,cmd)`, `setGraduated(id,boolean)`, `setEnabled(id,boolean)`. Password always BCrypt-encoded on write.
-  - Endpoints `/api/admin/users`: GET `?role=&classId=`, POST, PUT/{id}, DELETE/{id}, POST/{id}/reset-password, POST/{id}/graduate?value=, POST/{id}/enabled?value=. ADMIN-only.
+  - `UserService`：`list(String roleFilter, Long classId)`、`create(cmd)`、`update(id,cmd)`、`delete(id)`、`resetPassword(id,cmd)`、`setGraduated(id,boolean)`、`setEnabled(id,boolean)`。写入密码时始终经过 BCrypt 编码。
+  - `/api/admin/users` 接口：GET `?role=&classId=`、POST、PUT/{id}、DELETE/{id}、POST/{id}/reset-password、POST/{id}/graduate?value=、POST/{id}/enabled?value=。仅限 ADMIN。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AdminUserIT.java`:
 ```java
@@ -1643,12 +1643,12 @@ class AdminUserIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AdminUserIT`
-Expected: FAIL — endpoints missing.
+运行：`mvn -q -pl ittools-app test -Dtest=AdminUserIT`
+预期结果：失败 — 接口尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `UserDtos.java`:
 ```java
@@ -1754,12 +1754,12 @@ public class AdminUserController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AdminUserIT`
-Expected: PASS.
+运行：`mvn -q -pl ittools-app -am test -Dtest=AdminUserIT`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -1768,20 +1768,20 @@ git commit -m "feat(admin): user CRUD + reset-password/graduate/enable"
 
 ---
 
-## Task 11: Vue SPA scaffold + http client + auth store + /me boot
+## 任务 11：Vue 单页应用脚手架 + http 客户端 + 认证 store + 启动时拉取 /me
 
-**Files:**
-- Create: `web/package.json`, `web/vite.config.ts`, `web/index.html`, `web/src/main.ts`, `web/src/App.vue`
-- Create: `web/src/api/http.ts`, `web/src/stores/auth.ts`, `web/src/router/index.ts`
-- Test: `web/src/stores/__tests__/auth.spec.ts` (Vitest)
+**文件：**
+- 新建：`web/package.json`、`web/vite.config.ts`、`web/index.html`、`web/src/main.ts`、`web/src/App.vue`
+- 新建：`web/src/api/http.ts`、`web/src/stores/auth.ts`、`web/src/router/index.ts`
+- 测试：`web/src/stores/__tests__/auth.spec.ts`（Vitest）
 
-**Interfaces:**
-- Consumes: backend `/api/auth/me`, `/api/auth/login`, `/api/auth/logout`.
-- Produces:
-  - `http` axios instance: baseURL `/api`, `withCredentials: true`, reads `XSRF-TOKEN` cookie into `X-XSRF-TOKEN` header on mutating requests.
-  - Pinia `useAuthStore` with state `{ user: null|{userId,name,role,permissions[]} }`, actions `fetchMe()`, `login(payload)`, `logout()`, getter `isAuthenticated`, `hasPermission(code)`.
+**接口：**
+- 依赖：后端接口 `/api/auth/me`、`/api/auth/login`、`/api/auth/logout`。
+- 产出：
+  - `http` axios 实例：baseURL 为 `/api`，`withCredentials: true`，在有副作用的请求中读取 `XSRF-TOKEN` cookie 并写入 `X-XSRF-TOKEN` 请求头。
+  - Pinia 的 `useAuthStore`，状态为 `{ user: null|{userId,name,role,permissions[]} }`，动作有 `fetchMe()`、`login(payload)`、`logout()`，getter 有 `isAuthenticated`、`hasPermission(code)`。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `web/src/stores/__tests__/auth.spec.ts`:
 ```ts
@@ -1805,14 +1805,14 @@ describe('auth store', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `cd web && npm install && npx vitest run`
-Expected: FAIL — store/http not implemented.
+运行：`cd web && npm install && npx vitest run`
+预期结果：失败 — store/http 尚未实现。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
-`web/package.json` (key deps): `vue@^3.4`, `vue-router@^4`, `pinia@^2`, `element-plus@^2`, `axios@^1`, devDeps `vite@^5`, `@vitejs/plugin-vue`, `vitest`, `@vue/test-utils`, `typescript`. Scripts: `dev`, `build`, `test: vitest run`.
+`web/package.json`（关键依赖）：`vue@^3.4`、`vue-router@^4`、`pinia@^2`、`element-plus@^2`、`axios@^1`，开发依赖 `vite@^5`、`@vitejs/plugin-vue`、`vitest`、`@vue/test-utils`、`typescript`。脚本：`dev`、`build`、`test: vitest run`。
 
 `web/vite.config.ts`:
 ```ts
@@ -1871,14 +1871,14 @@ export const useAuthStore = defineStore('auth', {
 })
 ```
 
-`web/src/router/index.ts`, `web/src/main.ts`, `web/src/App.vue`, `web/index.html`: standard Vue + Pinia + Router + Element Plus bootstrap; router has routes `/login` and `/admin` (guarded, redirect to `/login` when `!isAuthenticated`).
+`web/src/router/index.ts`、`web/src/main.ts`、`web/src/App.vue`、`web/index.html`：标准的 Vue + Pinia + Router + Element Plus 启动脚手架；路由包含 `/login` 与 `/admin`（带守卫，`!isAuthenticated` 时重定向到 `/login`）。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `cd web && npx vitest run`
-Expected: PASS.
+运行：`cd web && npx vitest run`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add web
@@ -1887,20 +1887,20 @@ git commit -m "feat(web): vue scaffold + http client + auth store"
 
 ---
 
-## Task 12: Login view (three entrances) — modern redesign, functional parity
+## 任务 12：登录页（三入口）——现代化重新设计，功能对等
 
-**Files:**
-- Create: `web/src/views/login/LoginView.vue`
-- Create: `web/src/api/auth.ts`
-- Test: `web/src/views/login/__tests__/LoginView.spec.ts`
+**文件：**
+- 新建：`web/src/views/login/LoginView.vue`
+- 新建：`web/src/api/auth.ts`
+- 测试：`web/src/views/login/__tests__/LoginView.spec.ts`
 
-**Interfaces:**
-- Consumes: `/api/public/school-years|classes|students`, `useAuthStore().login`.
-- Produces: a login screen with a **tabbed** modern layout (Element Plus tabs) covering all original entrances: `学生(班级+姓名)`, `学生(学籍号)`, `教师`, `管理员`. On student-name tab: year→class→name cascading selects (loaded from public endpoints). Emits `login({loginType, ...})`.
+**接口：**
+- 依赖：`/api/public/school-years|classes|students`、`useAuthStore().login`。
+- 产出：一个采用**分标签页**现代布局（Element Plus tabs）的登录页面，覆盖原有的全部入口：`学生(班级+姓名)`、`学生(学籍号)`、`教师`、`管理员`。在“学生姓名”标签页中：年级→班级→姓名的级联下拉选择（数据从公开接口加载）。触发 `login({loginType, ...})`。
 
-**Design note (per spec §8.0):** Do NOT reproduce the old `login2.jpg` fixed-table layout. Use a clean centered card, responsive, Element Plus form components, inline validation, and loading/error states. All four original login paths must remain functional.
+**设计说明（依据设计文档 §8.0）：** 不要照搬旧版 `login2.jpg` 的固定表格布局。使用简洁居中的卡片式布局、响应式设计、Element Plus 表单组件、行内校验，以及加载/错误状态。原有四条登录路径必须全部保持可用。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `LoginView.spec.ts`:
 ```ts
@@ -1923,12 +1923,12 @@ describe('LoginView', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `cd web && npx vitest run LoginView`
-Expected: FAIL — component absent.
+运行：`cd web && npx vitest run LoginView`
+预期结果：失败 — 组件尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `web/src/api/auth.ts`:
 ```ts
@@ -1940,14 +1940,14 @@ export const publicApi = {
 }
 ```
 
-`LoginView.vue`: implement with `<el-tabs>` holding four `<el-tab-pane>` (labels `学生 · 班级姓名`, `学生 · 学籍号`, `教师`, `管理员`), each a small `<el-form>`; student-name pane wires three `<el-select>` (year/class/name) to `publicApi`; submit calls `useAuthStore().login({...})` then routes by role to `/admin` (ADMIN), `/teacher`, `/student` (latter two are placeholders for later sub-projects — route to a "敬请期待" stub for now). Centered `<el-card>`, `max-width: 420px`, error via `<el-alert>`.
+`LoginView.vue`：使用 `<el-tabs>` 承载四个 `<el-tab-pane>`（标签分别为 `学生 · 班级姓名`、`学生 · 学籍号`、`教师`、`管理员`），每个都是一个小型 `<el-form>`；学生姓名标签页中用三个 `<el-select>`（年级/班级/姓名）对接 `publicApi`；提交时调用 `useAuthStore().login({...})`，随后按角色跳转到 `/admin`（ADMIN）、`/teacher`、`/student`（后两者是留给后续子项目的占位路由——目前先跳转到一个“敬请期待”的桩页面）。使用居中的 `<el-card>`，`max-width: 420px`，错误提示通过 `<el-alert>` 展示。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `cd web && npx vitest run LoginView`
-Expected: PASS.
+运行：`cd web && npx vitest run LoginView`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add web/src/views/login web/src/api/auth.ts
@@ -1956,22 +1956,22 @@ git commit -m "feat(web): modern three-entrance login view"
 
 ---
 
-## Task 13: Admin layout + School Year / Class / User management views + Permission view
+## 任务 13：管理端布局 + 学年/班级/用户管理页面 + 权限页面
 
-**Files:**
-- Create: `web/src/layouts/AdminLayout.vue`
-- Create: `web/src/api/admin.ts`
-- Create: `web/src/views/admin/{SchoolYearView,ClassView,UserView,PermissionView}.vue`
-- Modify: `web/src/router/index.ts` (nest admin children)
-- Test: `web/src/views/admin/__tests__/SchoolYearView.spec.ts`
+**文件：**
+- 新建：`web/src/layouts/AdminLayout.vue`
+- 新建：`web/src/api/admin.ts`
+- 新建：`web/src/views/admin/{SchoolYearView,ClassView,UserView,PermissionView}.vue`
+- 修改：`web/src/router/index.ts`（嵌套 admin 子路由）
+- 测试：`web/src/views/admin/__tests__/SchoolYearView.spec.ts`
 
-**Interfaces:**
-- Consumes: `/api/admin/school-years|classes|users|permissions` and `/api/admin/module-permissions` (from Task 14).
-- Produces: `adminApi` (typed CRUD wrappers) + four management screens inside `AdminLayout` (Element Plus `<el-container>` with side menu). Tables with add/edit dialog forms, delete confirm, and for users: role/class filter, reset-password, graduate/enable toggles.
+**接口：**
+- 依赖：`/api/admin/school-years|classes|users|permissions` 以及（任务 14 产出的）`/api/admin/module-permissions`。
+- 产出：`adminApi`（带类型的 CRUD 封装）+ `AdminLayout` 内的四个管理页面（Element Plus `<el-container>` 配侧边菜单）。表格配合新增/编辑对话框表单、删除确认，用户页面还包括角色/班级筛选、重置密码、毕业/启停用开关。
 
-**Design note:** consistent design tokens, responsive tables, dialog-based edit forms — one shared table/dialog pattern reused across all four screens (DRY).
+**设计说明：** 统一的设计规范、响应式表格、基于对话框的编辑表单——四个页面复用同一套表格/对话框模式（遵循 DRY 原则）。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `SchoolYearView.spec.ts`:
 ```ts
@@ -1992,12 +1992,12 @@ describe('SchoolYearView', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `cd web && npx vitest run SchoolYearView`
-Expected: FAIL — view/api absent.
+运行：`cd web && npx vitest run SchoolYearView`
+预期结果：失败 — 视图/api 尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `web/src/api/admin.ts`:
 ```ts
@@ -2029,14 +2029,14 @@ export const adminApi = {
 }
 ```
 
-Views: `SchoolYearView.vue` (table + add/edit dialog + delete), `ClassView.vue` (year selector + class table), `UserView.vue` (role/class filters + user table + create/edit dialog + reset-password/graduate/enable actions), `PermissionView.vue` (list permissions + module-permission toggles). `AdminLayout.vue` provides the shell with a left `<el-menu>` linking the four routes. Router nests them under `/admin`.
+页面：`SchoolYearView.vue`（表格 + 新增/编辑对话框 + 删除）、`ClassView.vue`（年级选择器 + 班级表格）、`UserView.vue`（角色/班级筛选 + 用户表格 + 新增/编辑对话框 + 重置密码/毕业/启停用操作）、`PermissionView.vue`（权限列表 + 模块权限开关）。`AdminLayout.vue` 提供外层框架，左侧 `<el-menu>` 链接到这四个路由。路由将它们嵌套在 `/admin` 之下。
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `cd web && npx vitest run`
-Expected: PASS (all web specs).
+运行：`cd web && npx vitest run`
+预期结果：通过（前端全部测试）。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add web/src
@@ -2045,23 +2045,23 @@ git commit -m "feat(web): admin layout + year/class/user/permission management"
 
 ---
 
-## Task 14: Admin permission listing + module-permission toggles (backend)
+## 任务 14：管理端权限列表 + 模块权限开关（后端）
 
-**Files:**
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/PermissionService.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/web/AdminPermissionController.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/repository/ModulePermissionRepository.java`
-- Create: `modules/platform-core/src/main/java/com/ittools/platform/service/dto/PermissionDtos.java`
-- Test: `ittools-app/src/test/java/com/ittools/platform/AdminPermissionIT.java`
+**文件：**
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/PermissionService.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/web/AdminPermissionController.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/repository/ModulePermissionRepository.java`
+- 新建：`modules/platform-core/src/main/java/com/ittools/platform/service/dto/PermissionDtos.java`
+- 测试：`ittools-app/src/test/java/com/ittools/platform/AdminPermissionIT.java`
 
-**Interfaces:**
-- Consumes: `PermissionRepository`, `ModulePermissionRepository`.
-- Produces:
-  - DTOs `PermissionView(Long id,String code,String name,String module)`, `ModulePermissionCommand(String scope,Long scopeRefId,Long permissionId,boolean enabled)`.
-  - `PermissionService`: `listPermissions()`, `upsertModulePermission(cmd)`.
-  - Endpoints `GET /api/admin/permissions`, `PUT /api/admin/module-permissions`. ADMIN-only.
+**接口：**
+- 依赖：`PermissionRepository`、`ModulePermissionRepository`。
+- 产出：
+  - DTO：`PermissionView(Long id,String code,String name,String module)`、`ModulePermissionCommand(String scope,Long scopeRefId,Long permissionId,boolean enabled)`。
+  - `PermissionService`：`listPermissions()`、`upsertModulePermission(cmd)`。
+  - 接口 `GET /api/admin/permissions`、`PUT /api/admin/module-permissions`。仅限 ADMIN。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `AdminPermissionIT.java`:
 ```java
@@ -2095,12 +2095,12 @@ class AdminPermissionIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=AdminPermissionIT`
-Expected: FAIL — endpoint missing.
+运行：`mvn -q -pl ittools-app test -Dtest=AdminPermissionIT`
+预期结果：失败 — 接口尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
 `PermissionDtos.java`:
 ```java
@@ -2121,7 +2121,7 @@ public interface ModulePermissionRepository extends JpaRepository<ModulePermissi
     Optional<ModulePermission> findByScopeAndScopeRefIdAndPermissionId(String scope, Long scopeRefId, Long permissionId);
 }
 ```
-> Add `@Entity ModulePermission{id,scope,scopeRefId,permissionId,enabled}` and `@Entity Permission{id,code,name,module}` if not already created in Task 7. Include here if missing.
+> 如果在任务 7 中尚未创建，需在此处补充添加 `@Entity ModulePermission{id,scope,scopeRefId,permissionId,enabled}` 和 `@Entity Permission{id,code,name,module}`。
 
 `PermissionService.java`:
 ```java
@@ -2153,7 +2153,7 @@ public class PermissionService {
     }
 }
 ```
-> `PermissionRepository.findAll()` requires `Permission` to be a managed entity (created in Task 7). `getCode/getName/getModule` accessors must exist on it.
+> `PermissionRepository.findAll()` 要求 `Permission` 是一个受管实体（在任务 7 中创建）。它必须具备 `getCode/getName/getModule` 访问器。
 
 `AdminPermissionController.java`:
 ```java
@@ -2175,12 +2175,12 @@ public class AdminPermissionController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=AdminPermissionIT`
-Expected: PASS.
+运行：`mvn -q -pl ittools-app -am test -Dtest=AdminPermissionIT`
+预期结果：通过。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add modules/platform-core/src/main ittools-app/src/test
@@ -2189,20 +2189,20 @@ git commit -m "feat(admin): permission listing + module-permission upsert"
 
 ---
 
-## Task 15: Production packaging — build Vue into app, Dockerfile, full-stack compose up
+## 任务 15：生产环境打包——将 Vue 构建产物纳入应用、Dockerfile、全栈 compose 启动
 
-**Files:**
-- Create: `Dockerfile` (multi-stage: node build web → maven build → jre runtime)
-- Create: `web/.env.production` (base path)
-- Modify: `ittools-app/pom.xml` (frontend-maven-plugin OR copy `web/dist` into `static/`)
-- Modify: `docker-compose.yml` (app builds from Dockerfile)
-- Test: `ittools-app/src/test/java/com/ittools/StaticResourceIT.java`
+**文件：**
+- 新建：`Dockerfile`（多阶段构建：node 构建前端 → maven 构建 → jre 运行时）
+- 新建：`web/.env.production`（基础路径）
+- 修改：`ittools-app/pom.xml`（使用 frontend-maven-plugin，或将 `web/dist` 拷贝进 `static/`）
+- 修改：`docker-compose.yml`（app 从 Dockerfile 构建）
+- 测试：`ittools-app/src/test/java/com/ittools/StaticResourceIT.java`
 
-**Interfaces:**
-- Consumes: entire app.
-- Produces: single container serving API + SPA; `GET /` returns the SPA `index.html`; SPA routes fall back to `index.html`.
+**接口：**
+- 依赖：整个应用。
+- 产出：单一容器同时提供 API 与单页应用；`GET /` 返回单页应用的 `index.html`；单页应用路由回落到 `index.html`。
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **步骤 1：编写失败测试**
 
 `StaticResourceIT.java`:
 ```java
@@ -2227,15 +2227,15 @@ class StaticResourceIT extends AbstractPostgresIT {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **步骤 2：运行测试确认失败**
 
-Run: `mvn -q -pl ittools-app test -Dtest=StaticResourceIT`
-Expected: FAIL — no static `index.html`.
+运行：`mvn -q -pl ittools-app test -Dtest=StaticResourceIT`
+预期结果：失败 — 没有静态的 `index.html`。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **步骤 3：编写最小实现**
 
-- Add a build step producing `web/dist` and copying it to `ittools-app/src/main/resources/static/` (either via `frontend-maven-plugin` bound to `generate-resources`, or a committed `static/index.html` for the test plus Docker multi-stage for real builds). Ensure `web/index.html` contains `<div id="app"></div>`.
-- Add a SPA fallback controller so non-`/api` unmatched routes forward to `index.html`:
+- 添加一个构建步骤生成 `web/dist` 并拷贝到 `ittools-app/src/main/resources/static/`（可以是绑定在 `generate-resources` 阶段的 `frontend-maven-plugin`，也可以是为测试提交一份 `static/index.html`，再配合 Docker 多阶段构建完成真正的构建）。确保 `web/index.html` 中包含 `<div id="app"></div>`。
+- 添加一个单页应用回落控制器，让非 `/api` 且未匹配到的路由转发到 `index.html`：
 ```java
 package com.ittools.platform.web;
 import org.springframework.stereotype.Controller;
@@ -2247,7 +2247,7 @@ public class SpaForwardController {
 }
 ```
 
-`Dockerfile` (multi-stage):
+`Dockerfile`（多阶段构建）：
 ```dockerfile
 FROM node:20-alpine AS web
 WORKDIR /web
@@ -2267,12 +2267,12 @@ COPY --from=build /src/ittools-app/target/ittools-app-*.jar /app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **步骤 4：运行测试确认通过**
 
-Run: `mvn -q -pl ittools-app -am test -Dtest=StaticResourceIT`
-Expected: PASS. Then `docker compose up --build` and manually verify login at `http://localhost:8080`.
+运行：`mvn -q -pl ittools-app -am test -Dtest=StaticResourceIT`
+预期结果：通过。随后执行 `docker compose up --build`，并在 `http://localhost:8080` 手动验证登录流程。
 
-- [ ] **Step 5: Commit**
+- [ ] **步骤 5：提交**
 
 ```bash
 git add Dockerfile web/.env.production ittools-app docker-compose.yml
@@ -2281,21 +2281,21 @@ git commit -m "build: package SPA into app + docker multi-stage + compose"
 
 ---
 
-## Self-Review
+## 自评审
 
-**1. Spec coverage:**
-- §3 tech stack → Tasks 1-2 (Spring/Maven/Postgres/Flyway), 11 (Vue). ✓
-- §4 modular monolith structure → Task 1 (modules), file structure map. ✓
-- §5 data model (school_year/klass/users/permission/role_permission/module_permission) → Task 3 schema, Task 4 + 7 + 14 entities. ✓
-- §6 three-entrance auth, session, BCrypt, CSRF, parameterized, method authz → Tasks 5, 6, 7, 12. ✓
-- §7 API surface (auth, public lookups, admin CRUD, permissions) → Tasks 6, 7, 8, 9, 10, 14. ✓
-- §8 frontend Vue + §8.0 modern-redesign/functional-parity → Tasks 11, 12 (design notes), 13. ✓
-- §9 deployment (compose, Flyway, seed admin, env-injected secrets) → Tasks 2, 3, 15. ✓
-- §10 testing (Testcontainers, TDD) → every backend task; Vitest for frontend. ✓
-- Delivery boundary (no lab/course/assignment) → respected; teacher/student routes are stubs. ✓
+**1. 设计文档覆盖情况：**
+- §3 技术栈 → 任务 1-2（Spring/Maven/Postgres/Flyway）、任务 11（Vue）。✓
+- §4 模块化单体结构 → 任务 1（模块划分）、文件结构图。✓
+- §5 数据模型（school_year/klass/users/permission/role_permission/module_permission）→ 任务 3 的数据库结构，任务 4 + 7 + 14 的实体。✓
+- §6 三入口认证、会话、BCrypt、CSRF、参数化、方法级鉴权 → 任务 5、6、7、12。✓
+- §7 API 接口面（认证、公开查询、管理端 CRUD、权限）→ 任务 6、7、8、9、10、14。✓
+- §8 前端 Vue + §8.0 现代化重设计/功能对等 → 任务 11、12（设计说明）、13。✓
+- §9 部署（compose、Flyway、种子管理员、环境变量注入的密钥）→ 任务 2、3、15。✓
+- §10 测试（Testcontainers、TDD）→ 每个后端任务；前端使用 Vitest。✓
+- 交付边界（不涉及实验/课程/作业内容）→ 已遵守；教师端/学生端路由均为占位桩。✓
 
-**2. Placeholder scan:** No "TBD/TODO/implement later". Frontend view bodies (Tasks 12-13) describe concrete components with the exact APIs and props to wire; the reusable table/dialog pattern is specified rather than repeated four times (acceptable DRY guidance, not a missing-code placeholder).
+**2. 占位内容排查：** 未发现 "TBD/TODO/日后实现" 之类的占位说明。前端视图部分（任务 12-13）以具体组件描述了需要对接的确切 API 与 props；可复用的表格/对话框模式是作为规范说明给出的，而非重复写四遍（这是合理的 DRY 指导，不是缺失代码的占位）。
 
-**3. Type consistency:** `LoginRequest` record shape consistent across Tasks 5/6/12. `AppUserDetails.userId()/role()` consistent Tasks 5/6. `ApiResponse.ok/error` consistent. `Permission`/`RolePermission`/`ModulePermission` entities: introduced in Task 7 (Permission, RolePermission) and Task 14 (ModulePermission) — noted explicitly in both tasks' Interfaces so an out-of-order implementer creates them. DTO record field names match controller/service usage.
+**3. 类型一致性：** `LoginRequest` 这个 record 的结构在任务 5/6/12 中保持一致。`AppUserDetails.userId()/role()` 在任务 5/6 中保持一致。`ApiResponse.ok/error` 保持一致。`Permission`/`RolePermission`/`ModulePermission` 实体：分别在任务 7（Permission、RolePermission）和任务 14（ModulePermission）中引入——已在两个任务的“接口”部分明确标注，以便乱序实现者也能正确创建它们。DTO record 的字段名称与控制器/服务层的使用保持一致。
 
-**Known cross-task dependency to watch:** Task 6's `AuthController` calls `LookupService.permissionCodesForRole` (Task 7). Executors should implement Task 7 immediately after or alongside Task 6 (noted in Task 6 Step 4). If running strictly sequentially, stub the method returning `List.of()` in Task 6 and complete it in Task 7.
+**需要留意的跨任务依赖：** 任务 6 的 `AuthController` 调用了 `LookupService.permissionCodesForRole`（属于任务 7）。执行者应在完成任务 6 之后立即实现任务 7，或与任务 6 同步进行（已在任务 6 步骤 4 中标注）。若严格按顺序执行，可在任务 6 中先让该方法返回 `List.of()` 作为桩实现，再在任务 7 中补全。

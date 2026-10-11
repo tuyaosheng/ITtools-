@@ -40,12 +40,18 @@ public class MultiLoginAuthenticationProvider {
         if (!u.isEnabled()) {
             throw new DisabledException("账号已禁用");
         }
+        // 已毕业（离校）学生不再允许登录：与原系统 byflg=1 的学生从登录下拉中消失的行为一致。
+        if (u.getRole() == Role.STUDENT && u.isGraduated()) {
+            throw new DisabledException("学生已毕业");
+        }
         if (!encoder.matches(req.password(), u.getPasswordHash())) {
             throw new BadCredentialsException("密码错误");
         }
         String uname = u.getLoginName() != null ? u.getLoginName()
                 : (u.getXjh() != null ? u.getXjh() : ("uid:" + u.getId()));
-        return new AppUserDetails(u.getId(), uname, u.getPasswordHash(), u.getRole(), u.isEnabled());
+        Long classId = u.getKlass() == null ? null : u.getKlass().getId();
+        return new AppUserDetails(u.getId(), uname, u.getPasswordHash(), u.getRole(), u.isEnabled(),
+                u.getName(), classId);
     }
 
     private Optional<User> resolve(LoginRequest req) {

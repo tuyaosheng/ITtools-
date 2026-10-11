@@ -1,0 +1,6 @@
+CREATE TABLE lab_workstation (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    pc_name     VARCHAR(64) NOT NULL UNIQUE,
+    ip_address  VARCHAR(45) NOT NULL UNIQUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

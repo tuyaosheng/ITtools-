@@ -31,6 +31,8 @@ public class SecurityConfig {
             .authorizeRequests(a -> a
                     .antMatchers("/api/auth/**", "/api/public/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
+                    .antMatchers("/api/teacher/**").hasRole("TEACHER")
+                    .antMatchers("/api/student/**").hasRole("STUDENT")
                     // The SPA shell + its static assets are public at the HTTP layer -
                     // actual access control happens against the /api/** endpoints the
                     // SPA calls once loaded, and client-side router guards redirect
@@ -40,7 +42,13 @@ public class SecurityConfig {
                     .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
                             "/assets/**", "/favicon.ico").permitAll()
                     .anyRequest().authenticated())
-            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                    .accessDeniedHandler((req, resp, ex) -> {
+                        // 403 也使用统一 ApiResponse 信封
+                        resp.setStatus(HttpStatus.FORBIDDEN.value());
+                        resp.setContentType("application/json;charset=UTF-8");
+                        resp.getWriter().write("{\"code\":403,\"message\":\"无权访问\",\"data\":null}");
+                    }))
             .formLogin(f -> f.disable())
             .httpBasic(b -> b.disable());
         return http.build();

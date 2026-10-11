@@ -23,8 +23,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import com.ittools.platform.security.LoginPolicy;
 
 /**
  * BINDING Java 8 / Spring Boot 2.7 / Spring Security 5.x translation of the
@@ -36,17 +39,24 @@ import java.util.Map;
 public class AuthController {
     private final MultiLoginAuthenticationProvider provider;
     private final LookupService lookups;
+    private final List<LoginPolicy> policies;
     private final SecurityContextRepository repo = new HttpSessionSecurityContextRepository();
 
-    public AuthController(MultiLoginAuthenticationProvider provider, LookupService lookups) {
+    public AuthController(MultiLoginAuthenticationProvider provider, LookupService lookups,
+                          java.util.Optional<List<LoginPolicy>> policies) {
         this.provider = provider;
         this.lookups = lookups;
+        this.policies = policies.orElse(Collections.<LoginPolicy>emptyList());
     }
 
     @PostMapping("/login")
     public ApiResponse<Map<String, Object>> login(@RequestBody LoginRequest req,
                                                     HttpServletRequest request, HttpServletResponse response) {
         AppUserDetails ud = provider.authenticate(req);
+        String ip = ClientIp.of(request);
+        for (LoginPolicy p : policies) {
+            p.check(ud, ip);
+        }
         // Session fixation: rotate the session id right after authentication
         // succeeds and before the SecurityContext is persisted, so a login
         // never reuses a pre-existing (potentially attacker-seeded) session.
@@ -90,6 +100,8 @@ public class AuthController {
         Map<String, Object> m = new HashMap<>();
         m.put("userId", ud.userId());
         m.put("name", ud.getUsername());
+        m.put("displayName", ud.displayName());
+        m.put("classId", ud.classId());
         m.put("role", ud.role().name());
         m.put("permissions", lookups.permissionCodesForRole(ud.role()));
         return m;

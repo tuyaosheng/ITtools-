@@ -4,6 +4,8 @@ import { http } from '../api/http'
 interface User {
   userId: number
   name: string
+  displayName?: string
+  classId?: number | null
   role: string
   permissions: string[]
 }

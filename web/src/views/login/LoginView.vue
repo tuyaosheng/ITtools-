@@ -3,7 +3,8 @@
     <el-card class="login-card" shadow="always">
       <template #header>
         <div class="login-header">
-          <h1>ITtools 平台登录</h1>
+          <h1>{{ schoolName }}</h1>
+          <div class="login-sub">ITtools 信息技术教学平台</div>
         </div>
       </template>
 
@@ -17,7 +18,7 @@
       />
 
       <el-tabs v-model="activeTab" stretch>
-        <el-tab-pane label="学生 · 班级姓名" name="student-name">
+        <el-tab-pane v-if="showNameTab" label="学生 · 班级姓名" name="student-name">
           <el-form ref="studentNameFormRef" :model="studentNameForm" :rules="studentNameRules" label-width="70px" @submit.prevent>
             <el-form-item label="学年" prop="yearId">
               <el-select v-model="studentNameForm.yearId" placeholder="请选择学年" class="full-width" @change="onYearChange">
@@ -47,7 +48,7 @@
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="学生 · 学籍号" name="student-xjh">
+        <el-tab-pane v-if="showXjhTab" label="学生 · 学籍号" name="student-xjh">
           <el-form ref="studentXjhFormRef" :model="studentXjhForm" :rules="studentXjhRules" label-width="70px" @submit.prevent>
             <el-form-item label="学籍号" prop="xjh">
               <el-input v-model="studentXjhForm.xjh" placeholder="请输入学籍号" />
@@ -88,7 +89,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import { http } from '../../api/http'
 import { useRouter } from 'vue-router'
 import {
   ElCard,
@@ -133,7 +135,23 @@ const studentNameRules: FormRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
+// 工作模式（系统设置）：学籍模式只显示学籍号入口，其余模式显示班级+姓名入口；未取得设置时全部显示
+const schoolName = ref('ITtools 平台登录')
+const loginMode = ref<string | null>(null)
+const showNameTab = computed(() => loginMode.value !== 'XJH')
+const showXjhTab = computed(() => loginMode.value === null || loginMode.value === 'XJH')
+
 onMounted(async () => {
+  try {
+    const { data } = await http.get('/public/settings')
+    if (data?.data?.schoolName) {
+      schoolName.value = data.data.schoolName
+      loginMode.value = data.data.loginMode
+      if (loginMode.value === 'XJH') activeTab.value = 'student-xjh'
+    }
+  } catch {
+    // 设置不可用时保持默认（显示全部入口）
+  }
   years.value = await publicApi.years()
 })
 
@@ -177,8 +195,8 @@ async function doLogin(payload: Record<string, unknown>) {
   try {
     await auth.login(payload)
     routeByRole()
-  } catch {
-    errorMessage.value = '用户名或密码错误'
+  } catch (err: any) {
+    errorMessage.value = err?.response?.data?.message || '用户名或密码错误'
   } finally {
     loading.value = false
   }
@@ -272,6 +290,13 @@ async function submitAdmin() {
   margin: 0;
   font-size: 20px;
   text-align: center;
+}
+
+.login-sub {
+  text-align: center;
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 .login-alert {

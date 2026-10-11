@@ -22,9 +22,9 @@ import java.util.List;
  * cells (row 0 is the header). Supports .xlsx / .xls (Apache POI) and .csv
  * (commons-csv, UTF-8). Never returns null cells — missing cells are "".
  */
-final class SpreadsheetReader {
+public final class SpreadsheetReader {
 
-    List<List<String>> read(InputStream in, String filename) throws Exception {
+    public List<List<String>> read(InputStream in, String filename) throws Exception {
         String lower = filename == null ? "" : filename.toLowerCase();
         if (lower.endsWith(".csv")) {
             return readCsv(in);

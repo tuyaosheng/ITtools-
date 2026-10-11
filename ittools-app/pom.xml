@@ -22,6 +22,12 @@
   </dependencyManagement>
   <dependencies>
     <dependency><groupId>com.ittools</groupId><artifactId>platform-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>lab-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>classroom-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>homework-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>quiz-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>interact-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
+    <dependency><groupId>com.ittools</groupId><artifactId>resource-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>

@@ -90,6 +90,17 @@ export interface ModulePermissionBody {
   enabled: boolean
 }
 
+export interface LabWorkstationItem {
+  id: number
+  pcName: string
+  ipAddress: string
+}
+
+export interface LabWorkstationBody {
+  pcName: string
+  ipAddress: string
+}
+
 export interface ImportRowError {
   row: number
   message: string
@@ -146,6 +157,12 @@ export const adminApi = {
       unwrap(http.post(`/admin/users/${id}/graduate`, null, { params: { value } })),
     enabled: (id: number, value: boolean): Promise<void> =>
       unwrap(http.post(`/admin/users/${id}/enabled`, null, { params: { value } }))
+  },
+  labWorkstations: {
+    list: (): Promise<LabWorkstationItem[]> => unwrap(http.get('/admin/lab-workstations')),
+    create: (body: LabWorkstationBody): Promise<LabWorkstationItem> => unwrap(http.post('/admin/lab-workstations', body)),
+    update: (id: number, body: LabWorkstationBody): Promise<LabWorkstationItem> => unwrap(http.put(`/admin/lab-workstations/${id}`, body)),
+    remove: (id: number): Promise<void> => unwrap(http.delete(`/admin/lab-workstations/${id}`))
   },
   permissions: {
     list: (): Promise<PermissionItem[]> => unwrap(http.get('/admin/permissions')),
