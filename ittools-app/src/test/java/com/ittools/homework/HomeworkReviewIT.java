@@ -119,9 +119,12 @@ class HomeworkReviewIT extends AbstractPostgresIT {
         call(t, HttpMethod.POST, "/api/teacher/homework/submissions/" + sub2 + "/return", map("note", "颜色再调整"));
         JsonNode view = call(s2, HttpMethod.GET, url, null);
         assertThat(view.toString()).contains("颜色再调整").contains("\"returned\":true");
+        assertThat(call(s2, HttpMethod.GET, "/api/student/homework/late", null).size()).as("补交入口列出被发回的作品").isEqualTo(1);
+        assertThat(call(s1, HttpMethod.GET, "/api/student/homework/late", null).size()).as("已交且未发回、系统未开放补交").isEqualTo(0);
         assertThat(submit(s2, url, "校园一角（修改版）", "80").getStatusCode()).isEqualTo(HttpStatus.OK);
         view = call(s2, HttpMethod.GET, url, null);
         assertThat(view.toString()).contains("\"returned\":false").contains("修改版");
+        assertThat(call(s2, HttpMethod.GET, "/api/student/homework/late", null).size()).isEqualTo(0);
         } finally {
             call(admin, HttpMethod.PUT, "/api/admin/settings", map("homework.allowLate", "true"));
         }

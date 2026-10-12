@@ -91,7 +91,9 @@ onMounted(async () => {
     lesson.value = { id, courseName: r?.courseName, teacherName: r?.teacherName, status: 'ENDED', myAttendance: r }
   }
   await loadPages()
-  if (pages.value.length) await openPage(pages.value[0].id)
+  // ?page= 指定打开的页面（如从“我的作品”补交入口跳转）
+  const want = Number(route.query.page)
+  if (pages.value.length) await openPage(pages.value.some(p => p.id === want) ? want : pages.value[0].id)
   timer = window.setInterval(loadPages, 8000)
   // 在线监控心跳：上报当前查看的页面（教师"在线监控"使用）
   const beat = () => {

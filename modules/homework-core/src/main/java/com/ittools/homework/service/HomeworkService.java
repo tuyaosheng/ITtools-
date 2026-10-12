@@ -210,6 +210,22 @@ public class HomeworkService {
                 p("s", submissionId, "r", studentId, "sc", score, "c", settings.filterSensitive(comment)));
     }
 
+    /** 可补交的作品页。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> lateList(Long studentId) {
+        boolean allowLate = settings.getBool(SystemSettingService.HOMEWORK_ALLOW_LATE);
+        // 课后补交（原 afterclassfilelist）：已下课课堂中开放的作品页；系统开放补交时列出未交的，被发回重做的总是列出
+        return jdbc.queryForList("SELECT l.id AS \"lessonId\", c.name AS \"courseName\", pg.id AS \"pageId\", pg.title AS \"pageTitle\", "
+                + "l.started_at AS \"startedAt\", s.id AS \"submissionId\", s.returned, s.return_note AS \"returnNote\" "
+                + "FROM lesson l JOIN users st ON st.class_id = l.class_id JOIN course c ON c.id = l.course_id "
+                + "JOIN course_page pg ON pg.course_id = l.course_id AND pg.page_type = 'HOMEWORK' "
+                + "LEFT JOIN lesson_page_state ps ON ps.lesson_id = l.id AND ps.page_id = pg.id "
+                + "LEFT JOIN submission s ON s.lesson_id = l.id AND s.page_id = pg.id AND s.student_id = st.id "
+                + "WHERE st.id = :s AND l.status = 'ENDED' AND COALESCE(ps.is_open, pg.student_visible) "
+                + "AND (s.returned OR (:late AND s.id IS NULL)) ORDER BY l.started_at DESC LIMIT 100",
+                p("s", studentId, "late", allowLate));
+    }
+
     /** 我的作品（原 stuupfilelist）。 */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> myWorks(Long studentId) {
