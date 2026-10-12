@@ -111,6 +111,12 @@ class HomeworkReviewIT extends AbstractPostgresIT {
             if (x.get("id").asLong() == sub2) assertThat(x.get("rating").asText() + x.get("teacherScore").asDouble()).isEqualTo("OK60.0");
         }
 
+        // 精华作品排行榜
+        call(t, HttpMethod.PUT, "/api/teacher/homework/submissions/" + sub1 + "/essence", map("essence", true));
+        JsonNode rank = call(s2, HttpMethod.GET, "/api/homework/essence-ranking?yearId=" + yearId + "&days=7", null);
+        assertThat(rank.size()).isEqualTo(1);
+        assertThat(rank.get(0).get("name").asText() + rank.get(0).get("count").asInt()).isEqualTo("作品生11");
+
         // 下课后：未开放补交，普通学生不能重交；被发回重做的可以
         call(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/end", map());
         call(admin, HttpMethod.PUT, "/api/admin/settings", map("homework.allowLate", "false"));

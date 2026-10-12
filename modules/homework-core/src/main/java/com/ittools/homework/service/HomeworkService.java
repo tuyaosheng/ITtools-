@@ -236,6 +236,17 @@ public class HomeworkService {
 
     /** 精华作品展示（原 Essencestufile，按年级筛选）。 */
     @Transactional(readOnly = true)
+    public List<Map<String, Object>> essenceRanking(Long yearId, Integer days) {
+        // 精华作品排行榜（原 Essencestufile 分段排行榜 / 总排行榜）：days 为空是总榜，否则只统计最近 N 天
+        return jdbc.queryForList("SELECT u.id AS \"studentId\", u.name, sy.label || k.name AS \"className\", COUNT(*) AS count, "
+                        + "MAX(s.submitted_at) AS \"lastAt\" FROM submission s JOIN users u ON u.id = s.student_id JOIN klass k ON k.id = u.class_id "
+                        + "JOIN school_year sy ON sy.id = k.school_year_id WHERE s.essence "
+                        + (yearId == null ? "" : "AND sy.id = :y ") + (days == null ? "" : "AND s.submitted_at > now() - make_interval(days => :d) ")
+                        + "GROUP BY u.id, u.name, sy.label, k.name ORDER BY count DESC, MAX(s.submitted_at) DESC LIMIT 50",
+                p("y", yearId, "d", days));
+    }
+
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> showcase(Long yearId) {
         return jdbc.queryForList("SELECT s.id, u.name AS \"studentName\", sy.label || k.name AS \"className\", c.name AS \"courseName\", "
                         + "pg.title AS \"pageTitle\", s.file_name AS \"fileName\", s.file_size AS \"fileSize\", s.description, "
