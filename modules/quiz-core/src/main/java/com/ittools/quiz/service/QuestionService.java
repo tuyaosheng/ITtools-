@@ -46,13 +46,38 @@ public class QuestionService {
     }
 
     static final String COLS = "q.id, q.teacher_id AS \"teacherId\", u.name AS \"teacherName\", q.category, q.qtype, q.stem, "
-            + "q.options, q.answer, q.analysis, q.score, q.shared, q.created_at AS \"createdAt\" ";
+            + "q.options, q.answer, q.analysis, q.score, q.shared, q.created_at AS \"createdAt\", "
+            + "(q.image_path IS NOT NULL) AS \"hasImage\", q.stars, q.needs_answer AS \"needsAnswer\", q.deleted_at AS \"deletedAt\" ";
+
+    /** 可用于组卷/练习的题目：未删除且已设置答案。 */
+    public static final String USABLE = "q.deleted_at IS NULL AND NOT q.needs_answer ";
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> list(Long teacherId, String category, String qtype, String keyword, boolean includeShared) {
+        return list(teacherId, category, qtype, keyword, includeShared, null, null, "active");
+    }
+
+    /**
+     * 题库列表。status：active（默认，未删除）/ draft（待设置答案）/ trash（回收站，仅本人）；
+     * tag 按标签筛选；minStars 按星级下限筛选。
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> list(Long teacherId, String category, String qtype, String keyword, boolean includeShared,
+                                          String tag, Integer minStars, String status) {
         StringBuilder sql = new StringBuilder("SELECT " + COLS + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE ");
-        sql.append(includeShared ? "(q.teacher_id = :t OR q.shared) " : "q.teacher_id = :t ");
+        boolean trash = "trash".equals(status);
+        sql.append(includeShared && !trash ? "(q.teacher_id = :t OR (q.shared AND " + USABLE + ")) " : "q.teacher_id = :t ");
+        sql.append(trash ? "AND q.deleted_at IS NOT NULL " : "AND q.deleted_at IS NULL ");
+        if ("draft".equals(status)) sql.append("AND q.needs_answer ");
         MapSqlParameterSource ps = p("t", teacherId);
+        if (tag != null && !tag.isEmpty()) {
+            sql.append("AND EXISTS (SELECT 1 FROM question_tag g WHERE g.question_id = q.id AND g.tag = :tag) ");
+            ps.addValue("tag", tag);
+        }
+        if (minStars != null && minStars > 0) {
+            sql.append("AND q.stars >= :st ");
+            ps.addValue("st", minStars);
+        }
         if (category != null && !category.isEmpty()) {
             sql.append("AND q.category = :c ");
             ps.addValue("c", category);
@@ -71,7 +96,7 @@ public class QuestionService {
 
     @Transactional(readOnly = true)
     public List<String> categories(Long teacherId) {
-        return jdbc.queryForList("SELECT DISTINCT category FROM question WHERE (teacher_id = :t OR shared) AND category IS NOT NULL "
+        return jdbc.queryForList("SELECT DISTINCT category FROM question WHERE (teacher_id = :t OR shared) AND deleted_at IS NULL AND category IS NOT NULL "
                 + "AND category <> '' ORDER BY category", p("t", teacherId), String.class);
     }
 
@@ -88,32 +113,52 @@ public class QuestionService {
         String qtype = (String) f.get("qtype");
         if (!TYPES.contains(qtype)) throw new IllegalArgumentException("无效题型");
         String stem = str(f.get("stem"));
-        if (stem == null || stem.isEmpty()) throw new IllegalArgumentException("题干不能为空");
+        boolean hasImage = id != null && Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT image_path IS NOT NULL FROM question WHERE id = :id", p("id", id), Boolean.class));
+        if ((stem == null || stem.isEmpty()) && !hasImage) throw new IllegalArgumentException("题干不能为空");
+        if (stem == null) stem = "";
+        int stars = f.get("stars") == null ? 0 : ((Number) f.get("stars")).intValue();
+        if (stars < 0 || stars > 5) throw new IllegalArgumentException("星级为 0~5");
         List<String> options = toStrList(f.get("options"));
         String answer = normalizeAnswer(qtype, f.get("answer"), options);
         Object sc = f.get("score");
         MapSqlParameterSource ps = p("t", teacherId, "c", str(f.get("category")), "qt", qtype, "s", stem,
                 "o", ("SINGLE".equals(qtype) || "MULTI".equals(qtype)) ? toJson(options) : null, "a", answer,
                 "an", str(f.get("analysis")), "sc", sc == null ? 5 : ((Number) sc).intValue(),
-                "sh", Boolean.TRUE.equals(f.get("shared")));
+                "sh", Boolean.TRUE.equals(f.get("shared")), "st", stars);
         if (id == null) {
-            id = jdbc.queryForObject("INSERT INTO question(teacher_id, category, qtype, stem, options, answer, analysis, score, shared) "
-                    + "VALUES (:t, :c, :qt, :s, :o, :a, :an, :sc, :sh) RETURNING id", ps, Long.class);
+            id = jdbc.queryForObject("INSERT INTO question(teacher_id, category, qtype, stem, options, answer, analysis, score, shared, stars) "
+                    + "VALUES (:t, :c, :qt, :s, :o, :a, :an, :sc, :sh, :st) RETURNING id", ps, Long.class);
         } else {
             requireOwner(teacherId, id);
             ps.addValue("id", id);
+            // 保存即视为已设置答案（草稿题入库）
             jdbc.update("UPDATE question SET category = :c, qtype = :qt, stem = :s, options = :o, answer = :a, analysis = :an, "
-                    + "score = :sc, shared = :sh WHERE id = :id", ps);
+                    + "score = :sc, shared = :sh, stars = :st, needs_answer = FALSE WHERE id = :id", ps);
         }
+        if (f.containsKey("tags")) setTags(id, toStrList(f.get("tags")));
         return get(id);
     }
 
     @Transactional
     public void delete(Long teacherId, Long id) {
         requireOwner(teacherId, id);
-        Long used = jdbc.queryForObject("SELECT COUNT(*) FROM quiz_answer WHERE question_id = :id", p("id", id), Long.class);
-        if (used != null && used > 0) throw new IllegalArgumentException("该题已有学生作答记录，不能删除");
-        jdbc.update("DELETE FROM question WHERE id = :id", p("id", id));
+        // 删除进回收站：已组卷/已作答的记录不受影响，回收站里的图片继续参与去重
+        jdbc.update("UPDATE question SET deleted_at = now() WHERE id = :id", p("id", id));
+    }
+
+    /** 标签整体替换（去空白、去重，单个最长 32 字，最多 10 个）。 */
+    public void setTags(Long questionId, List<String> tags) {
+        java.util.LinkedHashSet<String> clean = new java.util.LinkedHashSet<>();
+        for (String t : tags) {
+            String v = t == null ? "" : t.trim();
+            if (v.isEmpty()) continue;
+            if (v.length() > 32) throw new IllegalArgumentException("标签不超过 32 字");
+            clean.add(v);
+        }
+        if (clean.size() > 10) throw new IllegalArgumentException("每题最多 10 个标签");
+        jdbc.update("DELETE FROM question_tag WHERE question_id = :q", p("q", questionId));
+        for (String t : clean) jdbc.update("INSERT INTO question_tag(question_id, tag) VALUES (:q, :t)", p("q", questionId, "t", t));
     }
 
     public void requireOwner(Long teacherId, Long id) {
@@ -284,9 +329,19 @@ public class QuestionService {
     // ---- JSON helpers ----
 
     List<Map<String, Object>> decorate(List<Map<String, Object>> rows) {
+        Map<Long, List<String>> tags = new HashMap<>();
+        if (!rows.isEmpty()) {
+            List<Long> ids = new ArrayList<>();
+            for (Map<String, Object> r : rows) ids.add(((Number) r.get("id")).longValue());
+            for (Map<String, Object> t : jdbc.queryForList("SELECT question_id, tag FROM question_tag WHERE question_id IN (:ids) ORDER BY tag",
+                    p("ids", ids))) {
+                tags.computeIfAbsent(((Number) t.get("question_id")).longValue(), k -> new ArrayList<>()).add((String) t.get("tag"));
+            }
+        }
         for (Map<String, Object> r : rows) {
             r.put("options", fromJsonList((String) r.get("options")));
             if ("FILL".equals(r.get("qtype"))) r.put("answer", fromJsonList((String) r.get("answer")));
+            r.put("tags", tags.getOrDefault(((Number) r.get("id")).longValue(), new ArrayList<>()));
         }
         return rows;
     }

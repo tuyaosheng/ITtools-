@@ -6,16 +6,18 @@
       <span class="score">（{{ q.score }} 分）</span>
       <span v-if="q.gotScore != null" class="got">得 {{ q.gotScore }} 分</span>
     </div>
-    <div class="stem" v-html="safeHtml(q.stem)" />
+    <div v-if="q.stem" class="stem" v-html="safeHtml(q.stem)" />
+    <el-image v-if="q.hasImage" :src="`/api/quiz/questions/${q.id}/image`" :preview-src-list="[`/api/quiz/questions/${q.id}/image`]"
+      fit="contain" class="stem-img" :hide-on-click-modal="true" />
 
     <!-- 单选 -->
     <el-radio-group v-if="q.qtype === 'SINGLE'" :model-value="value" :disabled="readonly" class="opts" @update:model-value="emitVal">
-      <el-radio v-for="(o, i) in q.options" :key="i" :value="letter(i)" class="opt">{{ letter(i) }}. {{ o }}</el-radio>
+      <el-radio v-for="(o, i) in q.options" :key="i" :value="letter(i)" class="opt">{{ letter(i) }}{{ o ? '. ' + o : '' }}</el-radio>
     </el-radio-group>
     <!-- 多选 -->
     <el-checkbox-group v-else-if="q.qtype === 'MULTI'" :model-value="multiValue" :disabled="readonly" class="opts"
       @update:model-value="(v: any) => emitVal([...v].sort().join(''))">
-      <el-checkbox v-for="(o, i) in q.options" :key="i" :value="letter(i)" class="opt">{{ letter(i) }}. {{ o }}</el-checkbox>
+      <el-checkbox v-for="(o, i) in q.options" :key="i" :value="letter(i)" class="opt">{{ letter(i) }}{{ o ? '. ' + o : '' }}</el-checkbox>
     </el-checkbox-group>
     <!-- 判断 -->
     <el-radio-group v-else-if="q.qtype === 'JUDGE'" :model-value="value" :disabled="readonly" class="opts" @update:model-value="emitVal">
@@ -80,6 +82,7 @@ function answerText(q: any) {
 .score { color: #909399; font-size: 12px; }
 .got { margin-left: auto; font-weight: 600; color: var(--el-color-primary); }
 .stem { margin-bottom: 10px; line-height: 1.7; }
+.stem-img { display: block; max-width: 100%; max-height: 420px; margin-bottom: 10px; border: 1px solid #ebeef5; border-radius: 6px; cursor: zoom-in; }
 .opts { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .opt { height: auto; white-space: normal; }
 .blanks { display: flex; gap: 8px; flex-wrap: wrap; }

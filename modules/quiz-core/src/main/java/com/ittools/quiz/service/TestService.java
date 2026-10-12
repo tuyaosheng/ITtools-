@@ -362,7 +362,7 @@ public class TestService {
     @Transactional(readOnly = true)
     public Map<String, Object> practiceNext(String category, String qtype) {
         List<Map<String, Object>> l = questions.decorate(jdbc.queryForList(
-                "SELECT " + QuestionService.COLS + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE q.shared "
+                "SELECT " + QuestionService.COLS + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE q.shared AND " + QuestionService.USABLE
                         + (category == null || category.isEmpty() ? "" : "AND q.category = :c ")
                         + (qtype == null || qtype.isEmpty() ? "" : "AND q.qtype = :qt ")
                         + "ORDER BY random() LIMIT 1", p("c", category, "qt", qtype)));
@@ -398,7 +398,7 @@ public class TestService {
 
     @Transactional(readOnly = true)
     public List<String> practiceCategories() {
-        return jdbc.queryForList("SELECT DISTINCT category FROM question WHERE shared AND category IS NOT NULL AND category <> '' ORDER BY category",
+        return jdbc.queryForList("SELECT DISTINCT category FROM question WHERE shared AND deleted_at IS NULL AND NOT needs_answer AND category IS NOT NULL AND category <> '' ORDER BY category",
                 p(), String.class);
     }
 

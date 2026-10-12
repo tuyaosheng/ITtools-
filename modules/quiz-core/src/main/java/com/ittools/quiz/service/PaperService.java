@@ -87,7 +87,7 @@ public class PaperService {
         for (Map<String, Object> it : items) {
             Long qid = ((Number) it.get("questionId")).longValue();
             if (!seen.add(qid)) continue;
-            Long ok = jdbc.queryForObject("SELECT COUNT(*) FROM question WHERE id = :q AND (teacher_id = :t OR shared)",
+            Long ok = jdbc.queryForObject("SELECT COUNT(*) FROM question q WHERE q.id = :q AND (q.teacher_id = :t OR q.shared) AND " + QuestionService.USABLE,
                     p("q", qid, "t", teacherId), Long.class);
             if (ok == null || ok == 0) throw new IllegalArgumentException("题目不可用：" + qid);
             Object sc = it.get("score");
@@ -101,14 +101,23 @@ public class PaperService {
     /** 随机组卷：从题库（本人+共享）按题型数量随机抽题追加到试卷。 */
     @Transactional
     public Map<String, Object> randomFill(Long teacherId, Long paperId, String category, Map<String, Integer> counts) {
+        return randomFill(teacherId, paperId, category, counts, null, null);
+    }
+
+    /** 随机组卷：可再按标签、最低星级筛选；只抽未删除且已设置答案的题。 */
+    @Transactional
+    public Map<String, Object> randomFill(Long teacherId, Long paperId, String category, Map<String, Integer> counts, String tag, Integer minStars) {
         requireOwner(teacherId, paperId);
         Integer seq = jdbc.queryForObject("SELECT COALESCE(MAX(seq), 0) FROM paper_question WHERE paper_id = :p", p("p", paperId), Integer.class);
         for (Map.Entry<String, Integer> e : counts.entrySet()) {
             if (e.getValue() == null || e.getValue() <= 0) continue;
-            List<Long> ids = jdbc.queryForList("SELECT id FROM question WHERE (teacher_id = :t OR shared) AND qtype = :qt "
-                            + (category == null || category.isEmpty() ? "" : "AND category = :c ")
-                            + "AND id NOT IN (SELECT question_id FROM paper_question WHERE paper_id = :p) ORDER BY random() LIMIT :n",
-                    p("t", teacherId, "qt", e.getKey(), "c", category, "p", paperId, "n", e.getValue()), Long.class);
+            List<Long> ids = jdbc.queryForList("SELECT q.id FROM question q WHERE (q.teacher_id = :t OR q.shared) AND q.qtype = :qt AND "
+                            + QuestionService.USABLE
+                            + (category == null || category.isEmpty() ? "" : "AND q.category = :c ")
+                            + (tag == null || tag.isEmpty() ? "" : "AND EXISTS (SELECT 1 FROM question_tag g WHERE g.question_id = q.id AND g.tag = :tag) ")
+                            + (minStars == null || minStars <= 0 ? "" : "AND q.stars >= :st ")
+                            + "AND q.id NOT IN (SELECT question_id FROM paper_question WHERE paper_id = :p) ORDER BY random() LIMIT :n",
+                    p("t", teacherId, "qt", e.getKey(), "c", category, "tag", tag, "st", minStars, "p", paperId, "n", e.getValue()), Long.class);
             for (Long qid : ids) {
                 jdbc.update("INSERT INTO paper_question(paper_id, question_id, seq, score) SELECT :p, id, :s, score FROM question WHERE id = :q",
                         p("p", paperId, "s", ++seq, "q", qid));

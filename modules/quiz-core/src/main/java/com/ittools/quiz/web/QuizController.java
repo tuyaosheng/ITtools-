@@ -48,8 +48,11 @@ public class QuizController {
     public ApiResponse<List<Map<String, Object>>> questions(@RequestParam(required = false) String category,
                                                             @RequestParam(required = false) String qtype,
                                                             @RequestParam(required = false) String keyword,
-                                                            @RequestParam(defaultValue = "true") boolean includeShared) {
-        return ApiResponse.ok(questions.list(CurrentUser.id(), category, qtype, keyword, includeShared));
+                                                            @RequestParam(defaultValue = "true") boolean includeShared,
+                                                            @RequestParam(required = false) String tag,
+                                                            @RequestParam(required = false) Integer minStars,
+                                                            @RequestParam(defaultValue = "active") String status) {
+        return ApiResponse.ok(questions.list(CurrentUser.id(), category, qtype, keyword, includeShared, tag, minStars, status));
     }
 
     @GetMapping("/api/teacher/quiz/categories")
@@ -112,7 +115,7 @@ public class QuizController {
         Body b = Body.of(body);
         Map<String, Integer> counts = new HashMap<>();
         for (String t : QuestionService.TYPES) counts.put(t, b.intv(t, 0));
-        return ApiResponse.ok(papers.randomFill(CurrentUser.id(), id, b.str("category"), counts));
+        return ApiResponse.ok(papers.randomFill(CurrentUser.id(), id, b.str("category"), counts, b.str("tag"), b.intv("minStars")));
     }
 
     @DeleteMapping("/api/teacher/quiz/papers/{id}")
