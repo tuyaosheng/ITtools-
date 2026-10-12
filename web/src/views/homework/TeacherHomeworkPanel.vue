@@ -4,6 +4,7 @@
     <div class="ops">
       <el-button size="small" @click="load">刷新</el-button>
       <el-button size="small" :disabled="!submitted" @click="zip">打包下载全部作品</el-button>
+      <el-button size="small" :disabled="!submitted" @click="carousel = true">循环展播</el-button>
       <el-button size="small" :disabled="!submitted" @click="regrade">按当前规则重新自动评分</el-button>
       <el-radio-group v-model="filter" size="small">
         <el-radio-button value="all">全部</el-radio-button>
@@ -62,6 +63,7 @@
       </el-table-column>
     </el-table>
 
+    <WorksCarousel v-model="carousel" :students="data.students" />
     <el-dialog v-model="gradeVisible" :title="`批阅：${grading?.studentName}`" width="520px" append-to-body>
       <el-form label-width="90px">
         <template v-if="data.rubric?.length">
@@ -97,6 +99,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 import AutoDetail from './AutoDetail.vue'
+import WorksCarousel from './WorksCarousel.vue'
 
 const props = defineProps<{ lessonId: number; page: any }>()
 const data = ref<any>(null)
@@ -106,6 +109,7 @@ const grading = ref<any>(null)
 const score = ref<number | undefined>()
 const comment = ref('')
 const rating = ref('')
+const carousel = ref(false)
 const ratingLabel: Record<string, string> = { GOOD: '好评', OK: '中评', BAD: '差评' }
 const selected = ref<any[]>([])
 const batchScore = ref<number | undefined>()
