@@ -123,7 +123,9 @@ const isOwner = computed(() => course.value && course.value.teacherId === auth.u
 
 // 作品提交页的专属设置（允许的文件类型、自动评分规则等）由作业模块提供
 const homeworkSettings = defineAsyncComponent(() => import('../homework/HomeworkPageSettings.vue'))
-const settingsComponent = computed(() => (current.value?.pageType === 'HOMEWORK' ? homeworkSettings : null))
+const quizSettings = defineAsyncComponent(() => import('../quiz/QuizPageSettings.vue'))
+const settingsComponent = computed(() => (current.value?.pageType === 'HOMEWORK' ? homeworkSettings
+  : current.value?.pageType === 'QUIZ' ? quizSettings : null))
 
 async function load() {
   const id = Number(route.params.id)

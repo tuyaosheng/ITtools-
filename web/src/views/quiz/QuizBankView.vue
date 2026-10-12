@@ -142,6 +142,11 @@
         </el-table>
       </el-tab-pane>
 
+      <!-- ===== 刷题与分析 ===== -->
+      <el-tab-pane label="刷题与分析" name="practice" lazy>
+        <PracticeAdmin />
+      </el-tab-pane>
+
       <!-- ===== 统计与标签 ===== -->
       <el-tab-pane label="统计与标签" name="stats">
         <div class="stat-cards">
@@ -372,6 +377,7 @@ import { http } from '../../api/http'
 import { safeHtml } from '../../utils/format'
 import { useAuthStore } from '../../stores/auth'
 import PublishTestDialog from './PublishTestDialog.vue'
+import PracticeAdmin from './PracticeAdmin.vue'
 
 const auth = useAuthStore()
 const me = computed(() => auth.user?.userId)

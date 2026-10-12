@@ -1,5 +1,6 @@
 package com.ittools.quiz.web;
 
+import com.ittools.classroom.service.CourseService;
 import com.ittools.classroom.service.LessonService;
 import com.ittools.platform.security.CurrentUser;
 import com.ittools.platform.service.dto.ImportResult;
@@ -35,12 +36,14 @@ public class QuizController {
     private final PaperService papers;
     private final TestService tests;
     private final LessonService lessons;
+    private final CourseService courses;
 
-    public QuizController(QuestionService questions, PaperService papers, TestService tests, LessonService lessons) {
+    public QuizController(QuestionService questions, PaperService papers, TestService tests, LessonService lessons, CourseService courses) {
         this.questions = questions;
         this.papers = papers;
         this.tests = tests;
         this.lessons = lessons;
+        this.courses = courses;
     }
 
     // ---- 题库 ----
@@ -126,15 +129,62 @@ public class QuizController {
 
     // ---- 测验 ----
     @PostMapping("/api/teacher/quiz/tests")
-    public ApiResponse<Map<String, Object>> publish(@RequestBody Map<String, Object> body) {
+    public ApiResponse<List<Map<String, Object>>> publish(@RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
-        return ApiResponse.ok(tests.publish(CurrentUser.id(), b.reqLng("paperId", "试卷"), b.reqLng("classId", "班级"), b.str("title"),
-                b.bool("showAnswer", true), b.intv("timeLimit")));
+        List<Long> classIds = b.longs("classIds");
+        if (classIds.isEmpty() && b.lng("classId") != null) classIds.add(b.lng("classId"));
+        Integer tl = b.intv("timeLimit");
+        return ApiResponse.ok(tests.publish(CurrentUser.id(), b.reqLng("paperId", "试卷"), classIds, b.str("title"),
+                b.bool("showAnswer", true), tl == null || tl <= 0 ? null : tl, b.str("kind"), b.str("mode")));
     }
 
     @GetMapping("/api/teacher/quiz/tests")
-    public ApiResponse<List<Map<String, Object>>> teacherTests() {
-        return ApiResponse.ok(tests.teacherTests(CurrentUser.id()));
+    public ApiResponse<List<Map<String, Object>>> teacherTests(@RequestParam(required = false) String kind) {
+        return ApiResponse.ok(tests.teacherTests(CurrentUser.id(), kind));
+    }
+
+    @PostMapping("/api/teacher/quiz/tests/{id}/finalize")
+    public ApiResponse<Map<String, Object>> finalizeTest(@PathVariable Long id) {
+        return ApiResponse.ok(tests.finalizeTest(CurrentUser.id(), id));
+    }
+
+    @PostMapping("/api/teacher/quiz/attempts/{id}/return")
+    public ApiResponse<Void> returnAttempt(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        tests.returnAttempt(CurrentUser.id(), id, Body.of(body).str("note"));
+        return ApiResponse.ok(null);
+    }
+
+    @GetMapping("/api/teacher/quiz/tests/{id}/fill-groups")
+    public ApiResponse<List<Map<String, Object>>> fillGroups(@PathVariable Long id) {
+        return ApiResponse.ok(tests.fillGroups(CurrentUser.id(), id));
+    }
+
+    @PutMapping("/api/teacher/quiz/tests/{id}/fill-groups")
+    public ApiResponse<Integer> gradeFillGroup(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        Double score = b.dbl("score");
+        if (score == null) throw new IllegalArgumentException("分数不能为空");
+        Object answer = body.get("answer");
+        return ApiResponse.ok(tests.gradeFillGroup(CurrentUser.id(), id, b.reqLng("questionId", "题目"), answer == null ? null : String.valueOf(answer), score));
+    }
+
+    @GetMapping("/api/teacher/quiz/tests/{id}/grade-stats")
+    public ApiResponse<Map<String, Object>> gradeStats(@PathVariable Long id) {
+        tests.requireTeacher(CurrentUser.id(), id);
+        return ApiResponse.ok(tests.gradeStats(id));
+    }
+
+    @GetMapping("/api/teacher/quiz/pages/{pageId}/config")
+    public ApiResponse<Map<String, Object>> pageConfig(@PathVariable Long pageId) {
+        return ApiResponse.ok(tests.pageConfig(pageId));
+    }
+
+    @PutMapping("/api/teacher/quiz/pages/{pageId}/config")
+    public ApiResponse<Map<String, Object>> savePageConfig(@PathVariable Long pageId, @RequestBody Map<String, Object> body) {
+        Map<String, Object> page = courses.page(pageId);
+        courses.requireOwner(CurrentUser.id(), ((Number) page.get("courseId")).longValue());
+        Body b = Body.of(body);
+        return ApiResponse.ok(tests.savePageConfig(pageId, b.reqStr("mode", "考试方式"), b.intv("timeLimit"), b.bool("showAnswer", true)));
     }
 
     @GetMapping("/api/teacher/quiz/tests/{id}")
@@ -192,8 +242,8 @@ public class QuizController {
 
     // ---- 学生 ----
     @GetMapping("/api/student/quiz/tests")
-    public ApiResponse<List<Map<String, Object>>> studentTests() {
-        return ApiResponse.ok(tests.studentTests(CurrentUser.id()));
+    public ApiResponse<List<Map<String, Object>>> studentTests(@RequestParam(required = false) String kind) {
+        return ApiResponse.ok(tests.studentTests(CurrentUser.id(), kind));
     }
 
     @GetMapping("/api/student/quiz/tests/{id}")
@@ -215,8 +265,15 @@ public class QuizController {
     }
 
     @GetMapping("/api/student/quiz/wrong-book")
-    public ApiResponse<List<Map<String, Object>>> wrongBook() {
-        return ApiResponse.ok(tests.wrongBook(CurrentUser.id()));
+    public ApiResponse<List<Map<String, Object>>> wrongBook(@RequestParam(required = false) String kind,
+                                                            @RequestParam(defaultValue = "false") boolean includeMastered) {
+        return ApiResponse.ok(tests.wrongBook(CurrentUser.id(), kind, includeMastered));
+    }
+
+    @PutMapping("/api/student/quiz/wrong-book/{questionId}")
+    public ApiResponse<Void> mastered(@PathVariable Long questionId, @RequestBody Map<String, Object> body) {
+        tests.setMastered(CurrentUser.id(), questionId, Body.of(body).bool("mastered", true));
+        return ApiResponse.ok(null);
     }
 
     @GetMapping("/api/student/quiz/practice/next")

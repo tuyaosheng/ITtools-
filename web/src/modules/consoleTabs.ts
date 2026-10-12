@@ -12,6 +12,7 @@ export interface ConsoleTab {
 
 export const consoleTabs: ConsoleTab[] = [
   { name: 'groups', label: '分组管理', component: defineAsyncComponent(() => import('../views/groups/GroupConsoleTab.vue')) },
+  { name: 'scores', label: '课堂成绩', component: defineAsyncComponent(() => import('../views/homework/LessonScores.vue')) },
   { name: 'homework', label: '作品汇总', component: defineAsyncComponent(() => import('../views/homework/LessonHomeworkSummary.vue')) },
   { name: 'interact', label: '举手与广播', component: defineAsyncComponent(() => import('../views/interact/TeacherInteractPanel.vue')) },
   { name: 'forum', label: '课堂论坛', component: defineAsyncComponent(() => import('../views/interact/ForumPanel.vue')) }

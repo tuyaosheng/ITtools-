@@ -21,7 +21,7 @@ const menu = computed(() => [
   { path: '/teacher/lessons', label: '上课记录' },
   { path: '/teacher/homework', label: '作品批阅' },
   { path: '/teacher/quiz', label: '题库与试卷' },
-  { path: '/teacher/tests', label: '测验管理' },
+  { path: '/teacher/tests', label: '作业与测验' },
   { path: '/teacher/python', label: 'Python 题库' },
   { path: '/teacher/rubrics', label: '评价量规' },
   { path: '/teacher/resources', label: '资源库' },
