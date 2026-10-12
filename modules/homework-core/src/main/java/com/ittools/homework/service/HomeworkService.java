@@ -91,7 +91,7 @@ public class HomeworkService {
                     + "u.student_no AS \"studentNo\", s.file_name AS \"fileName\", s.file_size AS \"fileSize\", s.description, "
                     + "s.pc_name AS \"pcName\", s.submitted_at AS \"submittedAt\", s.submit_count AS \"submitCount\", s.late, "
                     + "s.auto_score AS \"autoScore\", s.auto_max AS \"autoMax\", s.auto_detail AS \"autoDetail\", "
-                    + "s.teacher_score AS \"teacherScore\", s.rubric_scores AS \"rubricScores\", s.teacher_comment AS \"teacherComment\", "
+                    + "s.teacher_score AS \"teacherScore\", s.rubric_scores AS \"rubricScores\", s.title, s.self_score AS \"selfScore\", s.rating, s.returned, s.return_note AS \"returnNote\", s.teacher_comment AS \"teacherComment\", "
                     + "s.graded_at AS \"gradedAt\", s.essence, "
                     + "(SELECT ROUND(AVG(pr.score), 1) FROM peer_review pr WHERE pr.submission_id = s.id) AS \"peerAvg\", "
                     + "(SELECT COUNT(*) FROM peer_review pr WHERE pr.submission_id = s.id) AS \"peerCount\" ";
@@ -112,19 +112,32 @@ public class HomeworkService {
         }
         out.put("submission", sub);
         Map<String, Object> l = lessons.get(lessonId);
-        out.put("canSubmit", "ACTIVE".equals(l.get("status")) || settings.getBool(SystemSettingService.HOMEWORK_ALLOW_LATE));
+        out.put("canSubmit", "ACTIVE".equals(l.get("status")) || settings.getBool(SystemSettingService.HOMEWORK_ALLOW_LATE)
+                || (sub != null && Boolean.TRUE.equals(sub.get("returned"))));
         out.put("rubric", rubricItemsFor(pageId));
         return out;
     }
 
     @Transactional
     public Map<String, Object> submit(Long studentId, Long lessonId, Long pageId, MultipartFile file, String description, String ip) {
+        return submit(studentId, lessonId, pageId, file, description, ip, null, null);
+    }
+
+    /** 提交作品（原 courseuploadfile：作品名、自我评分、简介）。重新提交会清除“发回重做”标记。 */
+    @Transactional
+    public Map<String, Object> submit(Long studentId, Long lessonId, Long pageId, MultipartFile file, String description, String ip,
+                                      String title, Integer selfScore) {
+        if (title != null && title.length() > 100) throw new IllegalArgumentException("作品名不超过 100 字");
+        if (description != null && description.length() > 500) throw new IllegalArgumentException("简介不超过 500 字");
+        if (selfScore != null && (selfScore < 0 || selfScore > 100)) throw new IllegalArgumentException("自我评分为 0~100");
         lessons.requireStudent(studentId, lessonId);
         Map<String, Object> page = lessons.studentPage(studentId, lessonId, pageId);
         if (!"HOMEWORK".equals(page.get("pageType"))) throw new IllegalArgumentException("该页面不是作品提交页");
         Map<String, Object> l = lessons.get(lessonId);
         boolean late = !"ACTIVE".equals(l.get("status"));
-        if (late && !settings.getBool(SystemSettingService.HOMEWORK_ALLOW_LATE)) {
+        boolean returned = Boolean.TRUE.equals(jdbc.queryForList("SELECT returned FROM submission WHERE lesson_id = :l AND page_id = :p AND student_id = :s",
+                p("l", lessonId, "p", pageId, "s", studentId), Boolean.class).stream().findFirst().orElse(false));
+        if (late && !returned && !settings.getBool(SystemSettingService.HOMEWORK_ALLOW_LATE)) {
             throw new IllegalArgumentException("课堂已结束，系统未开放作业补交");
         }
         Map<String, Object> cfg = config(pageId);
@@ -144,22 +157,22 @@ public class HomeworkService {
         String pc = (String) lab.workstationByIp(ip).get("pcName");
         if (old.isEmpty()) {
             jdbc.update("INSERT INTO submission(lesson_id, page_id, student_id, file_path, file_name, file_size, description, "
-                            + "pc_name, ip_address, late, auto_score, auto_max, auto_detail) "
-                            + "VALUES (:l, :p, :s, :fp, :fn, :sz, :d, :pc, :ip, :late, :as, :am, :ad)",
+                            + "pc_name, ip_address, late, auto_score, auto_max, auto_detail, title, self_score) "
+                            + "VALUES (:l, :p, :s, :fp, :fn, :sz, :d, :pc, :ip, :late, :as, :am, :ad, :ti, :ss)",
                     p("l", lessonId, "p", pageId, "s", studentId, "fp", sf.getRelPath(), "fn", sf.getOriginalName(),
                             "sz", sf.getSize(), "d", description, "pc", pc, "ip", ip, "late", late,
                             "as", auto == null ? null : auto.get("score"), "am", auto == null ? null : auto.get("max"),
-                            "ad", auto == null ? null : auto.get("detail")));
+                            "ad", auto == null ? null : auto.get("detail"), "ti", title, "ss", selfScore));
         } else {
             storage.delete((String) old.get(0).get("file_path"));
             // 重新提交：保留教师评分/精华标记之外的数据全部更新，教师需重新批阅
             jdbc.update("UPDATE submission SET file_path = :fp, file_name = :fn, file_size = :sz, description = :d, pc_name = :pc, "
                             + "ip_address = :ip, submitted_at = now(), submit_count = submit_count + 1, late = :late, "
                             + "auto_score = :as, auto_max = :am, auto_detail = :ad, teacher_score = NULL, rubric_scores = NULL, "
-                            + "graded_at = NULL WHERE id = :id",
+                            + "graded_at = NULL, rating = NULL, returned = FALSE, return_note = NULL, title = :ti, self_score = :ss WHERE id = :id",
                     p("fp", sf.getRelPath(), "fn", sf.getOriginalName(), "sz", sf.getSize(), "d", description, "pc", pc, "ip", ip,
                             "late", late, "as", auto == null ? null : auto.get("score"), "am", auto == null ? null : auto.get("max"),
-                            "ad", auto == null ? null : auto.get("detail"), "id", old.get(0).get("id")));
+                            "ad", auto == null ? null : auto.get("detail"), "ti", title, "ss", selfScore, "id", old.get(0).get("id")));
         }
         return studentView(studentId, lessonId, pageId);
     }
@@ -210,7 +223,7 @@ public class HomeworkService {
     public List<Map<String, Object>> showcase(Long yearId) {
         return jdbc.queryForList("SELECT s.id, u.name AS \"studentName\", sy.label || k.name AS \"className\", c.name AS \"courseName\", "
                         + "pg.title AS \"pageTitle\", s.file_name AS \"fileName\", s.file_size AS \"fileSize\", s.description, "
-                        + "s.teacher_score AS \"teacherScore\", s.teacher_comment AS \"teacherComment\", s.submitted_at AS \"submittedAt\" "
+                        + "s.teacher_score AS \"teacherScore\", s.title, s.self_score AS \"selfScore\", s.rating, s.returned, s.return_note AS \"returnNote\", s.teacher_comment AS \"teacherComment\", s.submitted_at AS \"submittedAt\" "
                         + "FROM submission s JOIN users u ON u.id = s.student_id JOIN klass k ON k.id = u.class_id "
                         + "JOIN school_year sy ON sy.id = k.school_year_id JOIN course_page pg ON pg.id = s.page_id "
                         + "JOIN course c ON c.id = pg.course_id WHERE s.essence "
@@ -250,7 +263,7 @@ public class HomeworkService {
                         + "s.file_size AS \"fileSize\", s.description, s.pc_name AS \"pcName\", s.submitted_at AS \"submittedAt\", "
                         + "s.submit_count AS \"submitCount\", s.late, s.auto_score AS \"autoScore\", s.auto_max AS \"autoMax\", "
                         + "s.auto_detail AS \"autoDetail\", s.teacher_score AS \"teacherScore\", s.rubric_scores AS \"rubricScores\", "
-                        + "s.teacher_comment AS \"teacherComment\", s.essence, "
+                        + "s.title, s.self_score AS \"selfScore\", s.rating, s.returned, s.return_note AS \"returnNote\", s.teacher_comment AS \"teacherComment\", s.essence, "
                         + "(SELECT ROUND(AVG(pr.score), 1) FROM peer_review pr WHERE pr.submission_id = s.id) AS \"peerAvg\" "
                         + "FROM lesson l JOIN users st ON st.class_id = l.class_id AND st.role = 'STUDENT' AND NOT st.graduated "
                         + "LEFT JOIN submission s ON s.lesson_id = l.id AND s.page_id = :p AND s.student_id = st.id "
@@ -260,6 +273,13 @@ public class HomeworkService {
 
     @Transactional
     public void grade(Long teacherId, Long submissionId, Double score, Map<String, Object> rubricScores, String comment) {
+        grade(teacherId, submissionId, score, rubricScores, comment, null);
+    }
+
+    /** 批阅：分数（或量规）、评语、好评/中评/差评。 */
+    @Transactional
+    public void grade(Long teacherId, Long submissionId, Double score, Map<String, Object> rubricScores, String comment, String rating) {
+        if (rating != null && !rating.isEmpty() && !Arrays.asList("GOOD", "OK", "BAD").contains(rating)) throw new IllegalArgumentException("评价只能是好评/中评/差评");
         Map<String, Object> s = submission(submissionId);
         lessons.requireTeacher(teacherId, ((Number) s.get("lessonId")).longValue());
         String rubricJson = null;
@@ -275,8 +295,34 @@ public class HomeworkService {
                 throw new IllegalStateException(e);
             }
         }
-        jdbc.update("UPDATE submission SET teacher_score = :sc, rubric_scores = :r, teacher_comment = :c, graded_at = now() WHERE id = :id",
-                p("sc", score, "r", rubricJson, "c", comment, "id", submissionId));
+        jdbc.update("UPDATE submission SET teacher_score = :sc, rubric_scores = :r, teacher_comment = :c, rating = :ra, graded_at = now() WHERE id = :id",
+                p("sc", score, "r", rubricJson, "c", comment, "ra", rating == null || rating.isEmpty() ? null : rating, "id", submissionId));
+    }
+
+    /** 发回重做（原 viswtufile“发回重做”）：学生可在课后重新提交，即使系统未开放补交。 */
+    @Transactional
+    public void returnForRedo(Long teacherId, Long submissionId, String note) {
+        Map<String, Object> s = submission(submissionId);
+        lessons.requireTeacher(teacherId, ((Number) s.get("lessonId")).longValue());
+        if (note != null && note.length() > 200) throw new IllegalArgumentException("说明不超过 200 字");
+        jdbc.update("UPDATE submission SET returned = TRUE, return_note = :n WHERE id = :id", p("n", note, "id", submissionId));
+    }
+
+    /** 偷懒模式（原 markstufile2）：批量打分、批量评语、批量评价；只填了的项才修改，可选择跳过已批改的。 */
+    @Transactional
+    public int batchGrade(Long teacherId, List<Long> ids, Double score, String comment, String rating, boolean skipGraded) {
+        if (ids.isEmpty()) throw new IllegalArgumentException("请先勾选作品");
+        if (rating != null && !rating.isEmpty() && !Arrays.asList("GOOD", "OK", "BAD").contains(rating)) throw new IllegalArgumentException("评价只能是好评/中评/差评");
+        int n = 0;
+        for (Long id : ids) {
+            Map<String, Object> s = submission(id);
+            lessons.requireTeacher(teacherId, ((Number) s.get("lessonId")).longValue());
+            if (skipGraded && s.get("teacherScore") != null) continue;
+            n += jdbc.update("UPDATE submission SET teacher_score = COALESCE(:sc, teacher_score), teacher_comment = COALESCE(:c, teacher_comment), "
+                    + "rating = COALESCE(:ra, rating), graded_at = now() WHERE id = :id",
+                    p("sc", score, "c", comment == null || comment.isEmpty() ? null : comment, "ra", rating == null || rating.isEmpty() ? null : rating, "id", id));
+        }
+        return n;
     }
 
     @Transactional

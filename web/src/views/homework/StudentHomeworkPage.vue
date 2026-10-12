@@ -3,9 +3,16 @@
     <el-divider content-position="left">提交作品</el-divider>
     <div class="submit-box">
       <el-alert v-if="data.config.allowedExts" type="info" :closable="false" :title="`允许的文件类型：${data.config.allowedExts}`" />
+      <el-alert v-if="sub?.returned" type="error" :closable="false" show-icon
+        :title="`老师发回了你的作品，请修改后重新提交${sub.returnNote ? '：' + sub.returnNote : ''}`" />
       <el-alert v-if="!data.canSubmit" type="warning" :closable="false" title="课堂已结束，暂不接收提交" />
       <template v-else>
-        <el-input v-model="description" placeholder="作品说明（可选）" maxlength="200" />
+        <div class="meta-row">
+          <el-input v-model="title" placeholder="作品名（可选）" maxlength="100" class="w240" />
+          <span class="muted">自我评分</span>
+          <el-input-number v-model="selfScore" :min="0" :max="100" controls-position="right" class="w120" />
+        </div>
+        <el-input v-model="description" placeholder="作品简介（可选，500 字内）" maxlength="500" type="textarea" :rows="2" />
         <div class="upload-row">
           <input ref="fileInput" type="file" @change="onFile" />
           <el-button type="primary" :loading="uploading" :disabled="!file" @click="submit">
@@ -18,7 +25,7 @@
     <el-card v-if="sub" shadow="never" class="result">
       <div class="res-head">
         <div>
-          <b>已提交：</b>
+          <b>已提交：</b><span v-if="sub.title" class="title">《{{ sub.title }}》</span>
           <el-link type="primary" @click="download(sub.id, sub.fileName)">{{ sub.fileName }}</el-link>
           <span class="muted">（{{ fmtSize(sub.fileSize) }} · {{ fmtTime(sub.submittedAt) }} · 第 {{ sub.submitCount }} 次提交{{ sub.late ? ' · 补交' : '' }}）</span>
         </div>
@@ -26,7 +33,8 @@
       </div>
       <div class="scores">
         <div v-if="sub.autoMax != null" class="score-box"><span>自动评分</span><b>{{ sub.autoScore }}/{{ sub.autoMax }}</b></div>
-        <div class="score-box"><span>老师评分</span><b>{{ sub.teacherScore ?? '待批阅' }}</b></div>
+        <div class="score-box"><span>老师评分</span><b>{{ sub.teacherScore ?? '待批阅' }}</b><small v-if="sub.rating">{{ ratingLabel[sub.rating] }}</small></div>
+        <div v-if="sub.selfScore != null" class="score-box"><span>自我评分</span><b>{{ sub.selfScore }}</b></div>
         <div v-if="data.config.peerReview" class="score-box"><span>同学互评</span><b>{{ sub.peerAvg ?? '—' }}</b><small>{{ sub.peerCount }} 人评</small></div>
       </div>
       <div v-if="sub.teacherComment" class="comment"><b>老师评语：</b>{{ sub.teacherComment }}</div>
@@ -75,6 +83,9 @@ const props = defineProps<{ lessonId: number; page: any }>()
 const data = ref<any>(null)
 const file = ref<File | null>(null)
 const description = ref('')
+const title = ref('')
+const selfScore = ref<number | undefined>()
+const ratingLabel: Record<string, string> = { GOOD: '👍 好评', OK: '中评', BAD: '差评' }
 const uploading = ref(false)
 const classmates = ref<any[]>([])
 const fileInput = ref<HTMLInputElement>()
@@ -91,6 +102,8 @@ const base = () => `/student/homework/lessons/${props.lessonId}/pages/${props.pa
 async function load() {
   data.value = await api.get(base())
   description.value = data.value.submission?.description || ''
+  title.value = data.value.submission?.title || ''
+  selfScore.value = data.value.submission?.selfScore ?? undefined
   if (data.value.config.showClassmates || data.value.config.peerReview) await loadClassmates()
 }
 
@@ -106,7 +119,9 @@ async function submit() {
   if (!file.value) return
   uploading.value = true
   try {
-    data.value = await api.upload(base(), file.value, { description: description.value })
+    const extra: Record<string, string | number> = { description: description.value, title: title.value }
+    if (selfScore.value != null) extra.selfScore = selfScore.value
+    data.value = await api.upload(base(), file.value, extra)
     ElMessage.success('提交成功')
     file.value = null
     if (fileInput.value) fileInput.value.value = ''
@@ -137,6 +152,10 @@ onMounted(load)
 
 <style scoped>
 .submit-box { display: flex; flex-direction: column; gap: 10px; }
+.meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.w240 { width: 240px; }
+.w120 { width: 120px; }
+.title { font-weight: 600; margin-right: 4px; }
 .upload-row { display: flex; align-items: center; gap: 12px; }
 .result { margin-top: 14px; }
 .res-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }

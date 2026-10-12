@@ -67,8 +67,20 @@ public class HomeworkController {
     public ApiResponse<Void> grade(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
         Object rs = body.get("rubricScores");
-        svc.grade(CurrentUser.id(), id, b.dbl("score"), rs instanceof Map ? (Map<String, Object>) rs : null, b.str("comment"));
+        svc.grade(CurrentUser.id(), id, b.dbl("score"), rs instanceof Map ? (Map<String, Object>) rs : null, b.str("comment"), b.str("rating"));
         return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/api/teacher/homework/submissions/{id}/return")
+    public ApiResponse<Void> returnForRedo(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        svc.returnForRedo(CurrentUser.id(), id, Body.of(body).str("note"));
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/api/teacher/homework/submissions/batch-grade")
+    public ApiResponse<Integer> batchGrade(@RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        return ApiResponse.ok(svc.batchGrade(CurrentUser.id(), b.longs("ids"), b.dbl("score"), b.str("comment"), b.str("rating"), b.bool("skipGraded", false)));
     }
 
     @PutMapping("/api/teacher/homework/submissions/{id}/essence")
@@ -101,8 +113,10 @@ public class HomeworkController {
     public ApiResponse<Map<String, Object>> submit(@PathVariable Long lessonId, @PathVariable Long pageId,
                                                    @RequestParam("file") MultipartFile file,
                                                    @RequestParam(value = "description", required = false) String description,
+                                                   @RequestParam(value = "title", required = false) String title,
+                                                   @RequestParam(value = "selfScore", required = false) Integer selfScore,
                                                    HttpServletRequest req) {
-        return ApiResponse.ok(svc.submit(CurrentUser.id(), lessonId, pageId, file, description, ClientIp.of(req)));
+        return ApiResponse.ok(svc.submit(CurrentUser.id(), lessonId, pageId, file, description, ClientIp.of(req), title, selfScore));
     }
 
     @GetMapping("/api/student/homework/lessons/{lessonId}/pages/{pageId}/classmates")
