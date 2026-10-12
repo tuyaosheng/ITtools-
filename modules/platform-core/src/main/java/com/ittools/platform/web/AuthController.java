@@ -40,10 +40,13 @@ public class AuthController {
     private final MultiLoginAuthenticationProvider provider;
     private final LookupService lookups;
     private final List<LoginPolicy> policies;
+    private final com.ittools.platform.service.LoginLogService loginLogs;
+    private static final String LOG_ATTR = "ittools.loginLogId";
     private final SecurityContextRepository repo = new HttpSessionSecurityContextRepository();
 
     public AuthController(MultiLoginAuthenticationProvider provider, LookupService lookups,
-                          java.util.Optional<List<LoginPolicy>> policies) {
+                          java.util.Optional<List<LoginPolicy>> policies, com.ittools.platform.service.LoginLogService loginLogs) {
+        this.loginLogs = loginLogs;
         this.provider = provider;
         this.lookups = lookups;
         this.policies = policies.orElse(Collections.<LoginPolicy>emptyList());
@@ -67,6 +70,7 @@ public class AuthController {
         ctx.setAuthentication(auth);
         SecurityContextHolder.setContext(ctx);
         repo.saveContext(ctx, request, response);
+        request.getSession().setAttribute(LOG_ATTR, loginLogs.recordLogin(ud.userId(), ip));
         return ApiResponse.ok(principalPayload(ud));
     }
 
@@ -74,6 +78,8 @@ public class AuthController {
     public ApiResponse<Void> logout(HttpServletRequest request) {
         HttpSession s = request.getSession(false);
         if (s != null) {
+            Object logId = s.getAttribute(LOG_ATTR);
+            if (logId instanceof Long) loginLogs.recordLogout((Long) logId);
             s.invalidate();
         }
         SecurityContextHolder.clearContext();

@@ -50,7 +50,8 @@ const router = createRouter({
         { path: 'reflections', component: () => import('../views/teacher/ReflectionView.vue') },
         { path: 'disk', component: () => import('../views/common/DiskView.vue') },
         { path: 'messages', component: () => import('../views/teacher/MessageView.vue') },
-        { path: 'qa', component: () => import('../views/teacher/TeacherQa.vue') }
+        { path: 'qa', component: () => import('../views/teacher/TeacherQa.vue') },
+        { path: 'login-logs', component: () => import('../views/teacher/LoginLogs.vue') }
       ]
     },
     {

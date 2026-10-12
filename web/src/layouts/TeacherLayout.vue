@@ -29,6 +29,7 @@ const menu = computed(() => [
   { path: '/teacher/reflections', label: '学习心得' },
   { path: '/teacher/disk', label: '教师网盘' },
   { path: '/teacher/classes', label: '我的班级' },
+  { path: '/teacher/login-logs', label: '登入记录' },
   { path: '/teacher/timetable', label: '课表' },
   { path: '/teacher/messages', label: '系统消息', badge: notices.unreadMessages || undefined },
   { path: '/teacher/qa', label: '师生答疑', badge: notices.pendingQuestions || undefined }

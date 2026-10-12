@@ -32,9 +32,12 @@ public class TeacherClassroomController {
     private final TermService terms;
     private final ClassBindingService bindings;
     private final TeacherToolsService tools;
+    private final com.ittools.platform.service.LoginLogService loginLogService;
 
     public TeacherClassroomController(CourseService courses, LessonService lessons, TermService terms,
-                                      ClassBindingService bindings, TeacherToolsService tools) {
+                                      ClassBindingService bindings, TeacherToolsService tools,
+                                      com.ittools.platform.service.LoginLogService loginLogService) {
+        this.loginLogService = loginLogService;
         this.courses = courses;
         this.lessons = lessons;
         this.terms = terms;
@@ -45,6 +48,17 @@ public class TeacherClassroomController {
     @GetMapping("/terms")
     public ApiResponse<List<Map<String, Object>>> terms() {
         return ApiResponse.ok(terms.list());
+    }
+
+    /** 学生登入记录（原 stulog）：from/to 为 yyyy-MM-dd，含首尾两天。 */
+    @GetMapping("/login-logs")
+    public ApiResponse<java.util.List<Map<String, Object>>> loginLogs(@RequestParam Long classId, @RequestParam String from, @RequestParam String to) {
+        if (!bindings.teacherCanUseClass(CurrentUser.id(), classId)) throw new IllegalArgumentException("无权查看该班级");
+        java.time.ZoneId zone = java.time.ZoneId.systemDefault();
+        java.time.OffsetDateTime f = java.time.LocalDate.parse(from).atStartOfDay(zone).toOffsetDateTime();
+        java.time.OffsetDateTime t = java.time.LocalDate.parse(to).plusDays(1).atStartOfDay(zone).toOffsetDateTime();
+        if (t.isBefore(f)) throw new IllegalArgumentException("结束日期不能早于开始日期");
+        return ApiResponse.ok(loginLogService.classLogs(classId, f, t));
     }
 
     @GetMapping("/classes")
