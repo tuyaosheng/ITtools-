@@ -10,6 +10,13 @@
         <el-input v-model="message" size="small" placeholder="遇到什么问题？（可选）" maxlength="100" />
         <el-button type="warning" size="small" class="mt full" :disabled="!active" @click="raise">✋ 举手</el-button>
       </template>
+      <div v-if="active && classmates.length" class="thanks">
+        <span class="muted">同学帮我解决了问题：</span>
+        <el-select v-model="helperId" size="small" filterable placeholder="选择同学" class="helper">
+          <el-option v-for="c in classmates" :key="c.id" :label="c.name" :value="c.id" />
+        </el-select>
+        <el-button size="small" type="success" :disabled="!helperId" @click="thanks">谢谢 TA</el-button>
+      </div>
     </div>
 
     <div v-if="group?.groupNo" class="section">
@@ -44,6 +51,8 @@ const myHelp = ref<any>(null)
 const broadcasts = ref<any[]>([])
 const group = ref<any>(null)
 const message = ref('')
+const classmates = ref<any[]>([])
+const helperId = ref<number>()
 const active = computed(() => props.lesson?.status === 'ACTIVE')
 let timer: number | undefined
 
@@ -52,6 +61,18 @@ async function load() {
   myHelp.value = d.myHelp
   broadcasts.value = d.broadcasts
   group.value = d.group
+  classmates.value = d.classmates || []
+}
+
+async function thanks() {
+  try {
+    await api.post(`/student/interact/lessons/${props.lesson.id}/help/thanks`, { helperId: helperId.value })
+    myHelp.value = null
+    helperId.value = undefined
+    ElMessage.success('已记录，TA 的互助次数 +1')
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
 }
 
 async function raise() {
@@ -99,4 +120,7 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .pc { margin-left: 4px; color: #a8abb2; font-size: 11px; }
 .msg { padding: 8px 10px; background: #ecf5ff; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
 .time { font-size: 11px; color: #909399; margin-top: 2px; }
+.muted { color: #909399; font-size: 12px; }
+.thanks { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.helper { width: 120px; }
 </style>

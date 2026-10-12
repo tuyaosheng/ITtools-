@@ -70,7 +70,8 @@ public class InteractService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> helps(Long lessonId) {
         return jdbc.queryForList("SELECT h.id, h.student_id AS \"studentId\", u.name AS \"studentName\", h.pc_name AS \"pcName\", h.message, "
-                + "h.status, h.created_at AS \"createdAt\", h.resolved_at AS \"resolvedAt\" FROM help_request h JOIN users u ON u.id = h.student_id "
+                + "h.status, h.created_at AS \"createdAt\", h.resolved_at AS \"resolvedAt\", hp.name AS \"helperName\" "
+                + "FROM help_request h JOIN users u ON u.id = h.student_id LEFT JOIN users hp ON hp.id = h.helper_id "
                 + "WHERE h.lesson_id = :l ORDER BY h.status = 'OPEN' DESC, h.id", p("l", lessonId));
     }
 
@@ -81,6 +82,44 @@ public class InteractService {
         lessons.requireTeacher(teacherId, lessonId);
         jdbc.update("UPDATE help_request SET status = 'RESOLVED', resolved_at = now() WHERE id = :id", p("id", helpId));
         events.toClass(lessonId, "HELP_RESOLVED", h.get("studentId"));
+    }
+
+    /**
+     * 登记“收到谁的帮助”（原 coursehelplist）：求助的学生指定帮助自己的同学，同时结束本次求助。
+     * 只能登记本堂课已进课的同班同学，不能是自己。
+     */
+    @Transactional
+    public void thankHelper(Long studentId, Long lessonId, Long helperId) {
+        requireActive(lessons.requireStudent(studentId, lessonId));
+        if (helperId == null || helperId.equals(studentId)) throw new IllegalArgumentException("请选择帮助你的同学");
+        Long present = jdbc.queryForObject("SELECT COUNT(*) FROM lesson_attendance WHERE lesson_id = :l AND student_id = :h",
+                p("l", lessonId, "h", helperId), Long.class);
+        if (present == null || present == 0) throw new IllegalArgumentException("该同学不在本堂课中");
+        List<Long> open = jdbc.queryForList("SELECT id FROM help_request WHERE lesson_id = :l AND student_id = :s AND status = 'OPEN'",
+                p("l", lessonId, "s", studentId), Long.class);
+        if (open.isEmpty()) {
+            jdbc.update("INSERT INTO help_request(lesson_id, student_id, message, status, resolved_at, helper_id) "
+                    + "VALUES (:l, :s, '同学互助', 'RESOLVED', now(), :h)", p("l", lessonId, "s", studentId, "h", helperId));
+        } else {
+            jdbc.update("UPDATE help_request SET status = 'RESOLVED', resolved_at = now(), helper_id = :h WHERE id = :id",
+                    p("h", helperId, "id", open.get(0)));
+        }
+        events.toTeacher(lessonId, "HELP_CHANGED", null);
+        log(lessonId, studentId, "HELPED_BY", String.valueOf(helperId));
+    }
+
+    /** 本堂课互助榜：每位同学帮助了几人次。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> helpers(Long lessonId) {
+        return jdbc.queryForList("SELECT h.helper_id AS \"studentId\", u.name, COUNT(*) AS count FROM help_request h JOIN users u ON u.id = h.helper_id "
+                + "WHERE h.lesson_id = :l AND h.helper_id IS NOT NULL GROUP BY h.helper_id, u.name ORDER BY count DESC, u.name", p("l", lessonId));
+    }
+
+    /** 学生可选的“帮助我的同学”：本堂课已进课的其他同学。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> classmatesInLesson(Long studentId, Long lessonId) {
+        return jdbc.queryForList("SELECT u.id, u.name FROM lesson_attendance a JOIN users u ON u.id = a.student_id "
+                + "WHERE a.lesson_id = :l AND a.student_id <> :s AND a.status = 'PRESENT' ORDER BY u.student_no, u.name", p("l", lessonId, "s", studentId));
     }
 
     @Transactional(readOnly = true)

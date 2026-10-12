@@ -40,6 +40,7 @@ public class InteractController {
         lessons.requireTeacher(CurrentUser.id(), id);
         Map<String, Object> m = new HashMap<>();
         m.put("helps", svc.helps(id));
+        m.put("helpers", svc.helpers(id));
         m.put("broadcasts", svc.broadcasts(id));
         m.put("monitor", svc.monitor(id));
         m.put("activity", svc.activity(id));
@@ -103,10 +104,17 @@ public class InteractController {
         lessons.requireStudent(me, id);
         Map<String, Object> m = new HashMap<>();
         m.put("myHelp", svc.myHelp(me, id));
+        m.put("classmates", svc.classmatesInLesson(me, id));
         m.put("broadcasts", svc.broadcasts(id));
         m.put("group", svc.myGroup(me, id));
         m.put("answerFirst", svc.latestRound(id, null));
         return ApiResponse.ok(m);
+    }
+
+    @PostMapping("/api/student/interact/lessons/{id}/help/thanks")
+    public ApiResponse<Void> thanks(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        svc.thankHelper(CurrentUser.id(), id, Body.of(body).lng("helperId"));
+        return ApiResponse.ok(null);
     }
 
     @PostMapping("/api/student/interact/lessons/{id}/help")

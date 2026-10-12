@@ -10,10 +10,16 @@
           <div>
             <b>{{ h.studentName }}</b> <span class="muted">{{ h.pcName }} · {{ fmtTime(h.createdAt) }}</span>
             <div v-if="h.message" class="hmsg">{{ h.message }}</div>
+            <div v-if="h.helperName" class="hmsg">🤝 {{ h.helperName }} 帮助了 TA</div>
           </div>
           <el-button v-if="h.status === 'OPEN'" size="small" type="success" @click="resolve(h)">已处理</el-button>
           <el-tag v-else size="small" type="info">已处理</el-tag>
         </div>
+      </el-card>
+
+      <el-card v-if="data.helpers?.length" shadow="never">
+        <template #header>互助榜 <span class="muted">（同学登记“收到谁的帮助”）</span></template>
+        <div v-for="(h, i) in data.helpers" :key="h.studentId" class="bmsg">{{ i + 1 }}. {{ h.name }} <b>帮助 {{ h.count }} 人次</b></div>
       </el-card>
 
       <el-card shadow="never">
