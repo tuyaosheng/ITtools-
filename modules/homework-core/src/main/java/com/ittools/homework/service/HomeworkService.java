@@ -235,6 +235,19 @@ public class HomeworkService {
     }
 
     /** 精华作品展示（原 Essencestufile，按年级筛选）。 */
+    /** 作品分组统计（原 courseclutb）：本堂课各作品页按小组统计人数、已交、平均分。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> groupStats(Long teacherId, Long lessonId) {
+        lessons.requireTeacher(teacherId, lessonId);
+        return jdbc.queryForList("SELECT pg.id AS \"pageId\", pg.title AS \"pageTitle\", a.group_no AS \"groupNo\", COUNT(*) AS members, "
+                + "COUNT(s.id) AS submitted, ROUND(AVG(COALESCE(s.teacher_score, s.auto_score)), 1) AS \"avgScore\", "
+                + "COUNT(*) FILTER (WHERE s.essence) AS essence "
+                + "FROM lesson l JOIN course_page pg ON pg.course_id = l.course_id AND pg.page_type = 'HOMEWORK' "
+                + "JOIN lesson_attendance a ON a.lesson_id = l.id AND a.status = 'PRESENT' "
+                + "LEFT JOIN submission s ON s.lesson_id = l.id AND s.page_id = pg.id AND s.student_id = a.student_id "
+                + "WHERE l.id = :l GROUP BY pg.id, pg.title, pg.seq, a.group_no ORDER BY pg.seq, a.group_no", p("l", lessonId));
+    }
+
     @Transactional(readOnly = true)
     public List<Map<String, Object>> essenceRanking(Long yearId, Integer days) {
         // 精华作品排行榜（原 Essencestufile 分段排行榜 / 总排行榜）：days 为空是总榜，否则只统计最近 N 天

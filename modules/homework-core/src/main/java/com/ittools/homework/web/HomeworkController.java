@@ -142,6 +142,11 @@ public class HomeworkController {
     }
 
     // ---- 公共 ----
+    @GetMapping("/api/teacher/homework/lessons/{lessonId}/group-stats")
+    public ApiResponse<List<Map<String, Object>>> groupStats(@PathVariable Long lessonId) {
+        return ApiResponse.ok(svc.groupStats(CurrentUser.id(), lessonId));
+    }
+
     @GetMapping("/api/homework/essence-ranking")
     public ApiResponse<List<Map<String, Object>>> ranking(@RequestParam(required = false) Long yearId, @RequestParam(required = false) Integer days) {
         return ApiResponse.ok(svc.essenceRanking(yearId, days));

@@ -15,6 +15,16 @@
         <template #default="{ row }: { row: any }"><el-button link type="primary" @click="open(row)">批阅</el-button></template>
       </el-table-column>
     </el-table>
+    <template v-if="groups.length">
+      <el-divider content-position="left">按小组统计（只统计已进课的学生）</el-divider>
+      <el-table :data="groups" size="small" border>
+        <el-table-column prop="pageTitle" label="作品页" min-width="140" />
+        <el-table-column label="小组" width="90"><template #default="{ row }: { row: any }">{{ row.groupNo ? `第 ${row.groupNo} 组` : '未分组' }}</template></el-table-column>
+        <el-table-column label="已交 / 人数" width="110"><template #default="{ row }: { row: any }">{{ row.submitted }} / {{ row.members }}</template></el-table-column>
+        <el-table-column prop="avgScore" label="平均分" width="90" />
+        <el-table-column prop="essence" label="精华" width="70" />
+      </el-table>
+    </template>
     <el-dialog v-model="visible" :title="current?.title" width="90%" top="4vh" append-to-body>
       <TeacherHomeworkPanel v-if="current" :lesson-id="lesson.id" :page="{ id: current.pageId }" />
     </el-dialog>
@@ -36,5 +46,12 @@ function open(row: any) {
   visible.value = true
 }
 
-onMounted(async () => { list.value = await api.get(`/teacher/homework/lessons/${props.lesson.id}/summary`) })
+const groups = ref<any[]>([])
+onMounted(async () => {
+  ;[list.value, groups.value] = await Promise.all([
+    api.get(`/teacher/homework/lessons/${props.lesson.id}/summary`),
+    api.get(`/teacher/homework/lessons/${props.lesson.id}/group-stats`)])
+  // 全班都没分组时不显示按组统计
+  if (groups.value.every((g: any) => !g.groupNo)) groups.value = []
+})
 </script>
