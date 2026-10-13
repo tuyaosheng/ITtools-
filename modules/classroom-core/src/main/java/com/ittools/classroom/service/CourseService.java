@@ -21,7 +21,7 @@ import static com.ittools.platform.db.Sql.p;
 public class CourseService {
     public static final List<String> PAGE_TYPES = Arrays.asList(
             "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST", "PYTHON",
-            "GROUPING", "GROUP_WORK", "GROUP_SHOW");
+            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH");
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;
@@ -111,9 +111,9 @@ public class CourseService {
                 "INSERT INTO course(teacher_id, term_id, name, category, description, shared) "
                         + "SELECT :t, :term, name || '（副本）', category, description, FALSE FROM course WHERE id = :src RETURNING id",
                 p("t", teacherId, "term", termId != null ? termId : src.get("termId"), "src", sourceId), Long.class);
-        jdbc.update("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id) "
+        jdbc.update("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id, config) "
                         + "SELECT :id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, "
-                        + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END FROM course_page WHERE course_id = :src ORDER BY seq",
+                        + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END, config FROM course_page WHERE course_id = :src ORDER BY seq",
                 p("id", id, "src", sourceId));
         return get(id);
     }

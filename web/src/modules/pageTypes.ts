@@ -4,6 +4,7 @@ import { defineAsyncComponent, type Component } from 'vue'
  * 课程页面类型注册表（对应原 it_coursetype）。
  * - student：学生课堂中渲染该页面的组件（props: lessonId, page）
  * - teacher：教师课堂控制台中该页面的"查看/批改"组件（props: lessonId, page），无则只显示内容预览
+ * - settings：课程编辑中该页面类型的专属设置组件（props: page），页面保存后显示
  * 各子项目（作业/测验/互动）在此登记自己的组件。
  */
 export interface PageTypeDef {
@@ -11,6 +12,7 @@ export interface PageTypeDef {
   desc: string
   student?: Component
   teacher?: Component
+  settings?: Component
 }
 
 export const pageTypes: Record<string, PageTypeDef> = {
@@ -65,6 +67,20 @@ export const pageTypes: Record<string, PageTypeDef> = {
     desc: '展示各组成果，组间互相评分',
     student: defineAsyncComponent(() => import('../views/groups/StudentGroupShow.vue')),
     teacher: defineAsyncComponent(() => import('../views/groups/TeacherGroupWorkPanel.vue'))
+  },
+  SURVEY: {
+    label: '课堂调查',
+    desc: '判断/单选/多选/填空调查，实时统计全班与年级结果',
+    student: defineAsyncComponent(() => import('../views/activity/StudentSurveyPage.vue')),
+    teacher: defineAsyncComponent(() => import('../views/activity/TeacherSurveyPanel.vue')),
+    settings: defineAsyncComponent(() => import('../views/activity/SurveySettings.vue'))
+  },
+  TAKE_QUESTION: {
+    label: '随机抽题',
+    desc: '学生随机抽取一道问题（按学号分配，相邻同学题目不同）',
+    student: defineAsyncComponent(() => import('../views/activity/StudentTakeQuestionPage.vue')),
+    teacher: defineAsyncComponent(() => import('../views/activity/TeacherTakeQuestionPanel.vue')),
+    settings: defineAsyncComponent(() => import('../views/activity/TakeQuestionSettings.vue'))
   }
 }
 

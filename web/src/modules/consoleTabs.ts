@@ -16,7 +16,8 @@ export const consoleTabs: ConsoleTab[] = [
   { name: 'homework', label: '作品汇总', component: defineAsyncComponent(() => import('../views/homework/LessonHomeworkSummary.vue')) },
   { name: 'interact', label: '举手与广播', component: defineAsyncComponent(() => import('../views/interact/TeacherInteractPanel.vue')) },
   { name: 'forum', label: '课堂论坛', component: defineAsyncComponent(() => import('../views/interact/ForumPanel.vue')) },
-  { name: 'dwell', label: '学情监控', component: defineAsyncComponent(() => import('../views/interact/DwellPanel.vue')) }
+  { name: 'dwell', label: '学情监控', component: defineAsyncComponent(() => import('../views/interact/DwellPanel.vue')) },
+  { name: 'rollcall', label: '随机点名', component: defineAsyncComponent(() => import('../views/activity/RollCallPanel.vue')) }
 ]
 
 export const studentTools: ConsoleTab[] = [

@@ -78,11 +78,31 @@
                     <div class="pc">{{ seatAt(r, c).pcName }}</div>
                     <div class="who">{{ studentAt(seatAt(r, c).pcName)?.name || '空闲' }}</div>
                     <div v-if="studentAt(seatAt(r, c).pcName)?.groupNo" class="grp">第 {{ studentAt(seatAt(r, c).pcName).groupNo }} 组</div>
+                    <div v-if="studentAt(seatAt(r, c).pcName)" class="flags">
+                      <span class="star" :class="{ on: studentAt(seatAt(r, c).pcName).attention }" title="关注"
+                        @click="toggleAttention(studentAt(seatAt(r, c).pcName))">★</span>
+                      <template v-if="flagOf(studentAt(seatAt(r, c).pcName))">
+                        <span v-if="flagOf(studentAt(seatAt(r, c).pcName)).top10" class="fl top">前10</span>
+                        <span v-if="flagOf(studentAt(seatAt(r, c).pcName)).essence > 0" class="fl ess">精品</span>
+                        <span v-if="flagOf(studentAt(seatAt(r, c).pcName)).ungraded > 0" class="fl todo">待阅</span>
+                        <span v-else-if="flagOf(studentAt(seatAt(r, c).pcName)).works > 0" class="fl read">已阅</span>
+                      </template>
+                    </div>
                   </template>
                 </div>
               </template>
             </div>
-            <div class="legend"><span class="dot on" />有学生登录 <span class="dot" />空闲机位</div>
+            <div class="legend">
+              <span class="dot on" />有学生登录 <span class="dot" />空闲机位
+              <span class="fl top">前10</span>课堂总分前 10 名 <span class="fl ess">精品</span>有精华作品
+              <span class="fl todo">待阅</span>有作品未批阅 <span class="fl read">已阅</span>作品已全部批阅 <span class="star on">★</span>关注（点击切换）
+            </div>
+            <div v-if="seatAbsent.length" class="absent">
+              <b>缺席 / 请假（{{ seatAbsent.length }}）：</b>
+              <el-tag v-for="a in seatAbsent" :key="a.studentId" size="small" :type="a.status === 'LEAVE' ? 'warning' : 'danger'" class="atag">
+                {{ a.name }}{{ a.status === 'LEAVE' ? `（请假${a.leaveReason ? '·' + a.leaveReason : ''}）` : '' }}
+              </el-tag>
+            </div>
           </template>
         </el-tab-pane>
 
@@ -105,7 +125,7 @@
                 <h3>{{ currentPage.title }}</h3>
                 <PageContent :page="currentPage" />
                 <component :is="pageTypes[currentPage.pageType]?.teacher" v-if="pageTypes[currentPage.pageType]?.teacher"
-                  :lesson-id="lesson.id" :page="currentPage" />
+                  :lesson-id="lesson.id" :page="currentPage" :lesson="lesson" />
               </template>
             </div>
           </div>
@@ -153,7 +173,21 @@ async function loadLesson() {
 
 async function refresh() {
   attendance.value = await api.get(`/teacher/lessons/${id}/attendance`)
-  if (tab.value === 'seats') seatMap.value = await api.get(`/teacher/lessons/${id}/seat-map`)
+  if (tab.value === 'seats') await loadSeats()
+}
+
+async function loadSeats() {
+  const [m, f] = await Promise.all([api.get(`/teacher/lessons/${id}/seat-map`), api.get(`/teacher/lessons/${id}/seat-flags`).catch(() => [])])
+  seatMap.value = m
+  seatFlags.value = Object.fromEntries((f as any[]).map(x => [x.studentId, x]))
+}
+
+const seatFlags = ref<Record<number, any>>({})
+const flagOf = (a: any) => seatFlags.value[a.studentId]
+const seatAbsent = computed(() => (seatMap.value?.attendance || []).filter((a: any) => a.status !== 'PRESENT'))
+
+async function toggleAttention(a: any) {
+  await patch(a, { attention: !a.attention })
 }
 
 async function patch(row: any, body: any) {
@@ -205,7 +239,7 @@ const seatClass = (r: number, c: number) => {
 onMounted(async () => {
   await loadLesson()
   groupModels.value = await api.get('/teacher/lab/group-models')
-  seatMap.value = await api.get(`/teacher/lessons/${id}/seat-map`)
+  await loadSeats()
   await refresh()
   timer = window.setInterval(() => { if (active.value) refresh() }, 5000)
 })
@@ -245,4 +279,14 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .pinfo { flex: 1; }
 .page-view h3 { margin-top: 0; }
 @media (max-width: 1000px) { .pages-layout { grid-template-columns: 1fr; } }
+.flags { display: flex; gap: 3px; justify-content: center; align-items: center; margin-top: 2px; flex-wrap: wrap; }
+.star { cursor: pointer; color: #c0c4cc; font-size: 13px; }
+.star.on { color: #e6a23c; }
+.fl { font-size: 10px; padding: 0 3px; border-radius: 3px; line-height: 15px; }
+.fl.top { background: #fdf6ec; color: #e6a23c; }
+.fl.ess { background: #fef0f0; color: #f56c6c; }
+.fl.todo { background: #ecf5ff; color: #409eff; }
+.fl.read { background: #f0f9eb; color: #67c23a; }
+.absent { margin-top: 10px; font-size: 13px; }
+.atag { margin: 0 4px 4px 0; }
 </style>

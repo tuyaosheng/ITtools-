@@ -93,6 +93,41 @@ public class LessonScoreService {
         return out;
     }
 
+    /**
+     * 座位图标记（原 viewcoursestuseat：已阅 / 前10名 / 精品）：每位学生本堂课提交作品数、未批阅数、精华数、课堂总分与是否前 10 名。
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> seatFlags(Long teacherId, Long lessonId) {
+        @SuppressWarnings("unchecked") List<Map<String, Object>> rows = (List<Map<String, Object>>) scores(teacherId, lessonId).get("rows");
+        Map<Long, Map<String, Object>> sub = new HashMap<>();
+        for (Map<String, Object> r : jdbc.queryForList("SELECT student_id, COUNT(*) AS works, COUNT(*) FILTER (WHERE teacher_score IS NULL) AS ungraded, "
+                + "COUNT(*) FILTER (WHERE essence) AS essence FROM submission WHERE lesson_id = :l GROUP BY student_id", p("l", lessonId))) {
+            sub.put(((Number) r.get("student_id")).longValue(), r);
+        }
+        List<Double> totals = new ArrayList<>();
+        for (Map<String, Object> r : rows) {
+            Object t = r.get("total");
+            if (t != null && ((Number) t).doubleValue() > 0) totals.add(((Number) t).doubleValue());
+        }
+        totals.sort(java.util.Collections.reverseOrder());
+        double cut = totals.isEmpty() ? Double.MAX_VALUE : totals.get(Math.min(9, totals.size() - 1));
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> r : rows) {
+            long sid = ((Number) r.get("studentId")).longValue();
+            Map<String, Object> s = sub.get(sid);
+            double total = r.get("total") == null ? 0 : ((Number) r.get("total")).doubleValue();
+            Map<String, Object> f = new LinkedHashMap<>();
+            f.put("studentId", sid);
+            f.put("works", s == null ? 0 : s.get("works"));
+            f.put("ungraded", s == null ? 0 : s.get("ungraded"));
+            f.put("essence", s == null ? 0 : s.get("essence"));
+            f.put("total", total);
+            f.put("top10", total > 0 && total >= cut);
+            out.add(f);
+        }
+        return out;
+    }
+
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public byte[] export(Long teacherId, Long lessonId) {

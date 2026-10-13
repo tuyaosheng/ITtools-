@@ -28,6 +28,11 @@ public class LessonScoreController {
         return ApiResponse.ok(scores.scores(CurrentUser.id(), lessonId));
     }
 
+    @GetMapping("/api/teacher/lessons/{lessonId}/seat-flags")
+    public ApiResponse<java.util.List<Map<String, Object>>> seatFlags(@PathVariable Long lessonId) {
+        return ApiResponse.ok(scores.seatFlags(CurrentUser.id(), lessonId));
+    }
+
     @GetMapping("/api/teacher/lessons/{lessonId}/scores/export")
     public ResponseEntity<byte[]> export(@PathVariable Long lessonId) {
         return ResponseEntity.ok()

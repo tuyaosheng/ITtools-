@@ -34,7 +34,7 @@
           <h2 class="ptitle">{{ page.title }}</h2>
           <PageContent :page="page" />
           <component :is="pageTypes[page.pageType]?.student" v-if="pageTypes[page.pageType]?.student"
-            :lesson-id="lesson.id" :page="page" />
+            :lesson-id="lesson.id" :page="page" :lesson="lesson" />
         </template>
       </el-card>
 

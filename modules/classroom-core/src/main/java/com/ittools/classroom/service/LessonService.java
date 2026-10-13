@@ -136,7 +136,7 @@ public class LessonService {
         return jdbc.queryForList(
                 "SELECT s.id AS \"studentId\", s.name, s.student_no AS \"studentNo\", a.status, a.pc_name AS \"pcName\", "
                         + "a.ip_address AS \"ipAddress\", a.joined_at AS \"joinedAt\", COALESCE(a.group_no, 0) AS \"groupNo\", "
-                        + "a.score, a.comment "
+                        + "a.score, a.comment, a.leave_reason AS \"leaveReason\", COALESCE(a.attention, FALSE) AS attention "
                         + "FROM lesson l JOIN users s ON s.class_id = l.class_id AND s.role = 'STUDENT' AND NOT s.graduated "
                         + "LEFT JOIN lesson_attendance a ON a.lesson_id = l.id AND a.student_id = s.id "
                         + "WHERE l.id = :l ORDER BY s.student_no NULLS LAST, s.name", p("l", lessonId));
@@ -170,6 +170,17 @@ public class LessonService {
         if (f.containsKey("comment")) {
             jdbc.update("UPDATE lesson_attendance SET comment = :v WHERE lesson_id = :l AND student_id = :s",
                     p("v", f.get("comment"), "l", lessonId, "s", studentId));
+        }
+        if (f.containsKey("leaveReason")) {
+            Object r = f.get("leaveReason");
+            String reason = r == null ? null : String.valueOf(r).trim();
+            if (reason != null && reason.length() > 50) throw new IllegalArgumentException("请假原因不超过 50 字");
+            jdbc.update("UPDATE lesson_attendance SET leave_reason = :v WHERE lesson_id = :l AND student_id = :s",
+                    p("v", reason == null || reason.isEmpty() ? null : reason, "l", lessonId, "s", studentId));
+        }
+        if (f.containsKey("attention")) {
+            jdbc.update("UPDATE lesson_attendance SET attention = :v WHERE lesson_id = :l AND student_id = :s",
+                    p("v", Boolean.TRUE.equals(f.get("attention")), "l", lessonId, "s", studentId));
         }
     }
 

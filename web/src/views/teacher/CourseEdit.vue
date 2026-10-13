@@ -125,7 +125,7 @@ const isOwner = computed(() => course.value && course.value.teacherId === auth.u
 const homeworkSettings = defineAsyncComponent(() => import('../homework/HomeworkPageSettings.vue'))
 const quizSettings = defineAsyncComponent(() => import('../quiz/QuizPageSettings.vue'))
 const settingsComponent = computed(() => (current.value?.pageType === 'HOMEWORK' ? homeworkSettings
-  : current.value?.pageType === 'QUIZ' ? quizSettings : null))
+  : current.value?.pageType === 'QUIZ' ? quizSettings : pageTypes[current.value?.pageType]?.settings || null))
 
 async function load() {
   const id = Number(route.params.id)
