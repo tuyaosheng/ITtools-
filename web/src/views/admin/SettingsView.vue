@@ -30,6 +30,10 @@
         <el-input-number v-model="diskQuota" :min="1" :max="10240" />
       </el-form-item>
 
+      <el-form-item label="学生单处登录">
+        <el-switch v-model="singleLogin" />
+        <span class="tip inline">开启后同一学生账号在另一台电脑登录时，原电脑自动下线</span>
+      </el-form-item>
       <el-divider content-position="left">教学</el-divider>
       <el-form-item label="允许作业补交">
         <el-switch v-model="allowLate" />
@@ -62,6 +66,10 @@ const num = (k: string) => computed({
 })
 const uploadMax = num('upload.maxMb')
 const diskQuota = num('disk.quotaMb')
+const singleLogin = computed({
+  get: () => form['login.singleSession'] === 'true',
+  set: (v: boolean) => { form['login.singleSession'] = String(v) }
+})
 const allowLate = computed({
   get: () => form['homework.allowLate'] === 'true',
   set: (v: boolean) => { form['homework.allowLate'] = String(v) }

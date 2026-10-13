@@ -25,6 +25,8 @@ public class SystemSettingService {
     public static final String HOMEWORK_ALLOW_LATE = "homework.allowLate";
     public static final String UPLOAD_MAX_MB = "upload.maxMb";
     public static final String SENSITIVE_WORDS = "interact.sensitiveWords";
+    /** 学生账号只允许一处登录（再次登录时旧电脑下线） */
+    public static final String SINGLE_LOGIN = "login.singleSession";
 
     public static final List<String> LOGIN_MODES = Arrays.asList("NORMAL", "OPEN_CLASS", "XJH", "FIXED_SEAT");
 
@@ -37,6 +39,7 @@ public class SystemSettingService {
         DEFAULTS.put(HOMEWORK_ALLOW_LATE, "true");
         DEFAULTS.put(UPLOAD_MAX_MB, "50");
         DEFAULTS.put(SENSITIVE_WORDS, "");
+        DEFAULTS.put(SINGLE_LOGIN, "true");
     }
 
     private final SystemSettingRepository repo;

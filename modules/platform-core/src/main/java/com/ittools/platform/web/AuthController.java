@@ -42,11 +42,16 @@ public class AuthController {
     private final List<LoginPolicy> policies;
     private final com.ittools.platform.service.LoginLogService loginLogs;
     private static final String LOG_ATTR = "ittools.loginLogId";
+    private final com.ittools.platform.security.SessionTracker sessions;
+    private final com.ittools.platform.settings.SystemSettingService settings;
     private final SecurityContextRepository repo = new HttpSessionSecurityContextRepository();
 
     public AuthController(MultiLoginAuthenticationProvider provider, LookupService lookups,
-                          java.util.Optional<List<LoginPolicy>> policies, com.ittools.platform.service.LoginLogService loginLogs) {
+                          java.util.Optional<List<LoginPolicy>> policies, com.ittools.platform.service.LoginLogService loginLogs,
+                          com.ittools.platform.security.SessionTracker sessions, com.ittools.platform.settings.SystemSettingService settings) {
         this.loginLogs = loginLogs;
+        this.sessions = sessions;
+        this.settings = settings;
         this.provider = provider;
         this.lookups = lookups;
         this.policies = policies.orElse(Collections.<LoginPolicy>emptyList());
@@ -71,6 +76,19 @@ public class AuthController {
         SecurityContextHolder.setContext(ctx);
         repo.saveContext(ctx, request, response);
         request.getSession().setAttribute(LOG_ATTR, loginLogs.recordLogin(ud.userId(), ip));
+        // 学生账号同一时间只允许一处登录：新登录让旧电脑下线（系统参数可关闭）
+        if (ud.role() == com.ittools.platform.domain.Role.STUDENT && settings.getBool(com.ittools.platform.settings.SystemSettingService.SINGLE_LOGIN)) {
+            for (HttpSession old : sessions.others(ud.userId(), request.getSession())) {
+                try {
+                    Object logId = old.getAttribute(LOG_ATTR);
+                    if (logId instanceof Long) loginLogs.recordLogout((Long) logId);
+                } catch (IllegalStateException ignored) {
+                    // 旧会话已失效
+                }
+                sessions.kick(old);
+            }
+        }
+        sessions.register(ud.userId(), request.getSession());
         return ApiResponse.ok(principalPayload(ud));
     }
 

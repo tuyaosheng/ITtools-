@@ -84,4 +84,37 @@ class LoginLogIT extends AbstractPostgresIT {
         assertThat(call(t, HttpMethod.GET, "/api/teacher/login-logs?classId=" + classId + "&from=2000-01-01&to=2000-01-02", null).size()).isEqualTo(0);
         fails(t, HttpMethod.GET, "/api/teacher/login-logs?classId=" + classId + "&from=" + today + "&to=2000-01-01", null);
     }
+
+    @Test
+    void duplicateStudentLoginKicksOldSession() throws Exception {
+        HttpHeaders admin = session("{\"loginType\":\"ADMIN\",\"loginName\":\"admin\",\"password\":\"admin123\"}");
+        long yearId = call(admin, HttpMethod.POST, "/api/admin/school-years", map("yearCode", "2045", "label", "2045级", "active", true)).get("id").asLong();
+        long classId = call(admin, HttpMethod.POST, "/api/admin/classes", map("schoolYearId", yearId, "name", "单点班", "displayOrder", 1)).get("id").asLong();
+        call(admin, HttpMethod.POST, "/api/admin/users", map("role", "TEACHER", "name", "单点老师", "loginName", "kick_t", "password", "kick-pass-1"));
+        student(admin, "单点生", "KICK01", classId, yearId);
+        String stu = "{\"loginType\":\"STUDENT_XJH\",\"xjh\":\"KICK01\",\"password\":\"msg-pass-1\"}";
+        HttpHeaders first = session(stu);
+        call(first, HttpMethod.GET, "/api/auth/me", null);
+        HttpHeaders second = session(stu);
+        ResponseEntity<String> old = rest.exchange("/api/student/records", HttpMethod.GET, new HttpEntity<>(first), String.class);
+        assertThat(old.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(old.getBody()).contains("其他电脑登录").contains("\"kicked\":true");
+        call(second, HttpMethod.GET, "/api/student/records", null);
+
+        // 教师可多处登录
+        HttpHeaders t1 = session("{\"loginType\":\"TEACHER\",\"loginName\":\"kick_t\",\"password\":\"kick-pass-1\"}");
+        session("{\"loginType\":\"TEACHER\",\"loginName\":\"kick_t\",\"password\":\"kick-pass-1\"}");
+        call(t1, HttpMethod.GET, "/api/auth/me", null);
+
+        // 关闭“学生单处登录”后两处都有效
+        call(admin, HttpMethod.PUT, "/api/admin/settings", map("login.singleSession", "false"));
+        try {
+            HttpHeaders a = session(stu);
+            HttpHeaders b = session(stu);
+            call(a, HttpMethod.GET, "/api/student/records", null);
+            call(b, HttpMethod.GET, "/api/student/records", null);
+        } finally {
+            call(admin, HttpMethod.PUT, "/api/admin/settings", map("login.singleSession", "true"));
+        }
+    }
 }
