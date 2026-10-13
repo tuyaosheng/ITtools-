@@ -81,6 +81,19 @@ export const pageTypes: Record<string, PageTypeDef> = {
     student: defineAsyncComponent(() => import('../views/activity/StudentTakeQuestionPage.vue')),
     teacher: defineAsyncComponent(() => import('../views/activity/TeacherTakeQuestionPanel.vue')),
     settings: defineAsyncComponent(() => import('../views/activity/TakeQuestionSettings.vue'))
+  },
+  STORYLINE: {
+    label: '课件包',
+    desc: '上传 Storyline 等发布的 HTML5 课件包（zip），课堂中直接播放',
+    student: defineAsyncComponent(() => import('../views/activity/CoursewareFrame.vue')),
+    teacher: defineAsyncComponent(() => import('../views/activity/CoursewareFrame.vue')),
+    settings: defineAsyncComponent(() => import('../views/activity/CoursewareSettings.vue'))
+  },
+  SCRATCH: {
+    label: 'Scratch 作品',
+    desc: '上传 Scratch 作品（sb3/sb2/sb），课堂中直接运行演示，也可下载',
+    student: defineAsyncComponent(() => import('../views/activity/ScratchPlayer.vue')),
+    teacher: defineAsyncComponent(() => import('../views/activity/ScratchPlayer.vue'))
   }
 }
 

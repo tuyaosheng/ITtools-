@@ -54,7 +54,7 @@
           <el-form-item v-if="['LINK', 'VIDEO'].includes(current.pageType)" :label="current.pageType === 'LINK' ? '网址' : '视频地址'">
             <el-input v-model="current.linkUrl" placeholder="https://..." />
           </el-form-item>
-          <el-form-item v-if="['FILE', 'VIDEO', 'TEXT', 'HOMEWORK', 'DISCUSS'].includes(current.pageType)" label="附件">
+          <el-form-item v-if="['FILE', 'VIDEO', 'TEXT', 'HOMEWORK', 'DISCUSS', 'SCRATCH'].includes(current.pageType)" :label="current.pageType === 'SCRATCH' ? 'Scratch 作品' : '附件'">
             <div class="attach">
               <span v-if="current.fileName">{{ current.fileName }}</span>
               <span v-else class="muted">未上传</span>

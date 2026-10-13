@@ -2,7 +2,7 @@
   <div class="page-content">
     <div v-if="page.content && page.pageType !== 'LINK'" class="rich" v-html="safeHtml(page.content)" />
 
-    <div v-if="page.pageType === 'FILE' || (page.filePath && page.pageType !== 'VIDEO')" class="file-box">
+    <div v-if="page.pageType === 'FILE' || (page.filePath && page.pageType !== 'VIDEO' && page.pageType !== 'SCRATCH')" class="file-box">
       <template v-if="page.filePath">
         <el-icon class="file-icon"><Document /></el-icon>
         <span class="file-name">{{ page.fileName }}</span>

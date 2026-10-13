@@ -2,6 +2,7 @@ package com.ittools.platform.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -40,7 +41,9 @@ public class SecurityConfig {
                     // .authenticated() below would 401 "/", "/admin/**" etc. before
                     // SpaForwardController/static resource resolution ever runs.
                     .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
-                            "/assets/**", "/pyrunner/**", "/favicon.ico").permitAll()
+                            "/assets/**", "/pyrunner/**", "/scratch/**", "/favicon.ico").permitAll()
+                    // 课件包（Storyline 等）：按不可猜测的包编号公开访问，响应带 CSP sandbox，与平台会话隔离
+                    .antMatchers(HttpMethod.GET, "/courseware/**").permitAll()
                     .anyRequest().authenticated())
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                     .accessDeniedHandler((req, resp, ex) -> {
@@ -49,6 +52,8 @@ public class SecurityConfig {
                         resp.setContentType("application/json;charset=UTF-8");
                         resp.getWriter().write("{\"code\":403,\"message\":\"无权访问\",\"data\":null}");
                     }))
+            // 课件包需要在课堂页面的 iframe 中显示：只允许同源框架嵌入
+            .headers(h -> h.frameOptions().sameOrigin())
             .formLogin(f -> f.disable())
             .httpBasic(b -> b.disable());
         return http.build();
