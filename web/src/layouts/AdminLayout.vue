@@ -69,7 +69,8 @@ const menuGroups = [
       { path: '/admin/teaching', label: '教学管理' },
       { path: '/admin/electives', label: '走班选课' },
       { path: '/admin/permissions', label: '权限管理' },
-      { path: '/admin/settings', label: '系统设置' }
+      { path: '/admin/settings', label: '系统设置' },
+      { path: '/admin/tools', label: '应急工具' }
     ]
   }
 ]

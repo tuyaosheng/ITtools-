@@ -29,9 +29,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="summary" label="小结" min-width="140" show-overflow-tooltip />
-      <el-table-column label="操作" width="100">
+      <el-table-column label="操作" width="120">
         <template #default="{ row }: { row: any }">
           <el-button link type="primary" @click="router.push(`/teacher/lessons/${row.id}`)">查看</el-button>
+          <el-popconfirm title="撤销本次课堂？将清除本堂课全部学习记录（考勤、作品、测验、调查等），不可恢复" width="300" @confirm="revoke(row)">
+            <template #reference><el-button link type="danger">撤销</el-button></template>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
@@ -41,13 +44,24 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '../../api/client'
+import { ElMessage } from 'element-plus'
+import { api, errMsg } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 
 const router = useRouter()
 const list = ref<any[]>([])
 const status = ref('')
 const loading = ref(false)
+
+async function revoke(row: any) {
+  try {
+    await api.del(`/teacher/lessons/${row.id}`)
+    ElMessage.success('已撤销')
+    await load()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 
 async function load() {
   loading.value = true

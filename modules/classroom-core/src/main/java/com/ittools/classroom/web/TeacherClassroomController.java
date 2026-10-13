@@ -33,11 +33,14 @@ public class TeacherClassroomController {
     private final ClassBindingService bindings;
     private final TeacherToolsService tools;
     private final com.ittools.platform.service.LoginLogService loginLogService;
+    private final com.ittools.classroom.service.EmergencyToolsService emergency;
 
     public TeacherClassroomController(CourseService courses, LessonService lessons, TermService terms,
                                       ClassBindingService bindings, TeacherToolsService tools,
-                                      com.ittools.platform.service.LoginLogService loginLogService) {
+                                      com.ittools.platform.service.LoginLogService loginLogService,
+                                      com.ittools.classroom.service.EmergencyToolsService emergency) {
         this.loginLogService = loginLogService;
+        this.emergency = emergency;
         this.courses = courses;
         this.lessons = lessons;
         this.terms = terms;
@@ -164,6 +167,13 @@ public class TeacherClassroomController {
     @PutMapping("/lessons/{id}/pages/{pageId}")
     public ApiResponse<Void> setPageOpen(@PathVariable Long id, @PathVariable Long pageId, @RequestBody Map<String, Object> body) {
         lessons.setPageOpen(CurrentUser.id(), id, pageId, Body.of(body).bool("open", true));
+        return ApiResponse.ok(null);
+    }
+
+    /** 撤销课堂（原 coursemanage“撤销”）：清除本堂课全部学习记录。 */
+    @DeleteMapping("/lessons/{id}")
+    public ApiResponse<Void> revokeLesson(@PathVariable Long id) {
+        emergency.revokeLesson(CurrentUser.id(), id);
         return ApiResponse.ok(null);
     }
 

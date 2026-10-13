@@ -126,6 +126,9 @@ public class ClassReportService {
         String ts = testScope(termId);
         List<Map<String, Object>> rows = jdbc.queryForList("SELECT u.id AS \"studentId\", u.student_no AS \"studentNo\", u.name, "
                 + "(SELECT COUNT(*) FROM lesson WHERE id IN (" + ls + ")) AS lessons, "
+                // 已下课却没有考勤记录的课堂（缺勤记录被“消除”、或学生后来才转入）不计入出勤率分母
+                + "(SELECT COUNT(*) FROM lesson l2 WHERE l2.id IN (" + ls + ") AND l2.status = 'ENDED' "
+                + "  AND NOT EXISTS (SELECT 1 FROM lesson_attendance a WHERE a.lesson_id = l2.id AND a.student_id = u.id)) AS excused, "
                 + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.student_id = u.id AND a.lesson_id IN (" + ls + ") AND a.status = 'PRESENT') AS present, "
                 + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.student_id = u.id AND a.lesson_id IN (" + ls + ") AND a.status = 'LEAVE') AS leave, "
                 + "(SELECT ROUND(AVG(a.score), 1) FROM lesson_attendance a WHERE a.student_id = u.id AND a.lesson_id IN (" + ls + ") AND a.score IS NOT NULL) AS \"lessonScore\", "
@@ -151,7 +154,8 @@ public class ClassReportService {
                 + "FROM users u WHERE u.class_id = :k AND u.role = 'STUDENT' AND NOT u.graduated ORDER BY u.student_no NULLS LAST, u.name",
                 p("k", classId, "term", termId));
         for (Map<String, Object> r : rows) {
-            long lessons = ((Number) r.get("lessons")).longValue();
+            long lessons = ((Number) r.get("lessons")).longValue() - ((Number) r.get("excused")).longValue();
+            r.put("lessons", lessons);
             Double att = lessons == 0 ? null : ((Number) r.get("present")).doubleValue() * 100 / lessons;
             r.put("attendancePct", att == null ? null : round(att));
             Double[] parts = {att, num(r.get("workPct")), num(r.get("pythonPct")), num(r.get("homeworkPct")), num(r.get("testPct"))};

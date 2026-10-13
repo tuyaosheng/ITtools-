@@ -31,9 +31,12 @@ public class ClassroomCommonController {
     private final TermService terms;
     private final ClassBindingService bindings;
     private final FileStorageService storage;
+    private final com.ittools.classroom.service.EmergencyToolsService tools;
 
     public ClassroomCommonController(CourseService courses, LessonService lessons, TermService terms,
-                                     ClassBindingService bindings, FileStorageService storage) {
+                                     ClassBindingService bindings, FileStorageService storage,
+                                     com.ittools.classroom.service.EmergencyToolsService tools) {
+        this.tools = tools;
         this.courses = courses;
         this.lessons = lessons;
         this.terms = terms;
@@ -97,6 +100,38 @@ public class ClassroomCommonController {
     @GetMapping("/api/admin/lessons/active")
     public ApiResponse<List<Map<String, Object>>> activeLessons() {
         return ApiResponse.ok(lessons.activeLessons());
+    }
+
+    // ---- 管理员：应急工具 ----
+    @PostMapping("/api/admin/tools/end-all")
+    public ApiResponse<Integer> endAll() {
+        return ApiResponse.ok(tools.endAll());
+    }
+
+    @GetMapping("/api/admin/tools/absences")
+    public ApiResponse<List<Map<String, Object>>> absences(@RequestParam Long classId, @RequestParam(required = false) Long termId) {
+        return ApiResponse.ok(tools.absences(classId, termId));
+    }
+
+    @PostMapping("/api/admin/tools/absences/clear")
+    public ApiResponse<Integer> clearAbsences(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(tools.clearAbsences(Body.of(body).maps("items")));
+    }
+
+    @PostMapping("/api/admin/tools/lessons/{id}/revoke")
+    public ApiResponse<Void> revokeLesson(@PathVariable Long id) {
+        tools.revokeLesson(null, id);
+        return ApiResponse.ok(null);
+    }
+
+    @GetMapping("/api/admin/tools/courses")
+    public ApiResponse<List<Map<String, Object>>> courses(@RequestParam(required = false) String keyword) {
+        return ApiResponse.ok(tools.coursesWithUsage(keyword));
+    }
+
+    @DeleteMapping("/api/admin/tools/courses/{id}")
+    public ApiResponse<Integer> forceDeleteCourse(@PathVariable Long id) {
+        return ApiResponse.ok(tools.forceDeleteCourse(id));
     }
 
     @PostMapping("/api/admin/lessons/{id}/force-end")
