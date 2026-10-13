@@ -25,7 +25,8 @@ const menu = computed(() => [
   { path: '/student/electives', label: '走班选课' },
   { path: '/student/messages', label: '系统消息', badge: notices.unreadMessages || undefined },
   { path: '/student/qa', label: '师生答疑' },
-  { path: '/student/records', label: '学习记录' }
+  { path: '/student/records', label: '学习记录' },
+  { path: '/student/report', label: '我的学情' }
 ])
 
 onBeforeUnmount(() => window.clearInterval(timer))
