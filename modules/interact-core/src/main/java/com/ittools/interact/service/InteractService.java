@@ -288,13 +288,81 @@ public class InteractService {
 
     // ================= 在线监控 / 行为日志 =================
 
+    /**
+     * 课堂心跳：记录当前页面（在线监控），并把上次心跳以来的时间累计到上次所在页面（学情监控·页面停留时间）。
+     * 两次心跳间隔超过 60 秒视为离线不计时，单次最多计 30 秒；切换到新页面记一次访问。
+     * 浏览器页面被切到后台（visible=false）时仍算在线，但这段时间不计入页面停留。
+     */
     public void heartbeat(Long studentId, Long lessonId, Long pageId, String pageTitle) {
+        heartbeat(studentId, lessonId, pageId, pageTitle, true);
+    }
+
+    public void heartbeat(Long studentId, Long lessonId, Long pageId, String pageTitle, boolean visible) {
         lessons.requireStudent(studentId, lessonId);
+        long now = Instant.now().toEpochMilli();
+        Map<Long, Map<String, Object>> m = presence.computeIfAbsent(lessonId, k -> new ConcurrentHashMap<>());
+        Map<String, Object> prev = m.get(studentId);
+        Object prevPage = prev == null ? null : prev.get("pageId");
+        if (prevPage != null && Boolean.TRUE.equals(prev.get("visible"))) {
+            long gap = now - ((Number) prev.get("at")).longValue();
+            int secs = (int) (Math.min(gap, 30_000) / 1000);
+            if (gap < 60_000 && secs > 0) {
+                jdbc.update("INSERT INTO page_dwell(lesson_id, page_id, student_id, seconds) VALUES (:l, :p, :s, :n) "
+                        + "ON CONFLICT (lesson_id, page_id, student_id) DO UPDATE SET seconds = page_dwell.seconds + :n, last_at = now()",
+                        p("l", lessonId, "p", prevPage, "s", studentId, "n", secs));
+            }
+        }
+        Long validPage = null;
+        if (pageId != null) {
+            if (pageId.equals(prevPage)) {
+                validPage = pageId;
+            } else {
+                Long ok = jdbc.queryForObject("SELECT COUNT(*) FROM course_page cp JOIN lesson l ON l.course_id = cp.course_id WHERE l.id = :l AND cp.id = :p",
+                        p("l", lessonId, "p", pageId), Long.class);
+                if (ok != null && ok > 0) {
+                    validPage = pageId;
+                    jdbc.update("INSERT INTO page_dwell(lesson_id, page_id, student_id, visits) VALUES (:l, :p, :s, 1) "
+                            + "ON CONFLICT (lesson_id, page_id, student_id) DO UPDATE SET visits = page_dwell.visits + 1, last_at = now()",
+                            p("l", lessonId, "p", pageId, "s", studentId));
+                }
+            }
+        }
         Map<String, Object> st = new HashMap<>();
-        st.put("pageId", pageId);
+        st.put("pageId", validPage);
         st.put("pageTitle", pageTitle);
-        st.put("at", Instant.now().toEpochMilli());
-        presence.computeIfAbsent(lessonId, k -> new ConcurrentHashMap<>()).put(studentId, st);
+        st.put("visible", visible);
+        st.put("at", now);
+        m.put(studentId, st);
+    }
+
+    /** 学情监控：本堂课每位学生在各页面的停留秒数与访问次数。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> dwell(Long lessonId) {
+        List<Map<String, Object>> pages = jdbc.queryForList("SELECT cp.id, cp.seq, cp.title, cp.page_type AS \"pageType\" FROM course_page cp "
+                + "JOIN lesson l ON l.course_id = cp.course_id WHERE l.id = :l ORDER BY cp.seq, cp.id", p("l", lessonId));
+        List<Map<String, Object>> students = jdbc.queryForList("SELECT u.id AS \"studentId\", u.student_no AS \"studentNo\", u.name, a.status "
+                + "FROM lesson_attendance a JOIN users u ON u.id = a.student_id WHERE a.lesson_id = :l ORDER BY u.student_no NULLS LAST, u.name", p("l", lessonId));
+        Map<Long, Map<String, Object>> rows = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> st : students) {
+            Map<String, Object> r = new java.util.LinkedHashMap<>(st);
+            r.put("cells", new HashMap<String, Object>());
+            r.put("total", 0);
+            rows.put(((Number) st.get("studentId")).longValue(), r);
+        }
+        for (Map<String, Object> d : jdbc.queryForList("SELECT student_id, page_id, seconds, visits FROM page_dwell WHERE lesson_id = :l", p("l", lessonId))) {
+            Map<String, Object> r = rows.get(((Number) d.get("student_id")).longValue());
+            if (r == null) continue;
+            Map<String, Object> c = new HashMap<>();
+            c.put("seconds", d.get("seconds"));
+            c.put("visits", d.get("visits"));
+            @SuppressWarnings("unchecked") Map<String, Object> cells = (Map<String, Object>) r.get("cells");
+            cells.put(String.valueOf(d.get("page_id")), c);
+            r.put("total", ((Number) r.get("total")).intValue() + ((Number) d.get("seconds")).intValue());
+        }
+        Map<String, Object> out = new HashMap<>();
+        out.put("pages", pages);
+        out.put("rows", new ArrayList<>(rows.values()));
+        return out;
     }
 
     /** 全班学生在线状态：最近 60 秒有心跳为在线。 */

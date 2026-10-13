@@ -47,6 +47,12 @@ public class InteractController {
         return ApiResponse.ok(m);
     }
 
+    @GetMapping("/api/teacher/interact/lessons/{id}/dwell")
+    public ApiResponse<Map<String, Object>> dwell(@PathVariable Long id) {
+        lessons.requireTeacher(CurrentUser.id(), id);
+        return ApiResponse.ok(svc.dwell(id));
+    }
+
     @PostMapping("/api/teacher/interact/helps/{helpId}/resolve")
     public ApiResponse<Void> resolve(@PathVariable Long helpId) {
         svc.resolveHelp(CurrentUser.id(), helpId);
@@ -131,7 +137,7 @@ public class InteractController {
     @PostMapping("/api/student/interact/lessons/{id}/heartbeat")
     public ApiResponse<Void> heartbeat(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
-        svc.heartbeat(CurrentUser.id(), id, b.lng("pageId"), b.str("pageTitle"));
+        svc.heartbeat(CurrentUser.id(), id, b.lng("pageId"), b.str("pageTitle"), !Boolean.FALSE.equals(body.get("visible")));
         return ApiResponse.ok(null);
     }
 

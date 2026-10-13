@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
@@ -95,15 +95,21 @@ onMounted(async () => {
   const want = Number(route.query.page)
   if (pages.value.length) await openPage(pages.value.some(p => p.id === want) ? want : pages.value[0].id)
   timer = window.setInterval(loadPages, 8000)
-  // 在线监控心跳：上报当前查看的页面（教师"在线监控"使用）
-  const beat = () => {
-    if (lesson.value?.status === 'ACTIVE') {
-      api.post(`/student/interact/lessons/${id}/heartbeat`, { pageId: page.value?.id ?? null, pageTitle: page.value?.title ?? '课堂首页' }).catch(() => {})
-    }
-  }
+  // 在线监控心跳：上报当前查看的页面（教师"在线监控"与"学情监控·页面停留时间"使用）；切换页面时立即上报
   beat()
   hbTimer = window.setInterval(beat, 20000)
 })
+function beat() {
+  if (lesson.value?.status === 'ACTIVE') {
+    api.post(`/student/interact/lessons/${id}/heartbeat`, {
+      pageId: page.value?.id ?? null, pageTitle: page.value?.title ?? '课堂首页', visible: !document.hidden
+    }).catch(() => {})
+  }
+}
+watch(() => page.value?.id, (v, old) => { if (v !== old && hbTimer) beat() })
+// 切回/切走浏览器时立即上报，让后台时间不计入停留
+document.addEventListener('visibilitychange', beat)
+onBeforeUnmount(() => document.removeEventListener('visibilitychange', beat))
 onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(hbTimer) })
 </script>
 
