@@ -25,10 +25,18 @@ public class CourseService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;
+    private final org.springframework.beans.factory.ObjectProvider<PageExtension> extensions;
 
-    public CourseService(NamedParameterJdbcTemplate jdbc, FileStorageService storage) {
+    public CourseService(NamedParameterJdbcTemplate jdbc, FileStorageService storage,
+                         org.springframework.beans.factory.ObjectProvider<PageExtension> extensions) {
         this.jdbc = jdbc;
         this.storage = storage;
+        this.extensions = extensions;
+    }
+
+    /** 各子项目登记的页面扩展设置 */
+    public List<PageExtension> pageExtensions() {
+        return extensions.orderedStream().collect(java.util.stream.Collectors.toList());
     }
 
     private static final String COURSE_COLS =
@@ -111,10 +119,14 @@ public class CourseService {
                 "INSERT INTO course(teacher_id, term_id, name, category, description, shared) "
                         + "SELECT :t, :term, name || '（副本）', category, description, FALSE FROM course WHERE id = :src RETURNING id",
                 p("t", teacherId, "term", termId != null ? termId : src.get("termId"), "src", sourceId), Long.class);
-        jdbc.update("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id, config) "
-                        + "SELECT :id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, "
-                        + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END, config FROM course_page WHERE course_id = :src ORDER BY seq",
-                p("id", id, "src", sourceId));
+        // 逐页复制，并让各子项目复制页面的扩展设置（作品评分规则、测验方式等）
+        for (Long from : jdbc.queryForList("SELECT id FROM course_page WHERE course_id = :src ORDER BY seq, id", p("src", sourceId), Long.class)) {
+            Long to = jdbc.queryForObject("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id, config) "
+                            + "SELECT :id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, "
+                            + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END, config FROM course_page WHERE id = :from RETURNING id",
+                    p("id", id, "from", from), Long.class);
+            for (PageExtension ext : pageExtensions()) ext.copy(from, to);
+        }
         return get(id);
     }
 
