@@ -17,6 +17,9 @@
           </el-table-column>
         </el-table>
       </el-tab-pane>
+      <el-tab-pane label="课后操作题" name="practice" lazy>
+        <OpPracticeReport />
+      </el-tab-pane>
       <el-tab-pane label="精华作品" name="showcase" lazy>
         <ShowcaseList />
       </el-tab-pane>
@@ -28,6 +31,7 @@
 </template>
 
 <script setup lang="ts">
+import OpPracticeReport from './OpPracticeReport.vue'
 import { onMounted, ref } from 'vue'
 import { api } from '../../api/client'
 import { fmtTime } from '../../utils/format'

@@ -27,8 +27,8 @@ public class HomeworkPageExtension implements PageExtension {
 
     @Override
     public void copy(long fromPage, long toPage) {
-        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id) "
-                + "SELECT :to, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id FROM homework_config WHERE page_id = :from",
+        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice) "
+                + "SELECT :to, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice FROM homework_config WHERE page_id = :from",
                 p("from", fromPage, "to", toPage));
         jdbc.update("INSERT INTO grading_rule(page_id, seq, rule_type, param1, param2, param3, score, note) "
                 + "SELECT :to, seq, rule_type, param1, param2, param3, score, note FROM grading_rule WHERE page_id = :from ORDER BY seq",
@@ -38,7 +38,8 @@ public class HomeworkPageExtension implements PageExtension {
     @Override
     public Map<String, Object> export(long pageId) {
         List<Map<String, Object>> cfg = jdbc.queryForList("SELECT allowed_exts AS \"allowedExts\", peer_review AS \"peerReview\", "
-                + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\" FROM homework_config WHERE page_id = :p", p("p", pageId));
+                + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", auto_visibility AS \"autoVisibility\", practice "
+                + "FROM homework_config WHERE page_id = :p", p("p", pageId));
         List<Map<String, Object>> rules = jdbc.queryForList("SELECT seq, rule_type AS \"ruleType\", param1, param2, param3, score, note "
                 + "FROM grading_rule WHERE page_id = :p ORDER BY seq", p("p", pageId));
         if (cfg.isEmpty() && rules.isEmpty()) return null;
@@ -54,9 +55,12 @@ public class HomeworkPageExtension implements PageExtension {
         Object c = data.get("config");
         if (c instanceof Map) {
             Map<String, Object> m = (Map<String, Object>) c;
-            jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade) VALUES (:p, :e, :pr, :sc, :ag)",
+            Object vis = m.get("autoVisibility");
+            jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, auto_visibility, practice) "
+                            + "VALUES (:p, :e, :pr, :sc, :ag, :v, :pc)",
                     p("p", pageId, "e", cut(m.get("allowedExts"), 256), "pr", Boolean.TRUE.equals(m.get("peerReview")),
-                            "sc", Boolean.TRUE.equals(m.get("showClassmates")), "ag", !Boolean.FALSE.equals(m.get("autoGrade"))));
+                            "sc", Boolean.TRUE.equals(m.get("showClassmates")), "ag", !Boolean.FALSE.equals(m.get("autoGrade")),
+                            "v", "SCORE".equals(vis) || "NONE".equals(vis) ? vis : "ALL", "pc", Boolean.TRUE.equals(m.get("practice"))));
         }
         Object r = data.get("rules");
         if (r instanceof List) {

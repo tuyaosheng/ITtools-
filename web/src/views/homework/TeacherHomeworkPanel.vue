@@ -6,6 +6,7 @@
       <el-button size="small" :disabled="!submitted" @click="zip">打包下载全部作品</el-button>
       <el-button size="small" :disabled="!submitted" @click="carousel = true">循环展播</el-button>
       <el-button size="small" :disabled="!submitted" @click="regrade">按当前规则重新自动评分</el-button>
+      <el-button size="small" :disabled="!submitted" @click="openStats">评分点通过率</el-button>
       <el-radio-group v-model="filter" size="small">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="done">已交</el-radio-button>
@@ -90,6 +91,21 @@
         <el-button type="primary" @click="saveGrade">保存</el-button>
       </template>
     </el-dialog>
+    <el-dialog v-model="statsDlg" title="评分点通过率" width="620px" append-to-body>
+      <p class="muted">按本堂课已提交作品的自动评分统计，通过率低的操作就是学生普遍没掌握的地方。</p>
+      <el-table :data="stats" size="small" border empty-text="没有自动评分记录">
+        <el-table-column prop="seq" label="#" width="40" />
+        <el-table-column label="评分点" min-width="200">
+          <template #default="{ row }: { row: any }">{{ row.name }}<span v-if="row.note" class="muted">（{{ row.note }}）</span></template>
+        </el-table-column>
+        <el-table-column label="通过" width="90"><template #default="{ row }: { row: any }">{{ row.passed }}/{{ row.total }}</template></el-table-column>
+        <el-table-column label="通过率" width="180">
+          <template #default="{ row }: { row: any }">
+            <el-progress :percentage="row.rate ?? 0" :status="(row.rate ?? 0) < 60 ? 'exception' : 'success'" />
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -131,6 +147,17 @@ const base = () => `/teacher/homework/lessons/${props.lessonId}/pages/${props.pa
 
 async function load() {
   data.value = await api.get(base())
+}
+
+const statsDlg = ref(false)
+const stats = ref<any[]>([])
+async function openStats() {
+  try {
+    stats.value = await api.get(`/teacher/homework/lessons/${props.lessonId}/pages/${props.page.id}/rule-stats`)
+    statsDlg.value = true
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
 }
 
 function download(row: any) {

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,6 +39,19 @@ public class TeacherGradingController {
     @PutMapping("/pages/{pageId}/rules")
     public ApiResponse<List<Map<String, Object>>> saveRules(@PathVariable Long pageId, @RequestBody Map<String, Object> body) {
         return ApiResponse.ok(svc.saveRules(CurrentUser.id(), pageId, Body.of(body).maps("rules")));
+    }
+
+    @PostMapping("/inspect")
+    public ApiResponse<Map<String, Object>> inspect(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ApiResponse.ok(svc.inspect(file));
+    }
+
+    @PostMapping("/test")
+    public ApiResponse<Map<String, Object>> test(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+                                                 @RequestParam("rules") String rulesJson) throws java.io.IOException {
+        List<Map<String, Object>> rules = new com.fasterxml.jackson.databind.ObjectMapper().readValue(rulesJson,
+                new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() { });
+        return ApiResponse.ok(svc.testRules(file, rules));
     }
 
     @GetMapping("/rubrics")

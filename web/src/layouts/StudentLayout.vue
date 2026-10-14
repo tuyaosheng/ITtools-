@@ -19,6 +19,7 @@ const menu = computed(() => [
   { path: '/student/tests', label: '作业与测验' },
   { path: '/student/practice', label: '刷题练习' },
   { path: '/student/python', label: 'Python 练习' },
+  { path: '/student/op-practice', label: '课后操作题' },
   { path: '/student/resources', label: '学习资源' },
   { path: '/student/disk', label: '我的网盘' },
   { path: '/student/notes', label: '学习笔记' },

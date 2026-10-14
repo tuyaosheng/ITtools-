@@ -57,7 +57,8 @@ public class HomeworkService {
     public Map<String, Object> config(Long pageId) {
         List<Map<String, Object>> l = jdbc.queryForList(
                 "SELECT page_id AS \"pageId\", allowed_exts AS \"allowedExts\", peer_review AS \"peerReview\", "
-                        + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", rubric_id AS \"rubricId\" "
+                        + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", rubric_id AS \"rubricId\", "
+                        + "auto_visibility AS \"autoVisibility\", practice "
                         + "FROM homework_config WHERE page_id = :p", p("p", pageId));
         if (!l.isEmpty()) return l.get(0);
         Map<String, Object> d = new HashMap<>();
@@ -67,6 +68,8 @@ public class HomeworkService {
         d.put("showClassmates", false);
         d.put("autoGrade", true);
         d.put("rubricId", null);
+        d.put("autoVisibility", "ALL");
+        d.put("practice", false);
         return d;
     }
 
@@ -74,13 +77,17 @@ public class HomeworkService {
     public Map<String, Object> saveConfig(Long teacherId, Long pageId, Map<String, Object> f) {
         grading.requirePageOwner(teacherId, pageId);
         Object rubric = f.get("rubricId");
-        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id) "
-                        + "VALUES (:p, :e, :pr, :sc, :ag, :r) ON CONFLICT (page_id) DO UPDATE SET allowed_exts = EXCLUDED.allowed_exts, "
+        Object vis = f.get("autoVisibility");
+        String visibility = vis == null ? "ALL" : String.valueOf(vis);
+        if (!Arrays.asList("ALL", "SCORE", "NONE").contains(visibility)) throw new IllegalArgumentException("成绩显示设置无效");
+        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice) "
+                        + "VALUES (:p, :e, :pr, :sc, :ag, :r, :v, :pc) ON CONFLICT (page_id) DO UPDATE SET allowed_exts = EXCLUDED.allowed_exts, "
                         + "peer_review = EXCLUDED.peer_review, show_classmates = EXCLUDED.show_classmates, "
-                        + "auto_grade = EXCLUDED.auto_grade, rubric_id = EXCLUDED.rubric_id",
+                        + "auto_grade = EXCLUDED.auto_grade, rubric_id = EXCLUDED.rubric_id, auto_visibility = EXCLUDED.auto_visibility, "
+                        + "practice = EXCLUDED.practice",
                 p("p", pageId, "e", normalizeExts((String) f.get("allowedExts")), "pr", Boolean.TRUE.equals(f.get("peerReview")),
                         "sc", Boolean.TRUE.equals(f.get("showClassmates")), "ag", !Boolean.FALSE.equals(f.get("autoGrade")),
-                        "r", rubric == null ? null : ((Number) rubric).longValue()));
+                        "r", rubric == null ? null : ((Number) rubric).longValue(), "v", visibility, "pc", Boolean.TRUE.equals(f.get("practice"))));
         return config(pageId);
     }
 
@@ -106,6 +113,7 @@ public class HomeworkService {
                 + "WHERE s.lesson_id = :l AND s.page_id = :p AND s.student_id = :s", p("l", lessonId, "p", pageId, "s", studentId));
         Map<String, Object> sub = mine.isEmpty() ? null : mine.get(0);
         if (sub != null) {
+            hideAuto(sub, String.valueOf(config(pageId).get("autoVisibility")));
             sub.put("reviews", jdbc.queryForList(
                     "SELECT pr.score, pr.comment, pr.created_at AS \"createdAt\" FROM peer_review pr WHERE pr.submission_id = :id "
                             + "ORDER BY pr.created_at DESC", p("id", sub.get("id"))));
@@ -116,6 +124,17 @@ public class HomeworkService {
                 || (sub != null && Boolean.TRUE.equals(sub.get("returned"))));
         out.put("rubric", rubricItemsFor(pageId));
         return out;
+    }
+
+    /** 按“学生页面成绩显示控制”隐藏自动评分结果。 */
+    static void hideAuto(Map<String, Object> sub, String visibility) {
+        if ("NONE".equals(visibility)) {
+            sub.put("autoScore", null);
+            sub.put("autoMax", null);
+            sub.put("autoDetail", null);
+        } else if ("SCORE".equals(visibility)) {
+            sub.put("autoDetail", null);
+        }
     }
 
     @Transactional
@@ -229,9 +248,12 @@ public class HomeworkService {
     /** 我的作品（原 stuupfilelist）。 */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> myWorks(Long studentId) {
-        return jdbc.queryForList("SELECT " + SUB_COLS + ", c.name AS \"courseName\", pg.title AS \"pageTitle\" "
-                + "FROM submission s JOIN users u ON u.id = s.student_id JOIN course_page pg ON pg.id = s.page_id "
+        List<Map<String, Object>> l = jdbc.queryForList("SELECT " + SUB_COLS + ", c.name AS \"courseName\", pg.title AS \"pageTitle\", "
+                + "COALESCE(hc.auto_visibility, 'ALL') AS vis FROM submission s JOIN users u ON u.id = s.student_id JOIN course_page pg ON pg.id = s.page_id "
+                + "LEFT JOIN homework_config hc ON hc.page_id = s.page_id "
                 + "JOIN course c ON c.id = pg.course_id WHERE s.student_id = :s ORDER BY s.submitted_at DESC", p("s", studentId));
+        for (Map<String, Object> m : l) hideAuto(m, (String) m.remove("vis"));
+        return l;
     }
 
     /** 精华作品展示（原 Essencestufile，按年级筛选）。 */

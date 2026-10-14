@@ -76,7 +76,8 @@ const router = createRouter({
         { path: 'electives', component: () => import('../views/student/StudentElectives.vue') },
         { path: 'messages', component: () => import('../views/student/StudentMessages.vue') },
         { path: 'qa', component: () => import('../views/student/StudentQa.vue') },
-        { path: 'report', component: () => import('../views/student/StudentReport.vue') }
+        { path: 'report', component: () => import('../views/student/StudentReport.vue') },
+        { path: 'op-practice', component: () => import('../views/student/StudentOpPractice.vue') }
       ]
     }
   ]

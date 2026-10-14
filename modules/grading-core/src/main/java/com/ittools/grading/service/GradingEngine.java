@@ -61,6 +61,7 @@ public final class GradingEngine {
         CATALOG.put("PPTX_HAS_ANIMATION", new String[]{"PPT 设置动画", "至少几张幻灯片有动画", "", "", "pptx"});
         CATALOG.put("PPTX_HAS_TRANSITION", new String[]{"PPT 设置切换效果", "至少几张幻灯片有切换", "", "", "pptx"});
         CATALOG.put("HTML_HAS_TAG", new String[]{"网页包含标签", "标签名（如 img、table、a）", "最少个数", "", "html,htm"});
+        OfficeRules.register(CATALOG);
     }
 
     public static class Rule {
@@ -124,7 +125,7 @@ public final class GradingEngine {
         return r;
     }
 
-    private static class Check {
+    static class Check {
         final boolean ok;
         final String msg;
 
@@ -282,7 +283,7 @@ public final class GradingEngine {
                 return new Check(n >= num(rule.p2, 1), "<" + tag + "> 出现 " + n + " 次");
             }
             default:
-                return new Check(false, "未知规则类型 " + rule.type);
+                return OfficeRules.check(doc, rule);
         }
     }
 
@@ -320,13 +321,14 @@ public final class GradingEngine {
     }
 
     /** 延迟打开的文档句柄，同一次评分内复用。 */
-    private static final class Doc {
+    static final class Doc {
         final Path path;
         final String ext;
         private XWPFDocument word;
         private Workbook excel;
         private FormulaEvaluator eval;
         private XMLSlideShow ppt;
+        private DocxModel docx;
         private String text;
 
         Doc(Path path, String ext) {
@@ -342,6 +344,12 @@ public final class GradingEngine {
                 }
             }
             return word;
+        }
+
+        DocxModel docx() throws Exception {
+            if (!"docx".equals(ext)) throw new IllegalStateException("不是 docx 文件");
+            if (docx == null) docx = DocxModel.load(path);
+            return docx;
         }
 
         Workbook excel() throws Exception {

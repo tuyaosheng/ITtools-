@@ -97,6 +97,59 @@ public class GradingService {
         return m;
     }
 
+    // ---- 阅卷参数读取 / 用标准答案检验评分规则 ----
+
+    static final long MAX_SAMPLE = 30L * 1024 * 1024;
+
+    private static java.nio.file.Path temp(org.springframework.web.multipart.MultipartFile f) throws java.io.IOException {
+        if (f.getSize() > MAX_SAMPLE) throw new IllegalArgumentException("文件不能超过 30MB");
+        String ext = GradingEngine.ext(f.getOriginalFilename());
+        java.nio.file.Path t = java.nio.file.Files.createTempFile("grading", "." + (ext.isEmpty() ? "bin" : ext));
+        f.transferTo(t.toFile());
+        return t;
+    }
+
+    public Map<String, Object> inspect(org.springframework.web.multipart.MultipartFile file) {
+        java.nio.file.Path t = null;
+        try {
+            t = temp(file);
+            return OfficeInspector.inspect(t, file.getOriginalFilename());
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("无法读取该文件：" + e.getMessage());
+        } finally {
+            if (t != null) t.toFile().delete();
+        }
+    }
+
+    /** 用教师上传的标准答案（或学生样例）检验评分规则，返回每条规则的检测结果。规则可以是尚未保存的。 */
+    public Map<String, Object> testRules(org.springframework.web.multipart.MultipartFile file, List<Map<String, Object>> rules) {
+        if (rules == null || rules.isEmpty()) throw new IllegalArgumentException("请先添加评分规则");
+        List<GradingEngine.Rule> list = new ArrayList<>();
+        for (Map<String, Object> r : rules) {
+            String type = (String) r.get("type");
+            if (!GradingEngine.CATALOG.containsKey(type)) throw new IllegalArgumentException("未知规则类型：" + type);
+            Object sc = r.get("score");
+            list.add(new GradingEngine.Rule(type, str(r.get("param1")), str(r.get("param2")), str(r.get("param3")),
+                    sc == null ? 0 : ((Number) sc).doubleValue(), str(r.get("note"))));
+        }
+        java.nio.file.Path t = null;
+        try {
+            t = temp(file);
+            GradingEngine.Result res = GradingEngine.grade(t, file.getOriginalFilename(), list);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("score", res.score);
+            m.put("max", res.max);
+            m.put("details", res.details);
+            return m;
+        } catch (java.io.IOException e) {
+            throw new IllegalArgumentException("文件读取失败");
+        } finally {
+            if (t != null) t.toFile().delete();
+        }
+    }
+
     // ---- 评价量规 ----
 
     @Transactional(readOnly = true)
