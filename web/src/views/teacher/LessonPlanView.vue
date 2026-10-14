@@ -10,6 +10,9 @@
           <el-select v-model="termId" placeholder="全部学期" clearable class="w160" @change="load">
             <el-option v-for="t in terms" :key="t.id" :label="t.label" :value="t.id" />
           </el-select>
+          <el-upload v-if="scope === 'mine'" :show-file-list="false" accept=".zip" :http-request="importPack">
+            <el-button>导入教案包</el-button>
+          </el-upload>
           <el-button v-if="scope === 'mine'" type="primary" @click="open()">新建教案</el-button>
         </div>
       </div>
@@ -33,16 +36,20 @@
       <el-table-column label="更新时间" width="150">
         <template #default="{ row }">{{ fmtTime(row.updatedAt) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="230" fixed="right">
         <template #default="{ row }">
           <template v-if="scope === 'mine'">
             <el-button link type="primary" @click="open(row)">编辑</el-button>
             <el-button link type="primary" @click="copy(row)">复制</el-button>
+            <el-button link type="primary" @click="pack(row)">打包</el-button>
             <el-popconfirm title="删除该教案？" @confirm="remove(row)">
               <template #reference><el-button link type="danger">删除</el-button></template>
             </el-popconfirm>
           </template>
-          <el-button v-else link type="primary" @click="copy(row)">复制到我的教案</el-button>
+          <template v-else>
+            <el-button link type="primary" @click="copy(row)">复制到我的教案</el-button>
+            <el-button link type="primary" @click="pack(row)">打包</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -154,6 +161,25 @@ async function save() {
 function view(r: any) {
   current.value = r
   viewVisible.value = true
+}
+
+/** 教案打包（原“打包”）：zip 中含教案内容、教学设计与课件，可在其他平台“导入教案包” */
+async function pack(r: any) {
+  try {
+    await api.download(`/teacher/lesson-plans/${r.id}/pack`)
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
+async function importPack(o: any) {
+  try {
+    await api.upload('/teacher/lesson-plans/import', o.file, termId.value ? { termId: termId.value } : undefined)
+    ElMessage.success('教案已导入')
+    await load()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
 }
 
 async function copy(r: any) {

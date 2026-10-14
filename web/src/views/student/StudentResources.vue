@@ -23,21 +23,30 @@
           <el-tag v-if="r.category" size="small">{{ r.category }}</el-tag>
         </div>
         <div class="muted">{{ r.teacherName }} · {{ r.termLabel || '未分学期' }} · {{ fmtTime(r.createdAt) }}</div>
+        <div v-if="reading[r.id]" class="read">已阅读 {{ minutes(reading[r.id].seconds) }} · 打开 {{ reading[r.id].views }} 次</div>
         <p v-if="r.description" class="desc">{{ r.description }}</p>
         <div class="ops">
           <template v-if="r.fileName">
             <el-button size="small" type="primary" @click="download(r)">下载 {{ fmtSize(r.fileSize) }}</el-button>
-            <el-button v-if="previewable(r.fileName)" size="small" @click="preview(r)">在线查看</el-button>
+            <el-button v-if="previewable(r.fileName)" size="small" @click="openReader(r)">在线阅读</el-button>
           </template>
-          <el-button v-if="r.linkUrl" size="small" tag="a" :href="r.linkUrl" target="_blank">打开链接</el-button>
+          <el-button v-if="r.linkUrl" size="small" tag="a" :href="r.linkUrl" target="_blank" @click="markOpen(r)">打开链接</el-button>
         </div>
       </el-card>
     </div>
+
+    <el-dialog v-model="readerVisible" :title="current?.title" fullscreen append-to-body destroy-on-close @closed="stopTimer">
+      <div class="reader-bar">
+        <span class="muted">本次阅读计时：{{ minutes(sessionSeconds) }}（页面切到后台时暂停）</span>
+        <span v-if="current && reading[current.id]" class="muted">累计 {{ minutes(reading[current.id].seconds) }}</span>
+      </div>
+      <iframe v-if="current" class="reader" :src="fileUrl(`/resources/${current.id}/file?inline=true`)" />
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg, fileUrl } from '../../api/client'
 import { fmtSize, fmtTime } from '../../utils/format'
@@ -58,9 +67,43 @@ function previewable(name: string) {
   return /\.(pdf|png|jpe?g|gif|bmp|webp|svg|mp4|webm|mp3|txt|html?)$/i.test(name)
 }
 
-function preview(r: any) {
-  window.open(fileUrl(`/resources/${r.id}/file?inline=true`), '_blank')
+// ---- 阅读计时（原“阅读时间 分钟”）：打开记一次，阅读中每 20 秒上报，服务器按实际间隔累计 ----
+const reading = ref<Record<number, any>>({})
+const readerVisible = ref(false)
+const current = ref<any>(null)
+const sessionSeconds = ref(0)
+let beatTimer: number | undefined
+let tickTimer: number | undefined
+
+const minutes = (s: number) => (s < 60 ? `${s} 秒` : `${Math.floor(s / 60)} 分 ${s % 60} 秒`)
+
+async function markOpen(r: any) {
+  try {
+    reading.value[r.id] = await api.post(`/student/resources/${r.id}/open`)
+  } catch { /* 计时失败不影响阅读 */ }
 }
+
+async function openReader(r: any) {
+  current.value = r
+  sessionSeconds.value = 0
+  readerVisible.value = true
+  await markOpen(r)
+  beatTimer = window.setInterval(async () => {
+    if (document.hidden || !current.value) return
+    try { reading.value[current.value.id] = await api.post(`/student/resources/${current.value.id}/read`) } catch { /* ignore */ }
+  }, 20000)
+  tickTimer = window.setInterval(() => { if (!document.hidden) sessionSeconds.value++ }, 1000)
+}
+
+async function stopTimer() {
+  window.clearInterval(beatTimer)
+  window.clearInterval(tickTimer)
+  if (current.value) {
+    try { reading.value[current.value.id] = await api.post(`/student/resources/${current.value.id}/read`) } catch { /* ignore */ }
+  }
+  current.value = null
+}
+onBeforeUnmount(() => { window.clearInterval(beatTimer); window.clearInterval(tickTimer) })
 
 async function download(r: any) {
   try {
@@ -70,7 +113,10 @@ async function download(r: any) {
   }
 }
 
-onMounted(async () => { list.value = await api.get('/student/resources') })
+onMounted(async () => {
+  list.value = await api.get('/student/resources')
+  reading.value = await api.get('/student/resources/reading')
+})
 </script>
 
 <style scoped>
@@ -84,4 +130,7 @@ onMounted(async () => { list.value = await api.get('/student/resources') })
 .r-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .desc { font-size: 13px; color: #606266; margin: 8px 0; white-space: pre-wrap; }
 .ops { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.read { color: var(--el-color-success); font-size: 12px; margin-top: 2px; }
+.reader-bar { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.reader { width: 100%; height: calc(100vh - 140px); border: 1px solid var(--el-border-color); border-radius: 6px; }
 </style>

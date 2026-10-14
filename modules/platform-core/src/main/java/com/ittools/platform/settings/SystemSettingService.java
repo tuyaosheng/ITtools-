@@ -35,6 +35,8 @@ public class SystemSettingService {
     /** 第三方程序登录（原 weblogin.aspx）：开关与签名密钥 */
     public static final String SSO_ENABLED = "sso.enabled";
     public static final String SSO_SECRET = "sso.secret";
+    /** 学生个人站点大小上限（原“学生个人站点大小”） */
+    public static final String SITE_MAX_MB = "site.maxMb";
 
     public static final List<String> LOGIN_MODES = Arrays.asList("NORMAL", "OPEN_CLASS", "XJH", "FIXED_SEAT");
 
@@ -53,6 +55,7 @@ public class SystemSettingService {
         DEFAULTS.put(STUDENT_AVATAR, "false");
         DEFAULTS.put(SSO_ENABLED, "false");
         DEFAULTS.put(SSO_SECRET, "");
+        DEFAULTS.put(SITE_MAX_MB, "20");
     }
 
     private final SystemSettingRepository repo;
@@ -99,6 +102,7 @@ public class SystemSettingService {
             }
             if (SITE_NOTICE.equals(e.getKey()) && v.length() > 1000) throw new IllegalArgumentException("公告不超过 1000 字");
             if (SSO_SECRET.equals(e.getKey()) && !v.isEmpty() && v.length() < 16) throw new IllegalArgumentException("密钥至少 16 位");
+            if (SITE_MAX_MB.equals(e.getKey()) && !v.matches("\\d{1,4}")) throw new IllegalArgumentException("站点大小必须是正整数");
             if ((DISK_QUOTA_MB.equals(e.getKey()) || UPLOAD_MAX_MB.equals(e.getKey())) && !v.matches("\\d{1,6}")) {
                 throw new IllegalArgumentException("容量必须是正整数");
             }

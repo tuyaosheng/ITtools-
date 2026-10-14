@@ -3,6 +3,7 @@ package com.ittools.classroom.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ittools.platform.storage.FileStorageService;
+import com.ittools.platform.storage.ZipPackage;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,24 +11,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.ittools.platform.db.Sql.p;
 
@@ -103,14 +96,7 @@ public class CoursewareService {
         try {
             tmp = File.createTempFile("courseware", ".zip");
             file.transferTo(tmp);
-            List<String> files;
-            try {
-                files = extract(tmp, dir, StandardCharsets.UTF_8);
-            } catch (IllegalArgumentException e) {
-                if (e instanceof BadPackage) throw e;
-                deleteDir(dir);
-                files = extract(tmp, dir, Charset.forName("GBK"));   // Windows 自带压缩生成的 GBK 文件名
-            }
+            List<String> files = ZipPackage.extract(tmp, dir, MAX_TOTAL, MAX_ENTRIES).files;
             String start = findEntry(files, entry);
             Map<String, Object> cfg = config(pageId);
             Object old = cfg.get("package");
@@ -122,10 +108,10 @@ public class CoursewareService {
             if (old != null) removeIfUnused(String.valueOf(old));
             return cfg;
         } catch (IOException e) {
-            deleteDir(dir);
+            ZipPackage.deleteDir(dir);
             throw new IllegalArgumentException("课件包解压失败：" + e.getMessage());
         } catch (RuntimeException e) {
-            deleteDir(dir);
+            ZipPackage.deleteDir(dir);
             throw e;
         } finally {
             if (tmp != null && !tmp.delete()) tmp.deleteOnExit();
@@ -196,91 +182,16 @@ public class CoursewareService {
     private void removeIfUnused(String packageId) {
         if (!PACKAGE_ID.matcher(packageId).matches()) return;
         Long n = jdbc.queryForObject("SELECT COUNT(*) FROM course_page WHERE config LIKE :k", p("k", "%\"package\":\"" + packageId + "\"%"), Long.class);
-        if (n != null && n == 0) deleteDir(base().resolve(packageId));
-    }
-
-    static class BadPackage extends IllegalArgumentException {
-        BadPackage(String m) {
-            super(m);
-        }
-    }
-
-    /** 解压（防 zip-slip、限制总大小与文件数）；若所有文件都在同一个顶层目录下，则去掉该目录。返回相对路径列表。 */
-    List<String> extract(File zip, Path dir, Charset cs) throws IOException {
-        List<String> names = new ArrayList<>();
-        try (ZipFile zf = new ZipFile(zip, cs)) {
-            Enumeration<? extends ZipEntry> en = zf.entries();
-            List<ZipEntry> entries = new ArrayList<>();
-            while (en.hasMoreElements()) {
-                ZipEntry e = en.nextElement();
-                if (entries.size() >= MAX_ENTRIES) throw new BadPackage("课件包文件过多（超过 " + MAX_ENTRIES + " 个）");
-                entries.add(e);
-            }
-            String prefix = commonTopDir(entries);
-            long total = 0;
-            Files.createDirectories(dir);
-            for (ZipEntry e : entries) {
-                String n = e.getName().replace('\\', '/');
-                if (n.startsWith("__MACOSX/")) continue;
-                if (prefix != null) n = n.substring(prefix.length());
-                if (n.isEmpty()) continue;
-                Path target = dir.resolve(n).normalize();
-                if (!target.startsWith(dir)) throw new BadPackage("课件包中包含非法路径：" + e.getName());
-                if (e.isDirectory()) {
-                    Files.createDirectories(target);
-                    continue;
-                }
-                Files.createDirectories(target.getParent());
-                try (InputStream in = zf.getInputStream(e); OutputStream out = Files.newOutputStream(target)) {
-                    byte[] buf = new byte[65536];
-                    int r;
-                    while ((r = in.read(buf)) > 0) {
-                        total += r;
-                        if (total > MAX_TOTAL) throw new BadPackage("课件包解压后超过 500MB");
-                        out.write(buf, 0, r);
-                    }
-                }
-                names.add(n);
-            }
-        }
-        if (names.isEmpty()) throw new BadPackage("课件包是空的");
-        return names;
-    }
-
-    private static String commonTopDir(List<ZipEntry> entries) {
-        String top = null;
-        for (ZipEntry e : entries) {
-            String n = e.getName().replace('\\', '/');
-            if (n.startsWith("__MACOSX/")) continue;
-            int i = n.indexOf('/');
-            if (i < 0) return null;
-            String t = n.substring(0, i + 1);
-            if (top == null) top = t;
-            else if (!top.equals(t)) return null;
-        }
-        return top;
+        if (n != null && n == 0) ZipPackage.deleteDir(base().resolve(packageId));
     }
 
     static String findEntry(List<String> files, String wanted) {
         if (wanted != null && !wanted.trim().isEmpty()) {
             String w = wanted.trim().replace('\\', '/');
             if (files.contains(w)) return w;
-            throw new BadPackage("课件包中没有主页文件：" + w);
+            throw new ZipPackage.BadPackage("课件包中没有主页文件：" + w);
         }
-        for (String c : ENTRY_CANDIDATES) {
-            for (String f : files) if (f.equalsIgnoreCase(c)) return f;
-        }
-        return files.stream().filter(f -> f.toLowerCase().matches(".*\\.html?$"))
-                .min(Comparator.comparingInt((String f) -> f.split("/").length).thenComparing(f -> f))
-                .orElseThrow(() -> new BadPackage("课件包中没有找到网页文件（.html）"));
+        return ZipPackage.findEntry(files, ENTRY_CANDIDATES);
     }
 
-    private static void deleteDir(Path dir) {
-        if (!Files.exists(dir)) return;
-        try (Stream<Path> s = Files.walk(dir)) {
-            s.sorted(Comparator.reverseOrder()).forEach(f -> f.toFile().delete());
-        } catch (IOException ignored) {
-            // 清理失败不影响主流程
-        }
-    }
 }

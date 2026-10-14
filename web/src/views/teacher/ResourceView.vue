@@ -41,11 +41,12 @@
         </template>
       </el-table-column>
       <el-table-column label="下载" width="60" prop="downloads" />
-      <el-table-column label="操作" width="230" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button v-if="row.fileName" link type="primary" @click="download(row)">下载</el-button>
           <template v-if="scope === 'mine'">
             <el-button link type="primary" @click="openDistribute(row)">分发</el-button>
+            <el-button link type="primary" :disabled="!row.classIds.length" @click="openReading(row)">阅读情况</el-button>
             <el-button link type="primary" @click="open(row)">编辑</el-button>
             <el-popconfirm title="删除该资源？学生将无法再查看" @confirm="remove(row)">
               <template #reference><el-button link type="danger">删除</el-button></template>
@@ -82,6 +83,24 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="readVisible" :title="`阅读情况：${readOf?.title || ''}`" width="620px" append-to-body>
+      <div class="read-bar">
+        <el-radio-group v-model="readClass" size="small" @change="loadReading">
+          <el-radio-button v-for="id in readOf?.classIds || []" :key="id" :value="id">{{ className(id) }}</el-radio-button>
+        </el-radio-group>
+        <span class="muted">已读 {{ readRows.filter(r => r.views).length }}/{{ readRows.length }} 人</span>
+      </div>
+      <el-table :data="readRows" size="small" stripe max-height="420">
+        <el-table-column prop="studentNo" label="学号" width="70" />
+        <el-table-column prop="name" label="姓名" width="100" />
+        <el-table-column label="阅读时间" width="120" sortable :sort-method="(a: any, b: any) => a.seconds - b.seconds">
+          <template #default="{ row }: { row: any }"><span :class="{ muted: !row.views }">{{ row.views ? mins(row.seconds) : '未读' }}</span></template>
+        </el-table-column>
+        <el-table-column prop="views" label="打开次数" width="90" />
+        <el-table-column label="最近阅读"><template #default="{ row }: { row: any }">{{ row.lastAt && row.views ? fmtTime(row.lastAt) : '' }}</template></el-table-column>
+      </el-table>
+    </el-dialog>
+
     <el-dialog v-model="distVisible" title="分发给班级" width="480px" append-to-body>
       <p class="muted">勾选的班级学生可在「学习资源」中查看该资源。</p>
       <el-checkbox-group v-model="distClassIds">
@@ -100,7 +119,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { http } from '../../api/http'
-import { fmtSize } from '../../utils/format'
+import { fmtSize, fmtTime } from '../../utils/format'
 
 const scope = ref<'mine' | 'shared'>('mine')
 const category = ref<string>()
@@ -109,6 +128,26 @@ const list = ref<any[]>([])
 const categories = ref<string[]>([])
 const terms = ref<any[]>([])
 const classes = ref<any[]>([])
+const readVisible = ref(false)
+const readOf = ref<any>(null)
+const readClass = ref<number>()
+const readRows = ref<any[]>([])
+const mins = (s: number) => (s < 60 ? `${s} 秒` : `${Math.floor(s / 60)} 分 ${s % 60} 秒`)
+
+async function openReading(row: any) {
+  readOf.value = row
+  readClass.value = row.classIds[0]
+  readVisible.value = true
+  await loadReading()
+}
+
+async function loadReading() {
+  try {
+    readRows.value = await api.get(`/teacher/resources/${readOf.value.id}/reading`, { classId: readClass.value })
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 
 const visible = ref(false)
 const saving = ref(false)
@@ -212,4 +251,5 @@ onMounted(async () => {
 .full { width: 100%; }
 .mr4 { margin-right: 4px; }
 .ml8 { margin-left: 8px; }
+.read-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 </style>

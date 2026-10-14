@@ -243,7 +243,20 @@ public class ResourceService {
         Long used = jdbc.queryForObject("SELECT COALESCE(SUM(file_size), 0) FROM disk_file WHERE owner_id = :o", p("o", ownerId), Long.class);
         m.put("used", used);
         m.put("quota", settings.getInt(SystemSettingService.DISK_QUOTA_MB) * 1024L * 1024L);
+        Map<String, Object> pol = policy(ownerId);
+        m.put("disabled", pol.get("disabled"));
+        m.put("penaltyBytes", pol.get("penalty_bytes"));
         return m;
+    }
+
+    /** 教师对学生网盘的限制：关闭网盘、扣除空间（原 teacher/webdisc）。 */
+    private Map<String, Object> policy(Long userId) {
+        List<Map<String, Object>> l = jdbc.queryForList("SELECT disabled, penalty_bytes FROM disk_policy WHERE user_id = :u", p("u", userId));
+        if (!l.isEmpty()) return l.get(0);
+        Map<String, Object> d = new java.util.HashMap<>();
+        d.put("disabled", false);
+        d.put("penalty_bytes", 0L);
+        return d;
     }
 
     @Transactional
@@ -252,6 +265,11 @@ public class ResourceService {
         long quota = settings.getInt(SystemSettingService.DISK_QUOTA_MB) * 1024L * 1024L;
         Long used = jdbc.queryForObject("SELECT COALESCE(SUM(file_size), 0) FROM disk_file WHERE owner_id = :o", p("o", ownerId), Long.class);
         // 容量限制针对学生（原"网盘设置：学生网盘容量"），教师不限
+        if ("STUDENT".equals(role)) {
+            Map<String, Object> pol = policy(ownerId);
+            if (Boolean.TRUE.equals(pol.get("disabled"))) throw new IllegalArgumentException("你的网盘已被老师关闭");
+            used += ((Number) pol.get("penalty_bytes")).longValue();
+        }
         if ("STUDENT".equals(role) && used + file.getSize() > quota) {
             throw new IllegalArgumentException("网盘空间不足（容量 " + settings.getInt(SystemSettingService.DISK_QUOTA_MB) + "MB）");
         }

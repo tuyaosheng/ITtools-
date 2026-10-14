@@ -22,6 +22,8 @@ const menu = computed(() => [
   { path: '/student/op-practice', label: '课后操作题' },
   { path: '/student/resources', label: '学习资源' },
   { path: '/student/disk', label: '我的网盘' },
+  { path: '/student/site', label: '个人网站' },
+  { path: '/student/typing', label: '指法练习' },
   { path: '/student/notes', label: '学习笔记' },
   { path: '/student/electives', label: '走班选课' },
   { path: '/student/messages', label: '系统消息', badge: notices.unreadMessages || undefined },

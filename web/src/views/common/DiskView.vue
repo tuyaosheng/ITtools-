@@ -11,7 +11,9 @@
       <span>已用 {{ fmtSize(used) }}<template v-if="isStudent"> / {{ fmtSize(quota) }}</template></span>
       <el-progress v-if="isStudent" :percentage="percent" :status="percent >= 90 ? 'exception' : undefined" class="bar" />
       <span v-else class="muted">教师网盘不限容量</span>
+      <span v-if="penalty" class="warn">因上传与学习无关的文件被老师扣除 {{ fmtSize(penalty) }}</span>
     </div>
+    <el-alert v-if="disabled" type="warning" :closable="false" show-icon title="你的网盘已被老师关闭，暂时不能上传文件" class="mb8" />
 
     <el-table :data="files" stripe empty-text="网盘还是空的">
       <el-table-column label="名称" min-width="220">
@@ -62,6 +64,8 @@ const isStudent = computed(() => auth.user?.role === 'STUDENT')
 const files = ref<any[]>([])
 const used = ref(0)
 const quota = ref(0)
+const penalty = ref(0)
+const disabled = ref(false)
 const percent = computed(() => (quota.value ? Math.min(100, Math.round((used.value * 100) / quota.value)) : 0))
 
 const visible = ref(false)
@@ -73,7 +77,9 @@ const note = ref('')
 
 function apply(d: any) {
   files.value = d.files
-  used.value = Number(d.used)
+  penalty.value = Number(d.penaltyBytes || 0)
+  disabled.value = !!d.disabled
+  used.value = Number(d.used) + penalty.value
   quota.value = Number(d.quota)
 }
 
@@ -127,4 +133,6 @@ onMounted(load)
 .muted { color: #909399; font-size: 12px; }
 .usage { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 13px; }
 .bar { width: 260px; }
+.warn { color: var(--el-color-warning-dark-2); font-size: 12px; margin-left: 8px; }
+.mb8 { margin-bottom: 8px; }
 </style>

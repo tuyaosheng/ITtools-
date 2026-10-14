@@ -54,7 +54,8 @@ const router = createRouter({
         { path: 'messages', component: () => import('../views/teacher/MessageView.vue') },
         { path: 'qa', component: () => import('../views/teacher/TeacherQa.vue') },
         { path: 'login-logs', component: () => import('../views/teacher/LoginLogs.vue') },
-        { path: 'reports', component: () => import('../views/teacher/ClassReport.vue') }
+        { path: 'reports', component: () => import('../views/teacher/ClassReport.vue') },
+        { path: 'student-space', component: () => import('../views/teacher/StudentSpace.vue') }
       ]
     },
     {
@@ -78,7 +79,9 @@ const router = createRouter({
         { path: 'messages', component: () => import('../views/student/StudentMessages.vue') },
         { path: 'qa', component: () => import('../views/student/StudentQa.vue') },
         { path: 'report', component: () => import('../views/student/StudentReport.vue') },
-        { path: 'op-practice', component: () => import('../views/student/StudentOpPractice.vue') }
+        { path: 'op-practice', component: () => import('../views/student/StudentOpPractice.vue') },
+        { path: 'typing', component: () => import('../views/student/StudentTyping.vue') },
+        { path: 'site', component: () => import('../views/student/StudentSite.vue') }
       ]
     }
   ]

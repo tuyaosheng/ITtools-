@@ -28,6 +28,7 @@ const menu = computed(() => [
   { path: '/teacher/lesson-plans', label: '教案' },
   { path: '/teacher/reflections', label: '学习心得' },
   { path: '/teacher/disk', label: '教师网盘' },
+  { path: '/teacher/student-space', label: '学生空间' },
   { path: '/teacher/classes', label: '我的班级' },
   { path: '/teacher/reports', label: '学习情况' },
   { path: '/teacher/login-logs', label: '登入记录' },
