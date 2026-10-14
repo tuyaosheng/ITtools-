@@ -192,6 +192,38 @@ class LabSchemeIT extends AbstractPostgresIT {
             assertThat(raw(a, HttpMethod.POST, "/api/admin/lab/network/batch", map("action", "boom", "ips", new String[]{"10.72.0.11"}))
                     .getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
+            // 教师课堂座位图：只看得到、只能操作本课堂机房的电脑（机房里是 .21/.22，.11 不在）
+            long roomId = call(a, HttpMethod.POST, "/api/admin/lab/rooms/scheme", map("name", "课堂机房72", "prefix", "N72-", "pad", 2,
+                    "baseIp", "10.72.0.21", "step", 1, "layoutText", "1 2")).get("id").asLong();
+            long yearId = call(a, HttpMethod.POST, "/api/admin/school-years", map("yearCode", "2079", "label", "2079级", "active", true)).get("id").asLong();
+            long classId = call(a, HttpMethod.POST, "/api/admin/classes", map("schoolYearId", yearId, "name", "网控班", "displayOrder", 1)).get("id").asLong();
+            call(a, HttpMethod.PUT, "/api/admin/lab/class-configs/" + classId, map("roomId", roomId, "fixedSeat", false));
+            call(a, HttpMethod.POST, "/api/admin/users", map("role", "TEACHER", "name", "网控老师", "loginName", "net72_t", "password", "net-pass-1"));
+            call(a, HttpMethod.POST, "/api/admin/users", map("role", "TEACHER", "name", "别的老师", "loginName", "net72_o", "password", "net-pass-1"));
+            HttpHeaders teach = session("{\"loginType\":\"TEACHER\",\"loginName\":\"net72_t\",\"password\":\"net-pass-1\"}");
+            HttpHeaders other = session("{\"loginType\":\"TEACHER\",\"loginName\":\"net72_o\",\"password\":\"net-pass-1\"}");
+            long courseId = call(teach, HttpMethod.POST, "/api/teacher/courses", map("name", "网控课")).get("id").asLong();
+            long lesson = call(teach, HttpMethod.POST, "/api/teacher/lessons", map("courseId", courseId, "classId", classId)).get("id").asLong();
+            String base = "/api/teacher/lessons/" + lesson + "/network";
+            JsonNode ts = call(teach, HttpMethod.GET, base + "/status", null);
+            assertThat(ts.get("enabled").asBoolean()).isTrue();
+            assertThat(ts.get("status").has("10.72.0.11")).isFalse();
+            assertThat(ts.get("last").has("10.72.0.11")).isFalse();
+            assertThat(raw(other, HttpMethod.GET, base + "/status", null).getBody()).contains("不是你的课堂");
+            hits.clear();
+            JsonNode tb = call(teach, HttpMethod.POST, base + "/batch", map("action", "open", "ips", new String[]{"10.72.0.21", "10.72.0.22"}));
+            assertThat(tb.get("count").asInt()).isEqualTo(2);
+            assertThat(hits).contains("POST /api/network/enable_ip?ip=10.72.0.21", "POST /api/network/enable_ip?ip=10.72.0.22");
+            assertThat(raw(teach, HttpMethod.POST, base + "/batch", map("action", "cut", "ips", new String[]{"10.72.0.21", "10.72.0.11"})).getBody())
+                    .contains("不是本课堂机房");
+            assertThat(raw(other, HttpMethod.POST, base + "/batch", map("action", "cut", "ips", new String[]{"10.72.0.21"})).getBody())
+                    .contains("不是你的课堂");
+            assertThat(call(teach, HttpMethod.GET, base + "/status", null).get("last").get("10.72.0.21").asBoolean()).isTrue();
+            assertThat(network.lastCommands()).containsEntry("10.72.0.11", false);
+            call(teach, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/end", map());
+            assertThat(raw(teach, HttpMethod.POST, base + "/batch", map("action", "cut", "ips", new String[]{"10.72.0.21"})).getBody())
+                    .contains("课堂已结束");
+
             call(a, HttpMethod.PUT, "/api/admin/settings", map("net.ctrToken", "wrong"));
             assertThat(call(a, HttpMethod.GET, "/api/admin/lab/network/test", null).get("error").asText()).contains("令牌不正确");
             assertThatThrownBy(() -> network.setIp("10.72.0.12", false)).hasMessageContaining("令牌不正确");
