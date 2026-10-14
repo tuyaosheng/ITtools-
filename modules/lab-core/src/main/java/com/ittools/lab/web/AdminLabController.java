@@ -31,13 +31,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/lab")
 public class AdminLabController {
+    private final com.ittools.lab.service.NetworkControlService network;
     private final LabRoomService rooms;
     private final LabGroupService groups;
     private final LabClassSeatService classSeats;
     private final LabWorkstationService workstations;
 
-    public AdminLabController(LabRoomService rooms, LabGroupService groups, LabClassSeatService classSeats,
+    public AdminLabController(com.ittools.lab.service.NetworkControlService network, LabRoomService rooms, LabGroupService groups, LabClassSeatService classSeats,
                               LabWorkstationService workstations) {
+        this.network = network;
         this.rooms = rooms;
         this.groups = groups;
         this.classSeats = classSeats;
@@ -100,6 +102,35 @@ public class AdminLabController {
     }
 
     // ---- 分组模型 ----
+    // ---- 机房方案（文本排版 + 规则生成机位） ----
+    @GetMapping("/rooms/{id}/scheme")
+    public ApiResponse<Map<String, Object>> scheme(@PathVariable Long id) {
+        return ApiResponse.ok(rooms.scheme(id));
+    }
+
+    @PostMapping("/rooms/scheme")
+    public ApiResponse<Map<String, Object>> createScheme(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(rooms.saveScheme(null, body));
+    }
+
+    @PutMapping("/rooms/{id}/scheme")
+    public ApiResponse<Map<String, Object>> saveScheme(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(rooms.saveScheme(id, body));
+    }
+
+    @PostMapping("/workstations/swap-ip")
+    public ApiResponse<Void> swapIp(@RequestBody Map<String, Object> body) {
+        Object a = body.get("a"), b = body.get("b");
+        rooms.swapIp(a instanceof Number ? ((Number) a).longValue() : null, b instanceof Number ? ((Number) b).longValue() : null);
+        return ApiResponse.ok(null);
+    }
+
+    // ---- 网络控制器 CTR ----
+    @GetMapping("/network/test")
+    public ApiResponse<Map<String, Object>> networkTest() {
+        return ApiResponse.ok(network.test());
+    }
+
     @GetMapping("/group-models")
     public ApiResponse<List<Map<String, Object>>> groupModels() {
         return ApiResponse.ok(groups.list());

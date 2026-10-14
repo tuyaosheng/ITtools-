@@ -37,6 +37,10 @@ public class SystemSettingService {
     public static final String SSO_SECRET = "sso.secret";
     /** 学生个人站点大小上限（原“学生个人站点大小”） */
     public static final String SITE_MAX_MB = "site.maxMb";
+    /** 网络控制器 CTR（电脑室网络控制器主控端 HTTP 接口） */
+    public static final String NET_ENABLED = "net.enabled";
+    public static final String NET_CTR_URL = "net.ctrUrl";
+    public static final String NET_CTR_TOKEN = "net.ctrToken";
 
     public static final List<String> LOGIN_MODES = Arrays.asList("NORMAL", "OPEN_CLASS", "XJH", "FIXED_SEAT");
 
@@ -56,6 +60,9 @@ public class SystemSettingService {
         DEFAULTS.put(SSO_ENABLED, "false");
         DEFAULTS.put(SSO_SECRET, "");
         DEFAULTS.put(SITE_MAX_MB, "20");
+        DEFAULTS.put(NET_ENABLED, "false");
+        DEFAULTS.put(NET_CTR_URL, "http://127.0.0.1:8770");
+        DEFAULTS.put(NET_CTR_TOKEN, "");
     }
 
     private final SystemSettingRepository repo;
@@ -102,6 +109,7 @@ public class SystemSettingService {
             }
             if (SITE_NOTICE.equals(e.getKey()) && v.length() > 1000) throw new IllegalArgumentException("公告不超过 1000 字");
             if (SSO_SECRET.equals(e.getKey()) && !v.isEmpty() && v.length() < 16) throw new IllegalArgumentException("密钥至少 16 位");
+            if (NET_CTR_URL.equals(e.getKey()) && !v.matches("https?://[^\\s/]+(:\\d+)?/?")) throw new IllegalArgumentException("网络控制器地址格式应为 http://IP:端口");
             if (SITE_MAX_MB.equals(e.getKey()) && !v.matches("\\d{1,4}")) throw new IllegalArgumentException("站点大小必须是正整数");
             if ((DISK_QUOTA_MB.equals(e.getKey()) || UPLOAD_MAX_MB.equals(e.getKey())) && !v.matches("\\d{1,6}")) {
                 throw new IllegalArgumentException("容量必须是正整数");

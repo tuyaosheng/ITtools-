@@ -75,6 +75,25 @@
         </div>
       </el-form-item>
 
+      <el-divider content-position="left">网络控制器（CTR）</el-divider>
+      <el-form-item label="启用">
+        <el-switch v-model="netEnabled" />
+        <span class="tip inline">对接教师机上的“电脑室网络控制器”：课堂上按学生所在电脑开网/断网，闯关达标自动开网</span>
+      </el-form-item>
+      <el-form-item label="控制器地址">
+        <el-input v-model="form['net.ctrUrl']" placeholder="http://127.0.0.1:8770" class="w420" />
+        <div class="tip">网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</div>
+      </el-form-item>
+      <el-form-item label="访问令牌">
+        <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="与网络控制器 api_token 一致（未设置可留空）" class="w420" />
+      </el-form-item>
+      <el-form-item label="测试">
+        <el-button :loading="testing" @click="testNet">保存并测试连接</el-button>
+        <span v-if="netResult" class="tip inline" :class="netResult.ok ? 'ok' : 'bad'">
+          {{ netResult.ok ? `连接成功：${netResult.agents} 台被控端，在线 ${netResult.online} 台` : (netResult.error || '连接失败') }}
+        </span>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" :loading="saving" @click="save">保存设置</el-button>
       </el-form-item>
@@ -109,6 +128,22 @@ const studentPassword = bool('student.allowPasswordChange')
 const studentAvatar = bool('student.allowAvatarChange')
 const ssoEnabled = bool('sso.enabled')
 const origin = window.location.origin
+const netEnabled = bool('net.enabled')
+const testing = ref(false)
+const netResult = ref<any>(null)
+
+async function testNet() {
+  testing.value = true
+  netResult.value = null
+  try {
+    Object.assign(form, await api.put('/admin/settings', { ...form }))
+    netResult.value = await api.get('/admin/lab/network/test')
+  } catch (err) {
+    netResult.value = { ok: false, error: errMsg(err) }
+  } finally {
+    testing.value = false
+  }
+}
 
 async function newSecret() {
   try {
@@ -154,6 +189,8 @@ onMounted(load)
 .tip { font-size: 12px; color: #909399; line-height: 1.6; margin-top: 4px; }
 .tip.inline { margin: 0 0 0 10px; }
 .w420 { width: 420px; }
+.ok { color: var(--el-color-success); }
+.bad { color: var(--el-color-danger); }
 .doc { font-size: 12px; line-height: 1.8; color: var(--el-text-color-regular); }
 .doc code { background: var(--el-fill-color-light); padding: 1px 4px; border-radius: 3px; word-break: break-all; }
 </style>
