@@ -14,7 +14,8 @@
       </div>
     </el-card>
 
-    <div class="body">
+    <!-- 掌控板编程要放下积木区和场景，右侧工具栏挪到下面 -->
+    <div class="body" :class="{ wide: page?.pageType === 'MPYTHON' }">
       <el-card shadow="never" class="nav">
         <template #header>学习环节</template>
         <el-empty v-if="!pages.length" description="老师还没有开放页面" :image-size="50" />
@@ -127,6 +128,8 @@ onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(hbTime
 .type { font-size: 12px; color: var(--el-text-color-secondary); }
 .refresh { margin-top: 8px; width: 100%; }
 .ptitle { margin-top: 0; }
+.body.wide { grid-template-columns: 200px 1fr; }
+.body.wide .tools { grid-column: 1 / -1; }
 @media (max-width: 1200px) { .body { grid-template-columns: 200px 1fr; } .tools { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .body { grid-template-columns: 1fr; } }
 </style>

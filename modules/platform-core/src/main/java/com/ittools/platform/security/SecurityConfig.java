@@ -41,7 +41,7 @@ public class SecurityConfig {
                     // .authenticated() below would 401 "/", "/admin/**" etc. before
                     // SpaForwardController/static resource resolution ever runs.
                     .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
-                            "/assets/**", "/pyrunner/**", "/scratch/**", "/favicon.ico").permitAll()
+                            "/assets/**", "/pyrunner/**", "/scratch/**", "/mpython/**", "/favicon.ico").permitAll()
                     // 课件包（Storyline 等）：按不可猜测的包编号公开访问，响应带 CSP sandbox，与平台会话隔离
                     .antMatchers(HttpMethod.GET, "/courseware/**").permitAll()
                     // 学生个人站点：按不可猜测的站点编号公开访问，响应始终带 CSP sandbox

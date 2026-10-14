@@ -1,0 +1,255 @@
+/* 布局：顶栏操作 + 左“任务与网页反应” / 右“积木编辑器”。
+   不用网络字体——机房常断网，系统自带的微软雅黑最稳。 */
+:root{
+  --bg:#EEF2F7; --panel:#FFFFFF; --ink:#18222E; --dim:#5A6878; --line:#D9E0E8;
+  --board:#1E88E5; --net:#00A884; --warn:#E5484D; --amber:#FFB238;
+  --font:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+  --mono:Consolas,"Cascadia Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+/* .modal 等元素自己写了 display，会盖过浏览器默认的 [hidden]{display:none}，
+   不强制的话 hidden 属性形同虚设，选完组弹窗也关不掉 */
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);display:flex;flex-direction:column}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:8px;padding:7px 14px;white-space:nowrap}
+button:hover{border-color:var(--board);background:#F4F9FF}
+button:disabled{opacity:.45;cursor:default;border-color:var(--line);background:#fff}
+button.primary{background:var(--board);border-color:var(--board);color:#fff;font-weight:700}
+button.primary:hover{background:#1670C4}
+.btn-icon{display:inline-flex;align-items:center;gap:6px}
+.btn-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button:focus-visible{outline:2px solid var(--board);outline-offset:2px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--panel);
+  border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:16px;display:flex;align-items:baseline;gap:8px}
+.brand small{font-weight:600;color:var(--dim);font-size:13px}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
+  padding:4px 11px;font-size:13px;color:var(--dim);background:#fff}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:#B8C2CC}
+.chip.ok{color:#0B6B4F;border-color:#9FDCC8;background:#EFFAF6}
+.chip.ok::before{background:var(--net)}
+.chip.bad{color:#9A2328;border-color:#F3B6B8;background:#FFF4F4}
+.chip.bad::before{background:var(--warn)}
+button.chip::before{display:none}
+button.chip b{color:var(--ink);font-size:15px}
+
+.banner{background:#FFF7E6;border-bottom:1px solid #F5D9A0;color:#7A4B00;padding:10px 16px;font-size:13px}
+.banner code{font-family:var(--mono);background:#fff;border:1px solid #F0D7A6;border-radius:4px;padding:1px 5px;
+  user-select:all;word-break:break-all}
+
+/* 左栏宽度由 --lw 决定（拖分隔条时改它，记在本机）；收起时左栏宽 0，只剩分隔条上的展开按钮 */
+.split{flex:1;min-height:0;display:grid;grid-template-columns:var(--lw,38%) 14px 1fr;padding:12px}
+/* 收起后分隔条那一列加宽，让“展开任务”整个按钮露在外面，不压着积木区的分类栏 */
+.split.folded{grid-template-columns:0 44px 1fr}
+.split.folded .left{visibility:hidden}
+.split.dragging{cursor:col-resize;user-select:none}
+/* 拖动时 Blockly 的 svg 会抢鼠标事件，盖一层让指针一直落在分隔条上 */
+.split.dragging .right{pointer-events:none}
+.left{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0;overflow:auto;--lc:var(--board)}
+/* 左栏内容超高时整栏滚动，而不是把场景、卡片挤扁 */
+.left>*{flex-shrink:0}
+.splitter{position:relative;cursor:col-resize;touch-action:none}
+.splitter::before{content:"";position:absolute;left:6px;top:0;bottom:0;width:2px;border-radius:1px;background:transparent;
+  transition:background .15s}
+.splitter:hover::before,.split.dragging .splitter::before{background:var(--board)}
+/* 收起/展开：竖着写字的蓝色标签，一眼看得出是个按钮（原来那个灰色小箭头学生根本注意不到） */
+.splitter .fold{position:absolute;left:-9px;top:50%;transform:translateY(-50%);width:32px;padding:10px 0;
+  display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:10px;border:none;
+  background:var(--board);color:#fff;z-index:80;box-shadow:0 3px 10px rgba(30,136,229,.35);transition:background .15s,transform .15s}
+.splitter .fold:hover{background:#1670C4;transform:translateY(-50%) scale(1.05)}
+.splitter .fold .ar{font-size:18px;font-weight:800;line-height:1}
+.splitter .fold .tx{writing-mode:vertical-rl;letter-spacing:3px;font-size:13px;font-weight:700}
+.split.folded .splitter .fold{left:6px;background:#F59E0B;box-shadow:0 3px 12px rgba(245,158,11,.45);animation:foldHint 2.4s ease 2}
+.split.folded .splitter .fold:hover{background:#D98505}
+@keyframes foldHint{0%,100%{transform:translateY(-50%)}50%{transform:translateY(-50%) translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.splitter .fold{animation:none!important}}
+
+/* ---- 关卡条（左栏顶上）：每关一个颜色，--lc 由脚本按关卡设 ---- */
+.levels-card{padding:10px 12px 6px}
+.levels-head{display:flex;align-items:baseline;justify-content:space-between;font-size:13px;color:var(--dim);margin:0 2px 6px}
+.levels-head b{color:var(--ink)}
+.levels{display:flex;align-items:flex-start;justify-content:space-between;overflow-x:auto}
+/* 没选中的关卡一律同一种灰：一排四种颜色同时亮着，反而看不出“我现在在哪一关”。
+   只有当前这一关涂上自己的颜色 */
+.lv{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;
+  padding:4px 4px 2px;min-width:64px;color:var(--ink);border-radius:10px}
+.lv:hover{background:#F2F5F8}
+.lv .c{position:relative;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:16px;
+  border:2px solid #C9D2DC;color:#7D8896;background:#F4F6F9;transition:transform .15s}
+.lv:hover .c{border-color:#AEB9C5}
+.lv .t{font-size:12px;color:var(--dim);font-weight:600;white-space:nowrap}
+.lv .s{font-size:10.5px;height:16px;line-height:16px;padding:0 6px;border-radius:8px;color:transparent}
+.lv.cur .c{border-color:var(--lc);background:var(--lc);color:#fff;transform:scale(1.12);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--lc) 25%,transparent)}
+.lv.cur .t{font-weight:800;color:var(--lc)}
+.lv.pass .s{color:#fff;background:var(--net);font-weight:700}
+/* 拓展关：圆圈虚线边，下面写“拓展”（没通关时） */
+.lv.extra .c{border-style:dashed}
+.lv.extra:not(.pass) .s{color:var(--dim);border:1px dashed #C9D2DC;line-height:14px}
+/* 通关的在圆圈右上角贴个绿勾，圆圈里的数字照旧 */
+.lv.pass .c::after{content:"✓";position:absolute;right:-6px;top:-6px;width:17px;height:17px;border-radius:50%;
+  background:var(--net);color:#fff;font-size:10px;display:grid;place-items:center;border:2px solid #fff}
+.lv-link{flex:1 1 12px;min-width:10px;height:3px;border-radius:2px;margin-top:21px;background:#DDE3EA}
+.lv-link.pass{background:var(--net)}
+.right{display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;overflow:hidden}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.task{border-left:5px solid var(--lc)}
+.task h2{margin:0 0 4px;font-size:18px;color:color-mix(in srgb,var(--lc) 80%,#18222E)}
+.task p{margin:0;color:var(--dim);white-space:pre-line}
+.task .task-sec{margin-top:6px}
+.task .task-sec>b{display:block;font-size:12.5px;color:var(--ink);margin-bottom:1px}
+.task .task-sec p{color:var(--ink);font-size:14px;line-height:1.6}
+/* 自定义按钮要同时写 color 和 :hover，否则会吃到全局按钮的样式 */
+.task .hint-btn{margin-top:8px;padding:3px 12px;font-size:13px;border:1px dashed var(--lc);border-radius:14px;
+  background:#fff;color:color-mix(in srgb,var(--lc) 85%,#18222E)}
+.task .hint-btn:hover{background:color-mix(in srgb,var(--lc) 10%,#fff);border-color:var(--lc)}
+.task .hint{margin-top:8px;font-size:13px;color:color-mix(in srgb,var(--lc) 85%,#18222E);
+  background:color-mix(in srgb,var(--lc) 9%,#fff);border-radius:8px;padding:6px 10px}
+
+/* ---- 场景：每关的画面写在各自的 demoN.js 里（scene + css），这里只管外框和说明文字 ---- */
+.scene{position:relative;height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(#202A3A,#141B26);transition:background .6s ease}
+.scene .caption{position:absolute;left:14px;bottom:10px;color:#fff;font-weight:700;font-size:15px;z-index:10;
+  background:rgba(15,23,32,.55);padding:3px 10px;border-radius:8px;backdrop-filter:blur(2px)}
+.scene.flash{animation:flash .5s ease}
+@keyframes flash{0%{filter:brightness(1.6)}100%{filter:none}}
+@media (prefers-reduced-motion:reduce){.scene,.scene *{transition:none!important;animation:none!important}}
+
+.check h3,.console h3{margin:0 0 8px;font-size:13px;color:var(--dim);font-weight:700}
+.check ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.check li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:#F5F7FA}
+.check li .mark{flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;
+  font-weight:800;background:#DDE3EA;color:#6A7684}
+.check li.ok{background:#EDF9F4}
+.check li.ok .mark{background:var(--net);color:#fff}
+.check li .note{display:block;font-size:12px;color:var(--dim)}
+.check li.ok .note{display:none}
+.check .done{margin-top:8px;font-weight:700;color:#0B6B4F;display:none}
+.check.all .done{display:block}
+.check.passed .done{display:none}
+.pass-box{margin-top:10px;padding:12px;border-radius:10px;background:#EDF9F4;border:1px solid #9FDCC8;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pass-box .big{font-weight:800;color:#0B6B4F;font-size:15px;flex:1}
+.pass-box .all{color:#0B6B4F;font-weight:700}
+.viewbar{background:#EAF3FD;border-bottom-color:#BFD9F5;color:#174A7C}
+.viewbar .who{background:var(--board)}
+
+.board-warn{background:#FFF4F4;border:1px solid #F3B6B8;color:#8A1F24;border-radius:8px;padding:10px 12px;
+  margin-bottom:8px;font-size:13px;line-height:1.6}
+.board-warn b{color:#6E1418}
+.board-warn.ok{background:#EFFAF6;border-color:#9FDCC8;color:#0B6B4F}
+.console pre{margin:0;height:120px;overflow:auto;background:#0F1720;color:#BFE3CF;border-radius:8px;padding:8px 10px;
+  font:12px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all}
+
+.tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);align-items:center}
+/* 只有汉堡店（demo7）要把“AI 写代码”摆第一个——这一关本来就是教不会编程的学生用 AI，
+   先看见积木/代码两个「要懂代码」的页签会让人以为这关也得拼积木。靠 CSS order 换视觉顺序，
+   不动 DOM、不用碰其它关卡 */
+.tabs.ai-first [data-tab="ai"]{order:-1}
+.tabs button{border:none;background:transparent;border-radius:6px;padding:5px 12px;color:var(--dim)}
+.tabs button.on{background:#EAF3FD;color:var(--board);font-weight:700}
+.tabs .spacer{flex:1}
+.tabs .reset{font-size:12px;color:var(--dim)}
+#blocklyDiv{flex:1;min-height:360px}
+.editbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 12px;background:#FFF7E6;
+  border-bottom:1px solid #F5D9A0;font-size:13px;color:#7A4B00}
+.editbar .who{font-weight:800;background:#F5A623;color:#fff;border-radius:6px;padding:2px 8px}
+.editbar .tip{flex:1;min-width:220px}
+.editbar .btns{display:flex;gap:6px;flex-wrap:wrap}
+.editbar button{padding:5px 10px;font-size:13px}
+
+/* ---- 积木分类栏：左侧色条 + 图标 + 文字，对齐官方 mPython ---- */
+.blocklyToolboxDiv{background:#fff;border-right:1px solid var(--line);padding-top:4px}
+.blocklyTreeRow.mpl-cat-row{height:40px;line-height:40px;margin:0;padding:0 18px 0 0;border-bottom:1px solid #F0F2F5;
+  border-left-width:6px!important}
+.blocklyTreeRow.mpl-cat-row:not(.blocklyTreeSelected):hover{background:#F4F8FD}
+.blocklyTreeRowContentContainer{display:flex;align-items:center;height:100%}
+.mpl-cat-icon{display:inline-block;visibility:visible!important;width:22px;height:22px;margin:0 10px 0 12px;
+  background:center/contain no-repeat;flex:0 0 22px}
+.blocklyTreeLabel{font:15px var(--font);color:var(--ink)}
+.blocklyTreeSelected .blocklyTreeLabel{color:#fff}
+.blocklyTreeSelected .mpl-cat-icon{filter:brightness(0) invert(1)}
+.mpl-ic-display{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230097A7' stroke-width='2' stroke-linecap='round'%3E%3Crect x='2.5' y='5' width='19' height='12' rx='2'/%3E%3Cpath d='M9 21h6M12 17v4M6 9.5h6M6 12.5h9'/%3E%3C/svg%3E")}
+.mpl-ic-rgb{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E53935' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.7.6 1 1.3 1 2.1V18h6v-1.8c0-.8.3-1.5 1-2.1A6.5 6.5 0 0 0 12 2.5z'/%3E%3C/svg%3E")}
+.mpl-ic-music{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237CB342' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18V5l11-2v13'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Ccircle cx='17' cy='16' r='3'/%3E%3C/svg%3E")}
+.mpl-ic-text{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238D6E63' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 6V4h16v2M12 4v16M9 20h6'/%3E%3C/svg%3E")}
+.mpl-ic-var{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EC407A' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='3'/%3E%3Cpath d='M8.5 9.5l7 5M15.5 9.5l-7 5'/%3E%3C/svg%3E")}
+.mpl-ic-func{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C6BC0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4.5c-2.5-.8-4 .5-4.4 3L8 19.5c-.4 2.5-1.9 3.3-4 2.6M6 10h7M15 11l5 6M20 11l-5 6'/%3E%3C/svg%3E")}
+.blocklyFlyoutLabelText{font:600 13px var(--font);fill:#5B6573}
+.blocklyTreeSeparator{border-bottom:1px solid var(--line);margin:4px 0}
+.mpl-ic-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231E88E5' stroke-width='2' stroke-linecap='round'%3E%3Crect x='6' y='6' width='12' height='12' rx='2'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' rx='1'/%3E%3Cpath d='M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5'/%3E%3C/svg%3E")}
+.mpl-ic-net{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A884' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0'/%3E%3Ccircle cx='12' cy='19.3' r='1.3' fill='%2300A884' stroke='none'/%3E%3C/svg%3E")}
+.mpl-ic-logic{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C34FD1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='4.5' r='2'/%3E%3Ccircle cx='5' cy='19.5' r='2'/%3E%3Ccircle cx='19' cy='19.5' r='2'/%3E%3Cpath d='M12 6.5v5M5 17.5v-3h14v3'/%3E%3C/svg%3E")}
+.mpl-ic-math{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314A39A' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3.5' y='3.5' width='17' height='17' rx='3'/%3E%3Cpath d='M7 9h4M9 7v4M13.5 9h4M7.5 14.5l3 3M10.5 14.5l-3 3M13.5 15h4M13.5 17.5h4'/%3E%3C/svg%3E")}
+.mpl-ic-loop{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E69A1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 9a8 8 0 0 0-14.3-2.5M4.5 15a8 8 0 0 0 14.3 2.5'/%3E%3Cpath d='M5 2.5v4h4M19 21.5v-4h-4'/%3E%3C/svg%3E")}
+#codeView{flex:1;margin:0;overflow:auto;padding:14px 16px;font:13px/1.6 var(--mono);background:#FBFCFD;
+  white-space:pre;tab-size:4}
+/* AI 写代码页签：两个框上下摆，粘代码那个占剩下的高度 */
+#aiView{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding:12px 16px;background:#FBFCFD}
+#aiView[hidden]{display:none}
+.ai-steps{margin:0;padding-left:20px;font-size:13px;line-height:1.7;color:var(--dim)}
+.ai-steps b{color:var(--ink)}
+.ai-head{display:flex;align-items:center;gap:8px;margin-top:4px}
+.ai-head b{margin-right:auto;font-size:14px}
+.ai-head button{padding:4px 12px;font-size:13px}
+.ai-head button.ai-plain{color:var(--dim)}
+#aiView textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  font:13px/1.6 var(--mono);background:#fff;color:var(--ink);resize:vertical;tab-size:4}
+#aiPrompt{height:110px;font-family:var(--font)}
+.ai-task{padding:8px 12px;border-radius:8px;background:#FFF4E5;border:1px solid #FDBA74;color:#7C2D12;font-weight:700;font-size:14px}
+/* “我的要求”“完整的话”收在一张卡里，看着是一件事，不是两块各占地方的东西 */
+.ai-req{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;display:flex;flex-direction:column;gap:6px}
+.ai-req textarea{margin:0}
+/* 拼接区：和「第3课 互联网+各行各业-句子积木」同一套做法——句子模板 + 词块两个库，点选或拖都行，
+   拼好点"生成"才落进①。没学过编程的学生不用自己想怎么把话说顺，只管挑词填空 */
+.ai-builder{border:1px dashed #D9E0E8;border-radius:10px;padding:8px 10px;background:#FAFBFD;display:flex;flex-direction:column;gap:6px}
+.ai-bank{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+.ai-blk{padding:5px 11px;border:2px solid var(--board);background:#F4F9FF;color:var(--board);border-radius:8px;
+  font-size:12.5px;font-weight:700;cursor:grab;user-select:none;touch-action:none}
+.ai-bank.word{flex-direction:column;flex-wrap:nowrap;gap:4px}
+.ai-word-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ai-word-row b{flex:0 0 auto;font-size:12px;color:var(--dim);font-weight:700}
+.ai-bank.word .ai-blk{border-color:#1B7F43;background:#EAF7EE;color:#1B7F43}
+.ai-blk.picked{outline:3px solid var(--board)}
+.ai-zone{min-height:34px;border:2px dashed #D9E0E8;border-radius:8px;padding:6px 8px;background:#fff}
+.ai-zone:empty::before{content:"点上面的句子模板，加一行到这里";color:var(--dim);font-size:12.5px}
+.ai-zone.over{border-color:var(--board);background:#F4F9FF}
+.ai-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#F4F9FF;border-radius:8px;padding:5px 8px;margin:4px 0;font-size:13px}
+.ai-row .txt{flex:1;min-width:160px}
+.ai-slot{display:inline-block;min-width:54px;border-bottom:2px solid var(--board);margin:0 3px;padding:0 3px;
+  text-align:center;color:#1B7F43;font-weight:700;cursor:pointer}
+.ai-slot.empty{color:var(--dim);font-weight:400}
+.ai-slot.over,.ai-slot.wait{background:#FFF4E5}
+.ai-row .ctl button{border:1px solid var(--line);background:#fff;color:var(--dim);padding:1px 6px;font-size:12px;border-radius:4px}
+.ai-row .ctl button:hover{background:#F4F9FF}
+.ai-ghost-drag{position:fixed;pointer-events:none;z-index:1200;opacity:.85}
+.ai-full summary{cursor:pointer;font-size:12.5px;color:var(--dim)}
+.ai-full pre{margin:6px 0 0;max-height:220px;overflow:auto;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;font:12px/1.5 var(--mono);white-space:pre-wrap}
+.ai-links{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+.ai-links a{padding:4px 12px;border:1px solid var(--board);border-radius:6px;color:var(--board);background:#fff;
+  text-decoration:none;font-weight:700}
+.ai-links a:hover{background:#F4F9FF}
+#aiCode{flex:1;min-height:220px}
+
+/* Blockly 的工具箱 z-index 是 70，弹窗要压过它 */
+.modal{position:fixed;inset:0;background:rgba(15,23,32,.45);display:grid;place-items:center;z-index:1000;padding:16px}
+.modal .box{background:#fff;border-radius:14px;padding:22px;max-width:560px;width:100%}
+.modal h2{margin:0 0 6px;font-size:18px}
+.modal p{margin:0 0 14px;color:var(--dim)}
+/* 固定 5 列：30 个组号正好排成 5×6，列数不跟着窗口宽度变——不然同一个年级的机房，
+   窗口稍微窄一点，组号在学生眼里的位置就挪了地方，不好口头说"第二排第三个" */
+.modal .grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:8px}
+.modal .grid button{font-size:16px;font-weight:700;padding:10px 0}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#18222E;color:#fff;
+  padding:9px 16px;border-radius:8px;font-size:13px;z-index:1100;max-width:90vw}
+
+@media (max-width:860px){.split,.split.folded{grid-template-columns:1fr;gap:12px}.split.folded .left{visibility:visible}
+  .splitter{display:none}.right{min-height:520px}}

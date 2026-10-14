@@ -94,6 +94,13 @@ export const pageTypes: Record<string, PageTypeDef> = {
     desc: '上传 Scratch 作品（sb3/sb2/sb），课堂中直接运行演示，也可下载',
     student: defineAsyncComponent(() => import('../views/activity/ScratchPlayer.vue')),
     teacher: defineAsyncComponent(() => import('../views/activity/ScratchPlayer.vue'))
+  },
+  MPYTHON: {
+    label: '掌控板编程',
+    desc: '学生拼积木刷进掌控板，板子触发网页场景闯关；教师看板实时看每组的积木与进度',
+    student: defineAsyncComponent(() => import('../views/mpython/StudentMpythonPage.vue')),
+    teacher: defineAsyncComponent(() => import('../views/mpython/TeacherMpythonPanel.vue')),
+    settings: defineAsyncComponent(() => import('../views/mpython/MpythonSettings.vue'))
   }
 }
 

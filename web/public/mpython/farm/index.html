@@ -1,0 +1,2739 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智能农场远程监护系统</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#0d0f14; font-family:"Microsoft YaHei",sans-serif; }
+  #canvas-holder { position:absolute; inset:0; }
+
+  #loading {
+    position:absolute; inset:0; background:#0d0f14; color:#e8eef7;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:16px; z-index:20;
+  }
+  #loading .bar { width:260px; height:8px; background:#22262f; border-radius:5px; overflow:hidden; margin-top:14px; }
+  #loading .fill { height:100%; width:0%; background:#6fb1ff; transition:width .15s; }
+
+  #hud {
+    position:absolute; top:14px; left:14px; color:#e8eef7; background:rgba(0,0,0,0.5);
+    padding:12px 16px; border-radius:10px; font-size:13px; line-height:1.7; width:250px;
+  }
+  #hud h3 { margin:0 0 6px; font-size:14px; color:#ffd36b; }
+  #hud .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+  .ok{background:#3ddc84;} .bad{background:#e04b4b;}
+  #hud .room-row { display:flex; justify-content:space-between; }
+  #hud .room-row b.sel { color:#6fb1ff; }
+  #modeBadge {
+    display:inline-block; background:#3a4050; color:#ffd36b; font-weight:bold;
+    padding:4px 10px; border-radius:6px; margin-bottom:8px; font-size:13px;
+  }
+  #modeBadge.mode-voice { background:#2e5d4f; color:#7dffcf; }
+  #modeBadge.mode-auto { background:#2e4a5d; color:#7dc9ff; }
+  #modeHint { color:#9db0c9; }
+  #deviceButtons { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0; }
+  #deviceButtons button {
+    background:#2a2f3a; color:#c7d2e0; border:1px solid #444; border-radius:6px;
+    padding:3px 8px; font-size:11px; cursor:pointer;
+  }
+  #deviceButtons button.on { background:#3ddc84; color:#0d1f13; border-color:#3ddc84; }
+  #toast {
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    background:rgba(224,75,75,0.9); color:#fff; padding:10px 22px; border-radius:8px;
+    font-size:15px; opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+
+  #debug {
+    position:absolute; bottom:14px; left:14px; color:#c7d2e0; background:rgba(0,0,0,0.5);
+    padding:10px 14px; border-radius:10px; font-size:12px; line-height:1.6; width:290px;
+  }
+  #debug summary { cursor:pointer; color:#ffd36b; margin-bottom:4px; }
+  #debug label { display:block; margin-top:6px; }
+  #debug input[type=range] { width:100%; }
+  #debug .row { display:flex; justify-content:space-between; }
+
+  #editPanel {
+    position:absolute; bottom:14px; right:14px; color:#e8eef7; background:rgba(0,0,0,0.55);
+    padding:10px 14px; border-radius:10px; font-size:12px; line-height:1.6; width:280px;
+  }
+  #editPanel label { display:block; }
+  #editHint { color:#9db0c9; margin:6px 0; display:none; }
+  #editPanel.active #editHint { display:block; }
+  #editButtons { display:none; gap:6px; margin-top:6px; }
+  #editPanel.active #editButtons { display:flex; flex-wrap:wrap; }
+  #editButtons button {
+    flex:1; background:#2a2f3a; color:#e8eef7; border:1px solid #444; border-radius:6px;
+    padding:6px 4px; font-size:12px; cursor:pointer;
+  }
+  #editButtons button:hover { background:#3a4050; }
+  .row { display:flex; justify-content:space-between; }
+
+  #topRightPanels {
+    position:absolute; top:14px; right:14px; z-index:10;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+    max-height:calc(100vh - 28px); overflow-y:auto;
+  }
+  #catalogPanel {
+    color:#e8eef7; background:rgba(0,0,0,0.55);
+    padding:10px 14px; border-radius:10px; font-size:12px; width:260px; display:none;
+  }
+  #catalogPanel.active { display:block; }
+  #catalogSearch {
+    width:100%; box-sizing:border-box; padding:6px 8px; border-radius:6px; border:1px solid #444;
+    background:#1a1d24; color:#e8eef7; margin-bottom:6px;
+  }
+  #catalogList { max-height:45vh; overflow-y:auto; }
+  #catalogList .cat-header { color:#ffd36b; margin-top:6px; font-size:11px; opacity:0.8; }
+  #catalogList button {
+    display:block; width:100%; text-align:left; background:none; border:none; color:#c7d2e0;
+    padding:3px 4px; border-radius:4px; cursor:pointer; font-size:12px;
+  }
+  #catalogList button:hover { background:#2a2f3a; color:#fff; }
+
+  #simPanel {
+    color:#e8eef7; background:rgba(0,0,0,0.6); padding:10px 16px; border-radius:10px;
+    font-size:12px; width:340px; max-width:calc(100vw - 28px);
+  }
+  #simPanel summary { cursor:pointer; color:#ffd36b; text-align:center; }
+  #simPanel label { display:block; margin-top:8px; }
+  #simPanel input[type=range] { width:100%; }
+  .simRow { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; justify-content:center; }
+  .simRow button {
+    background:#2a2f3a; color:#e8eef7; border:1px solid #444; border-radius:6px;
+    padding:5px 8px; font-size:11px; cursor:pointer;
+  }
+  .simRow button:hover, .simRow button.active { background:#3a4050; }
+
+  #lightPanel {
+    color:#e8eef7; background:rgba(0,0,0,0.6); padding:10px 16px; border-radius:10px;
+    font-size:12px; width:300px; max-width:calc(100vw - 28px); max-height:70vh; overflow-y:auto;
+  }
+  #lightPanel summary { cursor:pointer; color:#ffd36b; }
+  .lightRoomBlock { border-top:1px solid #333; padding-top:6px; margin-top:8px; }
+  .lightRoomBlock h4 { margin:0 0 4px; color:#ffd36b; font-size:12px; }
+  .lightRoomBlock label { display:block; margin-top:6px; font-size:11px; color:#c7d2e0; }
+  .lightRoomBlock input[type=range] { width:100%; }
+  .lightRoomBlock input[type=color] { vertical-align:middle; margin-left:6px; }
+  .simRow button.simTouch.active { background:#3ddc84; color:#0d1f13; border-color:#3ddc84; }
+
+  #scenePanel {
+    color:#e8eef7; background:rgba(0,0,0,0.6); padding:10px 16px; border-radius:10px;
+    font-size:12px; width:300px; max-width:calc(100vw - 28px);
+  }
+  #scenePanel summary { cursor:pointer; color:#ffd36b; }
+  .sceneRow {
+    display:flex; align-items:center; gap:6px; border-top:1px solid #333;
+    padding-top:8px; margin-top:8px;
+  }
+  .sceneRow b { flex:1; }
+  .sceneRow button {
+    background:#2a2f3a; color:#e8eef7; border:1px solid #444; border-radius:6px;
+    padding:5px 8px; font-size:11px; cursor:pointer;
+  }
+  .sceneRow button:hover { background:#3a4050; }
+  .sceneRow .sceneEmpty { color:#7d8aa0; font-size:11px; }
+  #plantLabels { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:5; }
+  .plantTag {
+    position:absolute; transform:translate(-50%,-100%); white-space:nowrap; pointer-events:none;
+    background:rgba(10,14,20,.72); color:#c9f5d2; border:1px solid rgba(120,220,150,.5);
+    font-size:11px; font-weight:700; padding:2px 7px; border-radius:9px;
+  }
+  .plantTag.warn { color:#ffe08a; border-color:#e8b33b; background:rgba(60,40,5,.8); animation:plantBlink 1s ease-in-out infinite; }
+  .plantTag.dead { color:#ffc2b5; border-color:#c0644d; background:rgba(70,20,10,.85); }
+  @keyframes plantBlink { 50% { opacity:.55; } }
+  /* ---- 温室栽培关（?game=1）：自由农场那几块面板全藏起来，只留栽培面板 ---- */
+  body.game #hud, body.game #debug, body.game #editPanel, body.game #topRightPanels,
+  body.game #miniBar, body.game #plantLabels, body.game #toast { display:none !important; }
+  #growPanel { display:none; }
+  body.game #growPanel {
+    display:block; position:fixed; left:10px; top:10px; z-index:8; width:290px; max-width:calc(100vw - 20px);
+    background:rgba(12,18,24,.82); color:#e8eef7; border-radius:12px; padding:9px 11px; font-size:12px; line-height:1.4;
+    box-shadow:0 4px 16px rgba(0,0,0,.35); backdrop-filter:blur(3px);
+  }
+  #growPanel .gp-head { display:flex; gap:8px; align-items:baseline; justify-content:space-between; }
+  #growPanel .gp-head b { color:#9ff0b4; font-size:13px; }
+  #growPanel .gp-plant { margin:3px 0 4px; font-size:13px; }
+  #growPanel .gp-bar { display:grid; grid-template-columns:30px 1fr 34px; gap:6px; align-items:center; margin:2px 0; }
+  #growPanel .gp-tr { height:7px; border-radius:4px; background:#2b3542; overflow:hidden; }
+  #growPanel .gp-tr i { display:block; height:100%; border-radius:4px; transition:width .2s; }
+  #growPanel .gp-bar b { text-align:right; }
+  #growPanel .gp-ind { display:grid; grid-template-columns:70px 1fr 38px 60px; gap:6px; align-items:center; margin-top:5px; }
+  #growPanel .gp-track { position:relative; height:9px; border-radius:5px; background:#2b3542; }
+  #growPanel .gp-band { position:absolute; top:0; bottom:0; background:rgba(52,196,110,.55); border-radius:5px; }
+  #growPanel .gp-dot { position:absolute; top:-3px; width:4px; height:15px; margin-left:-2px; border-radius:2px; background:#fff; box-shadow:0 0 4px #000; }
+  #growPanel .gp-v { text-align:right; font-variant-numeric:tabular-nums; }
+  #growPanel .gp-s { color:#9ff0b4; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #growPanel .gp-ind.bad .gp-s, #growPanel .gp-ind.bad .gp-v { color:#ffb36b; font-weight:700; }
+  #growPanel .gp-ind.bad .gp-dot { background:#ffb36b; }
+  #growPanel .gp-log { margin-top:6px; border-top:1px solid #334; padding-top:4px; font-size:11.5px; min-height:16px; }
+  /* 日志的类名带 gl- 前缀：页面里本来就有 .ok（状态点的绿色），不加前缀会被涂成一块绿底 */
+  #growPanel .gp-log .gl-ok { color:#bfe9ff; } #growPanel .gp-log .gl-cool { color:#ffcf7a; } #growPanel .gp-log .gl-day { color:#d7c4ff; }
+  #growOverlay { display:none; position:fixed; inset:0; z-index:9; align-items:center; justify-content:center; background:rgba(8,12,18,.45); }
+  #growOverlay .go-box { max-width:340px; margin:0 12px; background:#fff; color:#18222E; border-radius:14px; padding:16px 18px; text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  #growOverlay h3 { margin:0 0 6px; font-size:18px; }
+  #growOverlay p { margin:0 0 12px; font-size:13px; color:#475569; line-height:1.55; }
+  #growOverlay button { background:#0D9488; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:14px; font-weight:700; cursor:pointer; }
+  #growOverlay button:hover { background:#0B7F75; }
+  #growSim { position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8; display:flex; gap:6px; }
+  #growSim button { background:#1f2937; color:#fff; border:1px solid #475569; border-radius:8px; padding:6px 10px; cursor:pointer; }
+  #growSim button:hover { background:#334155; }
+  /* 嵌在左栏小窗里：面板缩一号 */
+  @media (max-height: 520px) {
+    body.game #growPanel { width:250px; padding:7px 9px; font-size:11px; }
+    #growPanel .gp-ind { grid-template-columns:60px 1fr 34px 46px; margin-top:3px; }
+    #growPanel .gp-log div:nth-child(n+3) { display:none; }
+    #growOverlay .go-box { padding:12px 14px; } #growOverlay h3 { font-size:15px; } #growOverlay p { font-size:12px; margin-bottom:8px; }
+  }
+  /* 嵌在掌控板实验室左栏的小窗里（高度不到 520）：面板一摊开就把整个大棚盖住了，
+     小窗里只留 3D 画面、植物标签和一行状态，点外面的“⛶ 全屏”再看全部面板 */
+  #miniBar { display:none; }
+  @media (max-height: 520px) {
+    #hud, #debug, #editPanel, #topRightPanels { display:none !important; }
+    #miniBar { display:block; position:fixed; left:8px; top:8px; z-index:6; pointer-events:none;
+      background:rgba(10,14,20,.72); color:#dfe8f3; font-size:12px; padding:4px 10px; border-radius:8px; }
+    #miniBar b { color:#9ff0b4; }
+  }
+</style>
+</head>
+<body>
+<div id="loading">
+  正在加载场景模型 ...
+  <div class="bar"><div class="fill" id="loadFill"></div></div>
+</div>
+<div id="canvas-holder"></div>
+<!-- 每盆植物头顶的小标签（水分 / 缺水 / 枯死），由动画循环把 3D 坐标投影到屏幕上摆位置 -->
+<div id="plantLabels"></div>
+<div id="miniBar">选中：<b id="miniSel">补光灯</b> · 植物：<b id="miniPlant">--</b></div>
+<div id="toast"></div>
+
+<div id="hud">
+  <h3><span id="statusDot" class="dot bad"></span>桥接状态: <span id="statusText">未连接</span></h3>
+  <div id="modeBadge">按键模式</div>
+  <div class="room-row"><span>当前选中设备</span><b id="selRoom">补光灯</b></div>
+  <div id="deviceButtons"></div>
+  <div class="room-row"><span>总电源</span><b id="masterState">开</b></div>
+  <div class="room-row"><span>光照读数</span><b id="lightVal">--</b></div>
+  <div class="room-row"><span>通风扇转速(倾斜)</span><b id="fanVal">--</b></div>
+  <div class="room-row"><span>指南针朝向</span><b id="headingVal">--</b></div>
+  <div class="room-row"><span>植物（灌溉阀浇水）</span><b id="plantVal">--</b></div>
+  <div class="room-row" id="voiceStatusRow" style="display:none;"><span>语音</span><b id="voiceStatus">未在聆听</b></div>
+  <div class="room-row" id="voiceTranscriptRow" style="display:none;"><span>识别到</span><b id="voiceTranscript">--</b></div>
+  <hr style="border-color:#333;">
+  <div id="modeHint">触摸 P/Y/T/H 选设备，O 总开关，N 复位视角<br>按键 A 开关当前选中的设备，按键 B 切换模式<br>摇一摇板子 = 紧急停机（全部关闭）</div>
+</div>
+
+<details id="debug">
+  <summary>调试 / 触摸灵敏度校准</summary>
+  <div class="row"><span>P</span><span id="dp">--</span></div>
+  <div class="row"><span>Y</span><span id="dy">--</span></div>
+  <div class="row"><span>T</span><span id="dt">--</span></div>
+  <div class="row"><span>H</span><span id="dh">--</span></div>
+  <div class="row"><span>O</span><span id="do_">--</span></div>
+  <div class="row"><span>N</span><span id="dn">--</span></div>
+  <label>触摸灵敏度(读数超过"基准值 × 这个倍数"就算摸到): <span id="threshVal">1.3</span>
+    <input type="range" id="threshSlider" min="1.05" max="3" step="0.05" value="1.3">
+  </label>
+  <div style="color:#7d8aa0;">基准值会自动跟随未触摸时的读数缓慢调整，不用手动填具体数字。如果"摸了没反应"就把倍数调小，"没摸也乱跳"就调大。</div>
+  <label><input type="checkbox" id="compassToggle" checked style="width:auto;"> 指南针控制视角</label>
+  <hr style="border-color:#333;">
+  <div>光敏读数范围：<span id="lightRange">--</span></div>
+  <div style="color:#7d8aa0;">下面这个阈值只在按键 B 切到"自动模式"时才会生效。</div>
+  <label>自动模式判定阈值(暗于观察到的这个百分比就自动开灯+开空调): <span id="autoThreshVal">40</span>%
+    <input type="range" id="autoThreshSlider" min="5" max="95" step="5" value="40">
+  </label>
+  <div style="color:#7d8aa0;">这个百分比是相对"目前观察到的最亮~最暗范围"算的，不是绝对数值，开局用手挡一下/照一下光敏传感器让范围先撑开，自动模式会更准。</div>
+  <hr style="border-color:#333;">
+  <div>麦克风声音强度：<span id="dSound">--</span></div>
+  <label>声控灵敏度(声音超过"基准值 × 这个倍数"就算拍了一下手): <span id="soundThreshVal">1.6</span>
+    <input type="range" id="soundThreshSlider" min="1.1" max="4" step="0.1" value="1.6">
+  </label>
+  <div style="color:#7d8aa0;">拍手或大声喊一下会切换总电源（不是语音识别，只认音量大小）。基准值会自动跟随环境噪音缓慢调整，太灵敏就调大这个倍数。</div>
+</details>
+
+<div id="editPanel">
+  <label><input type="checkbox" id="editModeToggle" style="width:auto;"> 设施摆放编辑模式</label>
+  <div id="editHint">
+    开启后：鼠标点击物体选中(会显示红色线框)，然后用键盘调整：<br>
+    ← → 移动 X ／ ↑ ↓ 移动 Z ／ PageUp PageDown 移动高度 ／ Q E 旋转 ／ 按住 Shift 加大步长<br>
+    <b style="color:#ffd36b;">− ＝</b> 整体缩小/放大 ／ 按住 <b style="color:#ffd36b;">Alt</b> + 上面的移动键 = 单独缩放某一根轴
+    (Alt+← → 缩放 X／Alt+↑ ↓ 缩放 Z／Alt+PageUp PageDown 缩放 Y)
+  </div>
+  <div class="row"><span>已选中</span><b id="editSelName">无</b></div>
+  <div class="row"><span>缩放</span><b id="editScaleVal">100% / 100% / 100%</b></div>
+  <div id="editButtons">
+    <button id="editDeleteBtn">删除选中</button>
+    <button id="editResetScaleBtn">重置缩放</button>
+    <button id="editSaveBtn">保存到本机</button>
+    <button id="editExportBtn">下载布局文件</button>
+    <button id="editImportBtn">导入布局文件(替换)</button>
+    <button id="editImportMergeBtn">追加导入(合并当前布局)</button>
+    <button id="editResetBtn">重置为默认布局</button>
+  </div>
+  <input type="file" id="editImportInput" accept="application/json,.json" style="display:none;">
+  <input type="file" id="editImportMergeInput" accept="application/json,.json" style="display:none;">
+</div>
+
+<div id="topRightPanels">
+<div id="catalogPanel">
+  <div style="color:#ffd36b;margin-bottom:6px;">设施目录（点击添加到大棚正中央）</div>
+  <input type="text" id="catalogSearch" placeholder="搜索模型，比如 chair / lamp / plant ...">
+  <div id="catalogList">加载中...</div>
+</div>
+
+<details id="simPanel">
+  <summary>🎮 模拟掌控板（不接硬件也能测试全部功能）</summary>
+  <div style="color:#9db0c9; margin-bottom:8px;">
+    没有板子、或者板子不在手边的时候，用下面这些控件代替真实传感器，效果和真的板子发数据完全一样。
+    如果同时也连着真板子，两边的操作会互相覆盖，建议只用一边。
+  </div>
+  <div style="color:#9db0c9; margin-bottom:8px;">
+    现在一共有三种控制模式，按一下"按键 B"就在三种模式之间切换：<br>
+    <b style="color:#ffd36b;">按键模式</b>：按键 A 开关当前选中的设备。<br>
+    <b style="color:#7dffcf;">语音模式</b>：按住按键 A 的同时说话（比如"打开监测屏"），松开处理。<br>
+    <b style="color:#7dc9ff;">自动模式</b>：补光灯和灌溉阀跟着光照传感器自动开关，按键 A 不起作用。
+  </div>
+  <div class="simRow">
+    <button id="simBtnA">按键 A（按键模式=开关选中设备／语音模式=按住说话）</button>
+    <button id="simBtnB">按键 B（切换模式）</button>
+    <button id="simShake">摇一摇（紧急停机）</button>
+  </div>
+  <div class="simRow">
+    <span>触摸点：</span>
+    <button class="simTouch" data-key="p">P(选补光灯)</button>
+    <button class="simTouch" data-key="y">Y(选通风扇)</button>
+    <button class="simTouch" data-key="t">T(选监测屏)</button>
+    <button class="simTouch" data-key="h">H(选报警器/灌溉阀)</button>
+    <button class="simTouch" data-key="o">O(总开关)</button>
+    <button class="simTouch" data-key="n">N(复位视角)</button>
+  </div>
+  <label>光敏读数：<span id="simLightVal">2000</span>
+    <input type="range" id="simLight" min="0" max="4095" value="2000">
+  </label>
+  <label>倾斜 X：<span id="simTiltXVal">0</span>
+    <input type="range" id="simTiltX" min="-2" max="2" step="0.1" value="0">
+  </label>
+  <label>倾斜 Y：<span id="simTiltYVal">0</span>
+    <input type="range" id="simTiltY" min="-2" max="2" step="0.1" value="0">
+  </label>
+  <label>指南针朝向：<span id="simHeadingVal">90</span>°
+    <input type="range" id="simHeading" min="0" max="359" value="90">
+  </label>
+  <label>麦克风声音强度：<span id="simSoundVal">500</span>
+    <input type="range" id="simSound" min="0" max="4095" value="500">
+  </label>
+  <button id="simClap" style="margin-top:6px; width:100%;">👏 模拟拍一下手</button>
+</details>
+
+<details id="lightPanel">
+  <summary>💡 灯光参数调整</summary>
+  <div style="color:#9db0c9; margin-bottom:6px;">
+    大棚灯光颜色/亮度/锥形光范围都能在这里现场调，改了马上能在场景里看到效果。
+    调好之后记得点"保存灯光参数"，不然刷新页面就丢了。
+    "张角"滑块上限是 89°——three.js 的 SpotLight 硬性上限是 90°，到 90° 光会变成
+    退化的半球光（不是正常的锥形了），所以封顶设在 89，实际上已经很接近能给的最大值了。
+    新加了"灯具高度"，能调这盏灯离地面多高。提醒一下：这盏灯是"朝正下方照"的锥形光，
+    物理上靠近灯具本身、跟灯具差不多高的那圈墙面本来就照不到多少光（锥形光只往下方
+    的圆锥范围里照，不会往旁边/斜上方射），单纯调高度能改善但解决不了全部——如果调完
+    高度上方还是觉得太暗，可能得再加一层"整体垫高一点基础亮度"之类的办法，需要的话告诉我。
+  </div>
+  <div id="lightPanelBody">加载中...</div>
+  <div class="simRow">
+    <button id="lightSaveBtn">保存灯光参数</button>
+    <button id="lightResetBtn">重置为默认</button>
+  </div>
+</details>
+
+<details id="scenePanel">
+  <summary>🎬 场景模式（3 个槽位）</summary>
+  <div style="color:#9db0c9; margin-bottom:6px;">
+    把当前"哪些设备开着/关着"整体存成一个槽位，以后点"应用"就能一键把全部设备切回那个
+    组合，比如存一个"白天监测模式"(补光灯关、通风扇开)、"夜间保温模式"(补光灯开、通风扇关)……
+    存了 3 个槽位就够用一堂课演示的了。
+  </div>
+  <div id="scenePanelBody"></div>
+</details>
+</div>
+
+<!-- three.js 及其插件放在 vendor/ 里本地随包携带，不依赖任何在线 CDN，
+     教室没有外网也能跑（上次测试发现 jsdelivr 连不上，所以改成本地文件）。-->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/build/three.module.js",
+    "three/addons/": "./vendor/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// ============ 温室大棚整体布局配置（智能农场远程监护系统）============
+// 重新布局（第二版）：原来是“米白色实心墙 + 借用厨房/浴室家具顶替农业设施”，看着像间屋子。
+// 现在换成一座真正的玻璃温室（12 宽 x 6 深）：矮砖基 + 透明玻璃墙 + 人字形玻璃屋顶，
+// 中间一条南北向走道，两侧各三块抬高的种植床，床上种着 Kenney Nature Kit 的作物模型
+// （CC0 授权，assets/nature/，许可文件在同一目录）。设备照旧是那五样，只是换了位置：
+//   补光灯：走道正上方一盏主灯 + 东西两侧各一盏；通风扇：北边屋脊下；
+//   监测屏 + 报警器：南墙西段的值班台；灌溉阀：南墙东段、储水罐上方。
+// 坐标约定不变：x 向东 0~12，z 从北墙 0 往南到 -6，南墙正中（x 5.4~6.6）是大门。
+// 镜头默认从东北方斜上方看过来，所以高的作物（玉米）种在南边、矮的在北边，不挡视线。
+const ROOMS = {
+  greenhouse: { label: "温室大棚", x0: 0, z0: 0, w: 12, d: 6, color: 0x7bd88f },
+};
+
+// 大棚里实际装了哪些"可控设备"：一次性全部装齐，不再按分区拆
+const DEVICE_CONFIG = {
+  greenhouse: ["light", "fan", "tv", "speaker", "ac"],
+};
+const DEVICE_LABELS = { light: "补光灯", fan: "通风扇", tv: "监测屏", speaker: "报警器", ac: "灌溉阀" };
+
+// 灯光颜色统一用白光。这里的值只是"出厂默认值"——网页右下角有个"灯光参数调整"
+// 面板，可以现场拖滑块调，调好点"保存"会存到这台电脑，下次打开自动用调好的参数，
+// 不用再改这份代码。
+const ROOM_LIGHT_STYLE = {
+  greenhouse: { color: 0xfff4e0, intensity: 6, emissiveIntensity: 1.4, height: 2.75 },
+};
+// angleDeg / distance 两个字段默认不填，缺省就用 computeAutoSpotParams() 按房间大小自动算；
+// 一旦在"灯光参数调整"面板里手动调过，就会被写进来，之后优先用手动调的数值。
+
+const LAMP_HEIGHT = 2.75; // 吊灯离地面大概的高度，算锥形光覆盖范围要用
+function computeAutoSpotParams(room) {
+  const halfDiagonal = Math.sqrt((room.w / 2) ** 2 + (room.d / 2) ** 2);
+  const angle = Math.min(Math.atan2(halfDiagonal, LAMP_HEIGHT) + 0.1, Math.PI / 2.3);
+  const distance = Math.sqrt(halfDiagonal ** 2 + LAMP_HEIGHT ** 2) + 0.6;
+  return { angle, distance };
+}
+
+// 页面一打开就把上次"保存灯光参数"存下来的值合并进默认配置里，这样灯一创建出来
+// 就是调好的效果，不用先看到默认值再等面板刷新。
+// 换了布局（灯的高度、数量都变了），存档位跟着换，旧的调光数据对新大棚没意义。
+const LIGHT_STYLE_STORAGE_KEY = "smartFarmLightStyle_v3";
+(function applySavedLightStyle() {
+  try {
+    const raw = localStorage.getItem(LIGHT_STYLE_STORAGE_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    Object.entries(saved).forEach(([room, vals]) => {
+      if (ROOM_LIGHT_STYLE[room]) Object.assign(ROOM_LIGHT_STYLE[room], vals);
+    });
+  } catch {
+    // 存的内容损坏就当没存过，用默认值
+  }
+})();
+
+// ---- 六块种植床：每块一种作物，也是“植物枯萎”系统里的一个监护单位 ----
+// 一块床几十棵作物，每棵头上挂个标签会糊成一片，所以按床算水分、一块床一个标签；
+// 浇水时整块床的土变深、滴灌管变蓝，一眼看出水到了哪儿。
+// rows：每块床种几行；step：同一行里两棵的间距；scale：模型放大倍数（Nature Kit 作物原始尺寸偏小）
+const BED_LEN = 4.4, BED_W = 0.9, BED_H = 0.3;
+const BEDS = [
+  { key: "W1", name: "胡萝卜", icon: "🥕", model: "crop_carrot",       x: 2.7, z: -0.95, rows: 2, step: 0.55, scale: 1.0 },
+  { key: "W2", name: "生菜",   icon: "🥬", model: "crops_leafsStageB", x: 2.7, z: -2.55, rows: 2, step: 0.55, scale: 0.9 },
+  { key: "W3", name: "玉米",   icon: "🌽", model: "crops_cornStageD",  x: 2.7, z: -4.15, rows: 1, step: 0.6,  scale: 1.0 },
+  { key: "E1", name: "南瓜",   icon: "🎃", model: "crop_pumpkin",      x: 9.3, z: -0.95, rows: 2, step: 0.62, scale: 1.0 },
+  { key: "E2", name: "萝卜",   icon: "🥗", model: "crop_turnip",       x: 9.3, z: -2.55, rows: 2, step: 0.55, scale: 1.0 },
+  { key: "E3", name: "小麦",   icon: "🌾", model: "crops_wheatStageB", x: 9.3, z: -4.15, rows: 2, step: 0.5,  scale: 1.1 },
+];
+
+// 每件家具：model 文件名(不含.glb)、房间内局部坐标 [x,y,z]、绕Y轴旋转角度(度)
+// deviceRole 标记这件家具同时是一个"可控设备"（电视/音箱），用来接入下面的开关逻辑
+// bed 标记这棵作物属于哪块种植床；watch:true 的单独一盆也参与“缺水/枯萎”
+// 注意：每一件的"下标"是浏览器保存布局时用来对应"这条记录是哪件家具"的依据，
+// 这个数组是按固定顺序生成的，不要在中间插东西；要加就加在最后。
+const FURNITURE = [];
+// 作物：按床、按行、按棵的固定顺序生成，朝向用下标算个“随机”角度——
+// 整整齐齐全朝一个方向看着像贴图，稍微转一转才像种出来的
+BEDS.forEach((b) => {
+  const n = Math.floor((BED_LEN - 0.4) / b.step) + 1;
+  const x0 = b.x - ((n - 1) * b.step) / 2;
+  for (let r = 0; r < b.rows; r++) {
+    const dz = b.rows === 1 ? 0 : (r === 0 ? 0.2 : -0.2);
+    // 第二行错开半棵、少种一棵，不然最后一棵会伸出床外
+    const count = r ? n - 1 : n, off = r ? b.step / 2 : 0;
+    for (let i = 0; i < count; i++) {
+      const k = FURNITURE.length;
+      FURNITURE.push({
+        room: "greenhouse", model: b.model, bed: b.key, scale: b.scale,
+        pos: [x0 + off + i * b.step, BED_H, b.z + dz],
+        rotY: (k * 47) % 360,
+      });
+    }
+  }
+});
+FURNITURE.push(
+  // 南墙西段：值班台（监测屏 + 报警器），屏幕朝北、正对着默认镜头
+  { room: "greenhouse", model: "cabinetTelevision", pos: [2.1, 0, -5.62], rotY: 0, scale: 1.4 },
+  { room: "greenhouse", model: "televisionModern", pos: [2.66, 0.434, -5.8], rotY: 0, scale: 1.4, deviceRole: "tv" },
+  { room: "greenhouse", model: "speaker", pos: [3.5, 0, -5.62], rotY: 0, scale: 1.3, deviceRole: "speaker" },
+  { room: "greenhouse", model: "chairDesk", pos: [2.6, 0, -5.0], rotY: 180 },
+  // 东西两侧的补光吊灯，跟着补光灯开关一起开关（中间那盏主灯在 CEILING_LIGHTS 里）
+  { room: "greenhouse", model: "lampSquareCeiling", pos: [2.7, 2.75, -3.0], rotY: 0, scale: 2.2, lightRole: "room", lightHeight: 0, lightScale: 0.8 },
+  { room: "greenhouse", model: "lampSquareCeiling", pos: [9.3, 2.75, -3.0], rotY: 0, scale: 2.2, lightRole: "room", lightHeight: 0, lightScale: 0.8 },
+  // 门口内侧一盆盆栽，也是被监护的（单独一个标签）
+  { room: "greenhouse", model: "pottedPlant", pos: [7.0, 0, -5.55], rotY: 0, scale: 1.3, watch: true },
+  // ---- 大棚外面：草地上的树、花、灌木，门口的石板路和指示牌 ----
+  // 树都种在南边和东西两头远一点的地方：默认镜头从东北方看过来，北边种树会挡在镜头前面
+  { room: "greenhouse", model: "tree_default", pos: [-3.2, 0, -1.0], rotY: 20, scale: 2.0 },
+  { room: "greenhouse", model: "tree_oak", pos: [-3.6, 0, -8.6], rotY: 70, scale: 2.2 },
+  { room: "greenhouse", model: "tree_fat", pos: [-2.8, 0, -5.2], rotY: 130, scale: 1.9 },
+  { room: "greenhouse", model: "tree_pineRoundC", pos: [15.4, 0, -6.8], rotY: 10, scale: 2.2 },
+  { room: "greenhouse", model: "tree_detailed", pos: [2.6, 0, -10.2], rotY: 200, scale: 2.0 },
+  { room: "greenhouse", model: "tree_default", pos: [10.4, 0, -10.6], rotY: 300, scale: 2.1 },
+  { room: "greenhouse", model: "plant_bush", pos: [-1.0, 0, -1.6], rotY: 0, scale: 2 },
+  { room: "greenhouse", model: "plant_bushLarge", pos: [13.0, 0, -3.0], rotY: 90, scale: 1.8 },
+  { room: "greenhouse", model: "sign", pos: [4.7, 0, -6.9], rotY: 0, scale: 2.4 },
+  { room: "greenhouse", model: "path_stone", pos: [6, 0.005, -6.5], rotY: 0, scale: 1.2 },
+  { room: "greenhouse", model: "path_stone", pos: [6, 0.005, -7.25], rotY: 0, scale: 1.2 },
+  { room: "greenhouse", model: "path_stone", pos: [6, 0.005, -8.0], rotY: 0, scale: 1.2 },
+);
+// 南墙外沿一排花（门两边各一段）
+["flower_redA", "flower_yellowA", "flower_purpleA", "flower_redB", "flower_yellowB", "flower_purpleB"].forEach((m, i) => {
+  FURNITURE.push({ room: "greenhouse", model: m, pos: [0.8 + i * 0.75, 0, -6.45], rotY: i * 50, scale: 1.8 });
+  FURNITURE.push({ room: "greenhouse", model: m, pos: [7.4 + i * 0.75, 0, -6.45], rotY: i * 70, scale: 1.8 });
+});
+
+// ---- 大棚外面再丰富一点（只往末尾加：摆放编辑器按下标记位置）----
+// 原来外面只有几棵树，学生看着像一片空地。加一圈院子里常见的东西：前院木栅栏和院门、
+// 通到院门的石板路、西边一小块南瓜地、后院一片麦田、柴堆、石头、蘑菇、长椅、花盆、草丛。
+// 全放在南边（画面里是大棚后面）和东西两头：默认镜头从东北方看过来，北边放东西会挡在镜头跟前
+[-1.4, -0.2, 1.0, 2.2, 3.4, 4.6, 7.4, 8.6, 9.8, 11.0, 12.2, 13.4].forEach((x) => {
+  FURNITURE.push({ room: "greenhouse", model: "fence_simple", pos: [x, 0, -9.4], rotY: 0, scale: 1.2 });
+});
+FURNITURE.push(
+  { room: "greenhouse", model: "fence_gate", pos: [6.0, 0, -9.4], rotY: 0, scale: 1.2 },
+  { room: "greenhouse", model: "path_stone", pos: [6, 0.005, -8.75], rotY: 0, scale: 1.2 },
+  // 西边南瓜地
+  { room: "greenhouse", model: "crops_dirtDoubleRow", pos: [-1.6, 0, -7.6], rotY: 90, scale: 1.4 },
+  { room: "greenhouse", model: "crop_pumpkin", pos: [-1.9, 0.05, -7.2], rotY: 20, scale: 1.6 },
+  { room: "greenhouse", model: "crop_pumpkin", pos: [-1.3, 0.05, -7.9], rotY: 140, scale: 1.4 },
+  { room: "greenhouse", model: "crop_pumpkin", pos: [-1.9, 0.05, -8.3], rotY: 260, scale: 1.5 },
+  // 大棚后面一小片麦田
+  { room: "greenhouse", model: "crops_wheatStageB", pos: [9.8, 0, -7.7], rotY: 0, scale: 1.6 },
+  { room: "greenhouse", model: "crops_wheatStageB", pos: [10.8, 0, -7.7], rotY: 90, scale: 1.6 },
+  { room: "greenhouse", model: "crops_wheatStageB", pos: [11.8, 0, -7.7], rotY: 180, scale: 1.6 },
+  { room: "greenhouse", model: "crops_wheatStageB", pos: [9.8, 0, -8.6], rotY: 270, scale: 1.6 },
+  { room: "greenhouse", model: "crops_wheatStageA", pos: [10.8, 0, -8.6], rotY: 0, scale: 1.6 },
+  { room: "greenhouse", model: "crops_wheatStageA", pos: [11.8, 0, -8.6], rotY: 90, scale: 1.6 },
+  // 院子里的杂物
+  { room: "greenhouse", model: "log_stack", pos: [13.0, 0, -8.4], rotY: 30, scale: 1.5 },
+  { room: "greenhouse", model: "bench", pos: [8.6, 0, -7.7], rotY: 0, scale: 1.3 },
+  { room: "greenhouse", model: "pot_large", pos: [3.4, 0, -7.6], rotY: 0, scale: 1.6 },
+  { room: "greenhouse", model: "flower_redC", pos: [3.4, 0.42, -7.6], rotY: 0, scale: 1.4 },
+  { room: "greenhouse", model: "rock_largeA", pos: [-2.2, 0, -2.4], rotY: 40, scale: 1.4 },
+  { room: "greenhouse", model: "rock_smallC", pos: [14.4, 0, -5.0], rotY: 0, scale: 1.8 },
+  { room: "greenhouse", model: "rock_smallFlatA", pos: [7.9, 0, -8.7], rotY: 60, scale: 1.8 },
+  { room: "greenhouse", model: "mushroom_redGroup", pos: [-2.6, 0, -0.2], rotY: 0, scale: 1.8 },
+  { room: "greenhouse", model: "mushroom_tanGroup", pos: [15.0, 0, -7.6], rotY: 90, scale: 1.8 },
+  { room: "greenhouse", model: "plant_bushDetailed", pos: [14.0, 0, -9.4], rotY: 0, scale: 1.6 },
+  { room: "greenhouse", model: "grass_large", pos: [1.2, 0, -8.6], rotY: 0, scale: 1.8 },
+  { room: "greenhouse", model: "grass_large", pos: [10.0, 0, -9.0], rotY: 70, scale: 1.8 },
+  { room: "greenhouse", model: "grass_leafsLarge", pos: [-0.8, 0, -1.6], rotY: 20, scale: 1.8 },
+  { room: "greenhouse", model: "grass_leafsLarge", pos: [12.8, 0, -6.4], rotY: 120, scale: 1.8 },
+);
+
+// 走道正中的主灯（在屋脊正下方）
+const CEILING_LIGHTS = Object.keys(ROOMS).map((key) => {
+  const room = ROOMS[key];
+  const height = ROOM_LIGHT_STYLE[key].height ?? 2.75;
+  return { room: key, pos: [room.x0 + room.w / 2, height, -(room.z0 + room.d / 2)] };
+});
+
+// 开场要先加载好的模型 = 布局里用到的全部 + 主灯和风扇
+const MODEL_LIST = [...new Set(FURNITURE.map((f) => f.model).concat(["lampSquareCeiling", "ceilingFan"]))];
+
+// ============ three.js 基础搭建 ============
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcfe8f4);   // 浅天蓝：玻璃温室在“室外”，白底显得像悬在空中
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+const cameraTarget = new THREE.Vector3(6, 0.5, -3);
+const desiredCameraTarget = cameraTarget.clone(); // 切换选中房间时，让镜头平滑移过去，反馈更明显
+const cameraRadius = 12.5;
+let cameraElevation = 7.5;
+let cameraAzimuth = Math.PI * 0.25; // 弧度
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.getElementById("canvas-holder").appendChild(renderer.domElement);
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.copy(cameraTarget);
+controls.enableDamping = true;
+
+// 之前的 bug：指南针数据一来，每一帧都会强制把 camera.position 设成指南针算出来的位置，
+// 鼠标拖动 OrbitControls 改的位置下一帧就被盖掉，导致"复位视角"之后完全没法再拖动镜头
+// （复位视角内部会重新触发一次指南针数据，之后就一直被强制锁定）。
+// 现在改成：只要用户手动拖动过镜头，就暂停指南针自动转向，直到再点一次"复位视角"或
+// 触摸点 N 才重新恢复指南针跟随——两者不会互相打架了。
+let compassFollowEnabled = true;
+controls.addEventListener("start", () => { compassFollowEnabled = false; });
+
+// 环境光 + 太阳光调得比较暗，只是为了让关灯的房间不至于全黑、看得清轮廓，
+// 真正的亮度还是要看每个房间自己的灯开没开——不然背景光太强，开关灯看起来没差别，
+// 会显得好像所有房间的灯连在一起、关一盏其它也跟着还是那么亮。
+const ambient = new THREE.AmbientLight(0x8899bb, 0.08);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffffff, 0.12);
+sun.position.set(10, 15, 5);
+scene.add(sun);
+// 光敏读数变化时不直接瞬间跳到新亮度，而是每帧慢慢靠近，避免"数值一变，画面突然一下子
+// 变亮/变暗"这种突兀的闪烁感（动画循环里会用这个目标值）
+let targetAmbientIntensity = ambient.intensity;
+// 温室栽培（?game=1）是白天的户外场景，不需要“关灯看得出差别”那一套：
+// 加一盏天空光（上面偏天蓝、下面偏草地色）当底，太阳光也调亮。
+// 原来沿用农场那套暗光，整座温室灰蒙蒙的，树都是黑的。
+const skyFill = new THREE.HemisphereLight(0xeaf6ff, 0x9bb07a, 0);
+scene.add(skyFill);
+
+// ============ 玻璃温室的骨架（全部用简单几何体搭，保证不会有模型拼接错位问题）============
+// 矮砖基 + 透明玻璃墙 + 人字形玻璃屋顶（屋脊东西走向，在 z=-3 正上方）+ 白色钢架。
+// 玻璃是半透明且不写深度缓冲：从外面斜上方看得清里面的作物和设备，又看得出“这里有一层玻璃”。
+// 这些结构件一律不参与鼠标拾取（raycast 置空）：不然在“设施摆放编辑模式”里点里面的东西，
+// 每一下都先点在玻璃上，什么都选不中。
+const EAVE_H = 2.2, RIDGE_H = 3.2, BASE_H = 0.35;
+const DOOR_X0 = 5.4, DOOR_X1 = 6.6;
+const glassMat = new THREE.MeshStandardMaterial({
+  color: 0xd6f1ff, transparent: true, opacity: 0.16, roughness: 0.1, metalness: 0,
+  depthWrite: false, side: THREE.DoubleSide,
+});
+const frameMat = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.5 });
+const baseMat = new THREE.MeshStandardMaterial({ color: 0xc9b9a0, roughness: 0.9 });
+const noPick = () => {};
+function addStatic(mesh) { mesh.raycast = noPick; scene.add(mesh); return mesh; }
+function box(sx, sy, sz, x, y, z, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
+  m.position.set(x, y, z);
+  return addStatic(m);
+}
+function glassPane(w, h, x, y, z, rotY = 0) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glassMat);
+  m.position.set(x, y, z);
+  m.rotation.y = rotY;
+  m.renderOrder = 2;       // 透明物体最后画，里面的东西才不会被玻璃“擦掉”
+  return addStatic(m);
+}
+(function buildGreenhouse() {
+  const W = ROOMS.greenhouse.w, D = ROOMS.greenhouse.d, glassH = EAVE_H - BASE_H, gy = BASE_H + glassH / 2;
+  // 砖基：北、东、西整段，南墙在大门处断开
+  box(W, BASE_H, 0.12, W / 2, BASE_H / 2, 0, baseMat);
+  box(0.12, BASE_H, D, 0, BASE_H / 2, -D / 2, baseMat);
+  box(0.12, BASE_H, D, W, BASE_H / 2, -D / 2, baseMat);
+  box(DOOR_X0, BASE_H, 0.12, DOOR_X0 / 2, BASE_H / 2, -D, baseMat);
+  box(W - DOOR_X1, BASE_H, 0.12, (W + DOOR_X1) / 2, BASE_H / 2, -D, baseMat);
+  // 玻璃墙
+  glassPane(W, glassH, W / 2, gy, 0);
+  glassPane(D, glassH, 0, gy, -D / 2, Math.PI / 2);
+  glassPane(D, glassH, W, gy, -D / 2, Math.PI / 2);
+  glassPane(DOOR_X0, glassH, DOOR_X0 / 2, gy, -D);
+  glassPane(W - DOOR_X1, glassH, (W + DOOR_X1) / 2, gy, -D);
+  glassPane(DOOR_X1 - DOOR_X0, EAVE_H - 2.0, (DOOR_X0 + DOOR_X1) / 2, 2.0 + (EAVE_H - 2.0) / 2, -D);  // 门楣上方
+  // 立柱：四周每隔 1.5 米一根，门两边各一根
+  const posts = [];
+  for (let x = 0; x <= W + 0.01; x += 1.5) { posts.push([x, 0]); posts.push([x, -D]); }
+  for (let z = -1.5; z > -D + 0.01; z -= 1.5) { posts.push([0, z]); posts.push([W, z]); }
+  posts.push([DOOR_X0, -D], [DOOR_X1, -D]);
+  posts.forEach(([x, z]) => box(0.07, EAVE_H, 0.07, x, EAVE_H / 2, z, frameMat));
+  // 檐梁 + 门楣
+  box(W, 0.07, 0.07, W / 2, EAVE_H, 0, frameMat);
+  box(W, 0.07, 0.07, W / 2, EAVE_H, -D, frameMat);
+  box(0.07, 0.07, D, 0, EAVE_H, -D / 2, frameMat);
+  box(0.07, 0.07, D, W, EAVE_H, -D / 2, frameMat);
+  box(DOOR_X1 - DOOR_X0, 0.07, 0.07, (DOOR_X0 + DOOR_X1) / 2, 2.0, -D, frameMat);
+  // 人字形屋顶：两片斜玻璃 + 屋脊 + 每 1.5 米一根椽子
+  const half = D / 2, rise = RIDGE_H - EAVE_H, slope = Math.hypot(half, rise), tilt = Math.atan2(rise, half);
+  [1, -1].forEach((side) => {
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(W, slope), glassMat);
+    roof.position.set(W / 2, EAVE_H + rise / 2, -half + side * half / 2);
+    roof.rotation.x = -Math.PI / 2 + side * tilt;
+    roof.renderOrder = 2;
+    addStatic(roof);
+    for (let x = 0; x <= W + 0.01; x += 1.5) {
+      const r = box(0.06, 0.06, slope, x, EAVE_H + rise / 2, -half + side * half / 2, frameMat);
+      r.rotation.x = side * tilt;
+    }
+  });
+  box(W, 0.08, 0.08, W / 2, RIDGE_H, -half, frameMat);
+  // 东西两头的山墙三角玻璃
+  const tri = new THREE.Shape();
+  tri.moveTo(-half, 0); tri.lineTo(half, 0); tri.lineTo(0, rise); tri.closePath();
+  [0, W].forEach((x) => {
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(tri), glassMat);
+    m.position.set(x, EAVE_H, -half);
+    m.rotation.y = Math.PI / 2;
+    m.renderOrder = 2;
+    addStatic(m);
+  });
+})();
+
+// ============ 房间地面高亮（同时充当房间选中指示）============
+const highlightMats = {};
+Object.entries(ROOMS).forEach(([key, room]) => {
+  const mat = new THREE.MeshBasicMaterial({
+    color: room.color, transparent: true, opacity: 0.06, depthWrite: false,
+  });
+  highlightMats[key] = mat;
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), mat);
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.set(room.x0 + room.w / 2, 0.06, -(room.z0 + room.d / 2));
+  scene.add(plane);
+});
+
+// ============ 加载模型 ============
+const loader = new GLTFLoader();
+const modelCache = {};
+const loadFill = document.getElementById("loadFill");
+
+// 模型分两个文件夹：assets/furniture（Kenney 家具包，原来就有的设备模型）和
+// assets/nature（Kenney Nature Kit：作物、树、花、石板路……）。两边没有重名，按名字查是哪一边的。
+const NATURE_NAMES = new Set();
+async function loadNatureManifest() {
+  try { (await (await fetch("assets/nature/manifest.json")).json()).forEach((n) => NATURE_NAMES.add(n)); }
+  catch { /* 清单读不到时全当家具包的，顶多个别模型加载失败 */ }
+}
+function modelUrl(name) {
+  return NATURE_NAMES.has(name) ? `assets/nature/${name}.glb` : `assets/furniture/${name}.glb`;
+}
+
+async function loadAllModels() {
+  await loadNatureManifest();
+  // 模型多了（三十来个），一个接一个下载要等好几秒；同时发、各自完成时推进度条
+  let done = 0;
+  await Promise.all(MODEL_LIST.map(async (name) => {
+    const gltf = await loader.loadAsync(modelUrl(name));
+    modelCache[name] = gltf.scene;
+    done++;
+    loadFill.style.width = Math.round((done / MODEL_LIST.length) * 100) + "%";
+  }));
+}
+
+function placeModel(name, pos, rotYDeg = 0, scale = 1) {
+  const src = modelCache[name];
+  if (!src) return null;
+  const obj = src.clone(true);
+  // 重要：Object3D.clone() 只深拷贝物体结构，材质(material)默认是"共享引用"，
+  // 不是每个实例各拷贝一份！同一个模型摆好几次（比如四个房间都用的吸顶灯），
+  // 如果不在这里单独克隆材质，改其中一个的颜色/亮度会连带把其它几个也一起改了
+  // （之前"开一盏灯，所有灯泡都变白"就是这个原因）。
+  obj.traverse((c) => {
+    if (c.isMesh && c.material) {
+      c.material = Array.isArray(c.material) ? c.material.map((m) => m.clone()) : c.material.clone();
+    }
+  });
+  obj.position.set(pos[0], pos[1], pos[2]);
+  obj.rotation.y = THREE.MathUtils.degToRad(rotYDeg);
+  if (Array.isArray(scale)) obj.scale.set(scale[0], scale[1], scale[2]);
+  else obj.scale.setScalar(scale);
+  scene.add(obj);
+  return obj;
+}
+
+async function ensureModelLoaded(name) {
+  if (modelCache[name]) return modelCache[name];
+  const gltf = await loader.loadAsync(modelUrl(name));
+  modelCache[name] = gltf.scene;
+  return modelCache[name];
+}
+
+// ============ 家具摆放编辑（点击选中 + 键盘移动 + 保存 + 从目录添加）============
+// editableItems 里每一项要么是默认家具（kind:"static"，对应 FURNITURE 数组里的下标），
+// 要么是从右上角目录里添加的自定义家具（kind:"dynamic"，自己生成的 id）。
+// 又把"灌溉间/监测中心/仓储间/过道"四个分区合并成了一个开放的温室大棚，所有家具
+// 都换成了 room:"greenhouse"、坐标也全部重新算过，旧的存档数据已经对不上任何东西了，
+// 换一个全新的存档 key，不做迁移。
+// 第二版布局（玻璃温室 + 种植床）家具清单整个换了，旧存档的下标对不上任何东西，换新存档位
+const LAYOUT_STORAGE_KEY = "smartFarmLayout_v3";
+const editableItems = [];
+const removedDefaults = new Set();
+let nextDynamicId = 1;
+
+function loadSavedLayout() {
+  try {
+    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return {
+      overrides: parsed.overrides || {},
+      removed: parsed.removed || [],
+      added: parsed.added || [],
+      fixtures: parsed.fixtures || {}, // 吸顶灯/空调这类"内置固定设施"的位置覆盖，用字符串 id 而不是数组下标
+    };
+  } catch {
+    return { overrides: {}, removed: [], added: [], fixtures: {} };
+  }
+}
+
+// 吸顶灯、空调这些不是从 FURNITURE 数组里来的"内置设施"，也想让它们能被拖动、缩放、
+// 而且挪动之后能被记住——用这个函数统一注册，逻辑上和普通家具是同一套（点选、方向键、
+// 保存），只是用字符串 id 代替数组下标来区分是哪一个。
+function placeFixture(fixtureId, obj, savedLayout) {
+  const override = savedLayout.fixtures[fixtureId];
+  if (override) {
+    obj.position.set(override.pos[0], override.pos[1], override.pos[2]);
+    obj.rotation.y = THREE.MathUtils.degToRad(override.rotY || 0);
+    if (override.scale) obj.scale.set(override.scale[0], override.scale[1], override.scale[2]);
+  }
+  editableItems.push({ kind: "fixture", fixtureId, obj });
+}
+
+function placeFurnitureItem(index, f, savedLayout) {
+  if (savedLayout.removed.includes(index)) return;
+  const room = ROOMS[f.room];
+  const basePos = [room.x0 + f.pos[0], f.pos[1], -(room.z0) + f.pos[2]];
+  const override = savedLayout.overrides[index];
+  const pos = override ? override.pos : basePos;
+  const rotY = override ? override.rotY : f.rotY;
+  const scale = override && override.scale ? override.scale : (f.scale || 1);
+  const obj = placeModel(f.model, pos, rotY, scale);
+  if (!obj) return;
+  editableItems.push({ kind: "static", index, obj, config: f });
+
+  // 电视/音箱这类"可控设备"：模型本身是不是有独立发光材质不确定（不同 glTF 导出情况不一样），
+  // 所以保底加一个贴着模型摆的小点光源，开关状态一定看得出来，不依赖模型材质细节。
+  // 这个灯光用 obj.add()挂成模型的"子物体"，用局部坐标定位，而不是记录一次性的世界坐标——
+  // 这样以后用家具编辑模式挪动/缩放这件家具时，灯光会跟着一起动，不会留在原地。
+  if (f.deviceRole === "tv") {
+    const light = new THREE.PointLight(0xbfe3ff, 0, 2.2, 2);
+    light.position.set(0, 0.2, 0);
+    obj.add(light);
+    roomState[f.room].deviceObjs.tvMesh = obj;
+    roomState[f.room].deviceObjs.tvLight = light;
+  }
+  if (f.deviceRole === "speaker") {
+    const light = new THREE.PointLight(0x9dffcf, 0, 2, 2);
+    light.position.set(0, 0.4, 0);
+    obj.add(light);
+    roomState[f.room].deviceObjs.speakerMesh = obj;
+    roomState[f.room].deviceObjs.speakerLight = light;
+  }
+
+  // lightRole:"room" 标记"这件家具本身也是一盏灯"（台灯/落地灯之类），
+  // 跟着房间的灯开关一起开关——一个房间不一定只有一盏吸顶灯，加几件这种家具就行。
+  // lightScale 控制这盏灯比主灯暗多少（台灯通常不需要跟吸顶灯一样亮），不填默认 0.6 倍。
+  if (f.lightRole === "room") {
+    const style = ROOM_LIGHT_STYLE[f.room];
+    const light = new THREE.PointLight(style.color, 0, 2.2, 2);
+    light.position.set(0, f.lightHeight ?? 0.3, 0);
+    obj.add(light);
+    registerRoomLight(f.room, obj, light, f.lightScale ?? 0.6);
+  }
+}
+
+// 素材库里没有灌溉阀/水肥机模型，这里用简单几何体搭一个挂壁式控制箱（白色机身 + 出水口 +
+// 一个会亮的运行指示灯），保证不会有模型对不上的问题，效果虽然简单但一眼能看出"这是个控制箱"。
+function createACUnit() {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.22, 0.22),
+    new THREE.MeshStandardMaterial({ color: 0xf2f5f8 })
+  );
+  body.position.set(0.4, 0.11, -0.11);
+  group.add(body);
+
+  const vent = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 0.03, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0xced6de })
+  );
+  vent.position.set(0.4, 0.0, -0.11);
+  group.add(vent);
+
+  const indicatorMat = new THREE.MeshStandardMaterial({
+    color: 0x2ec4ff, emissive: 0x2ec4ff, emissiveIntensity: 0,
+  });
+  const indicator = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.01), indicatorMat);
+  indicator.position.set(0.72, 0.11, -0.005);
+  group.add(indicator);
+
+  return { group, indicatorMat };
+}
+
+async function spawnDynamicItem(model, pos, rotY, id, scale = 1) {
+  await ensureModelLoaded(model);
+  const obj = placeModel(model, pos, rotY, scale);
+  if (!obj) return null;
+  const item = { kind: "dynamic", id: id ?? nextDynamicId++, obj, model };
+  editableItems.push(item);
+  return item;
+}
+
+// ============ 房间运行时状态 ============
+const roomState = {};
+Object.keys(ROOMS).forEach((key) => {
+  roomState[key] = {
+    // 默认全部关闭：如果默认就是"全开"，第一次点一个房间按 A 只会把那一间关掉，
+    // 其它房间因为本来就是开着的还是亮的，看起来就像"怎么按了都是全部亮着"，
+    // 容易被误以为每个房间没有独立控制。全部从关始，每次开哪个是哪个，效果才看得清楚。
+    lightOn: false, fanOn: false, tvOn: false, speakerOn: false, acOn: false,
+    lights: [], // 这个房间里所有"灯光开关"控制的灯具，不限一盏，每个是 {mesh, lightObj, factor}
+    ceilingSpot: null, // 主灯（吸顶灯）的 SpotLight 引用，"灯光参数调整"面板改张角/距离直接用这个
+    ceilingLampMesh: null, // 主灯的模型引用，"灯光参数调整"面板改高度直接用这个
+    deviceObjs: {}, // 电视/音箱/空调等设备用到的 mesh、灯光引用，摆放时再填进来
+  };
+});
+let masterOn = true;
+// 现在只有一个大棚（GREENHOUSE），不用再"选分区"了；触摸 P/Y/T/H 改成"选设备"，
+// 选中哪个设备，按键模式下按键 A 就开关哪个（原来是选分区，因为只有一个分区所以
+// 改成选设备才有意义）。
+const GREENHOUSE = "greenhouse";
+let selectedDevice = "light";
+let fan = null;
+
+// 把一件家具/灯具注册成"补光灯开关能控制的一盏灯"——不限于一盏吸顶灯，大棚里是
+// "吸顶灯 + 两侧补充灯 + 落地灯"一起开关。
+// factor：这盏灯相对房间"主亮度"的比例，主灯(吸顶灯)是 1，台灯/落地灯这类辅助灯通常是
+// 0.5~0.7。不直接存死数值，而是每次都从 ROOM_LIGHT_STYLE 现读——这样"灯光参数调整"面板
+// 改了哪个房间的亮度/颜色，这个房间所有登记过的灯（包括辅助灯）都会跟着实时变。
+function registerRoomLight(roomKey, mesh, lightObj, factor = 1) {
+  roomState[roomKey].lights.push({ mesh, lightObj, factor });
+}
+
+function applyRoomLight(key) {
+  const st = roomState[key];
+  const style = ROOM_LIGHT_STYLE[key];
+  const on = masterOn && st.lightOn;
+  st.lights.forEach(({ mesh, lightObj, factor }) => {
+    if (lightObj) {
+      lightObj.color.setHex(style.color);
+      lightObj.intensity = on ? style.intensity * factor : 0;
+    }
+    mesh.traverse((c) => {
+      if (c.isMesh && c.material && c.material.emissive) {
+        c.material.emissive.setHex(style.color);
+        c.material.emissiveIntensity = on ? style.emissiveIntensity * factor : 0;
+      }
+    });
+  });
+}
+
+function applyRoomTV(key) {
+  const st = roomState[key];
+  const on = masterOn && st.tvOn;
+  if (st.deviceObjs.tvLight) st.deviceObjs.tvLight.intensity = on ? 2 : 0;
+  if (st.deviceObjs.tvMesh) {
+    st.deviceObjs.tvMesh.traverse((c) => {
+      if (c.isMesh && c.material && c.material.emissive) c.material.emissiveIntensity = on ? 1.0 : 0;
+    });
+  }
+}
+
+function applyRoomSpeaker(key) {
+  const st = roomState[key];
+  const on = masterOn && st.speakerOn;
+  if (st.deviceObjs.speakerLight) st.deviceObjs.speakerLight.intensity = on ? 1.2 : 0;
+  if (st.deviceObjs.speakerMesh) {
+    st.deviceObjs.speakerMesh.traverse((c) => {
+      if (c.isMesh && c.material && c.material.emissive) c.material.emissiveIntensity = on ? 0.8 : 0;
+    });
+  }
+}
+
+function applyRoomAC(key) {
+  const st = roomState[key];
+  const on = masterOn && st.acOn;
+  if (st.deviceObjs.acIndicatorMat) st.deviceObjs.acIndicatorMat.emissiveIntensity = on ? 1.5 : 0;
+  if (st.deviceObjs.acLight) st.deviceObjs.acLight.intensity = on ? 1.0 : 0;
+}
+
+function refreshAllLights() { Object.keys(ROOMS).forEach(applyRoomLight); }
+
+function refreshAllDevices() {
+  Object.keys(ROOMS).forEach((key) => {
+    applyRoomLight(key);
+    if (DEVICE_CONFIG[key].includes("tv")) applyRoomTV(key);
+    if (DEVICE_CONFIG[key].includes("speaker")) applyRoomSpeaker(key);
+    if (DEVICE_CONFIG[key].includes("ac")) applyRoomAC(key);
+  });
+}
+
+// 用浏览器自带的 Web Audio 弹几个音符当"设备操作反馈音"，音箱开关时用，
+// 不依赖任何音频文件素材。ascending=true 是开启时的上扬音，false 是关闭时的下降音。
+function playChime(ascending) {
+  try {
+    const ctx = playChime._ctx || (playChime._ctx = new (window.AudioContext || window.webkitAudioContext)());
+    const freqs = ascending ? [440, 554, 659] : [659, 554, 440];
+    freqs.forEach((freq, i) => {
+      const t0 = ctx.currentTime + i * 0.09;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.15, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.15);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.16);
+    });
+  } catch {
+    // 有些浏览器要求先有一次用户交互才允许播放音频，静默失败即可，不影响其它功能
+  }
+}
+
+function applyDevice(roomKey, device) {
+  if (device === "light") applyRoomLight(roomKey);
+  else if (device === "tv") applyRoomTV(roomKey);
+  else if (device === "speaker") applyRoomSpeaker(roomKey);
+  else if (device === "ac") applyRoomAC(roomKey);
+  // fan 不需要单独 apply：动画循环里每一帧都会读 roomState[GREENHOUSE].fanOn
+}
+
+// 显式把某个设备设成开/关（语音指令用这个：“打开”就是 true，“关闭”就是 false，
+// 不能用"切换"，不然万一设备已经是开着的，说"打开"反而会把它关掉）
+function setDeviceState(roomKey, device, on) {
+  if (!masterOn) { masterOn = true; document.getElementById("masterState").textContent = "开"; }
+  const st = roomState[roomKey];
+  const field = device + "On";
+  const changed = st[field] !== on;
+  st[field] = on;
+  applyDevice(roomKey, device);
+  if (device === "speaker" && changed) playChime(on);
+  refreshDevicePanel();
+}
+
+// 按键模式用这个：不知道当前状态，直接翻转
+function toggleDevice(roomKey, device) {
+  setDeviceState(roomKey, device, !roomState[roomKey][device + "On"]);
+}
+
+function refreshDevicePanel() {
+  const container = document.getElementById("deviceButtons");
+  if (!container) return;
+  container.innerHTML = "";
+  const st = roomState[GREENHOUSE];
+  DEVICE_CONFIG[GREENHOUSE].forEach((device) => {
+    const isOn = masterOn && st[device + "On"];
+    const btn = document.createElement("button");
+    btn.textContent = `${DEVICE_LABELS[device]}：${isOn ? "开" : "关"}`;
+    // 鼠标点这里直接开关，跟触摸板选中的设备是两回事，所以不需要单独标出"选中"状态，
+    // 只标"开/关"状态就够了；触摸板选中的设备在 HUD 上面"当前选中设备"那一行显示。
+    btn.className = isOn ? "on" : "";
+    btn.addEventListener("click", () => toggleDevice(GREENHOUSE, device));
+    container.appendChild(btn);
+  });
+}
+
+// 只有一个大棚了，不用再切换"选中哪个分区"，地面高亮就固定显示这一个大棚的轮廓。
+function refreshRoomHighlight() {
+  highlightMats[GREENHOUSE].opacity = 0.12;
+}
+
+// 触摸 P/Y/T/H 现在选的是"设备"，不是"分区"——只有一个大棚，选分区没有意义了，
+// 选中哪个设备，按键模式下按键 A 就负责开关它。
+function refreshDeviceSelection() {
+  document.getElementById("selRoom").textContent = DEVICE_LABELS[selectedDevice];
+  document.getElementById("miniSel").textContent = DEVICE_LABELS[selectedDevice];
+  showToast(`已选中设备：${DEVICE_LABELS[selectedDevice]}`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.opacity = "1";
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => (t.style.opacity = "0"), 2200);
+}
+
+function leaveHomeMode() {
+  masterOn = false;
+  document.getElementById("masterState").textContent = "关（紧急停机）";
+  refreshAllDevices();
+  refreshDevicePanel();
+  showToast("已触发紧急停机：全部设备已关闭");
+}
+
+// 总开关：之前只是个"允许显示"的开关，如果各分区设备本来就是关着的（默认就是关的），
+// 按"开"也不会有任何变化，摸起来感觉像坏了。改成真正的"总开关"：开 = 把全部分区
+// 拥有的所有设备都点亮，不是只解除限制；关 = 跟紧急停机一样全部关掉。
+function toggleMasterPower() {
+  masterOn = !masterOn;
+  document.getElementById("masterState").textContent = masterOn ? "开" : "关";
+  if (masterOn) {
+    Object.keys(ROOMS).forEach((key) => {
+      DEVICE_CONFIG[key].forEach((device) => { roomState[key][device + "On"] = true; });
+    });
+    showToast("总电源已开启：全部设备已全部打开");
+  } else {
+    showToast("总电源已关闭：全部设备已全部关闭");
+  }
+  refreshAllDevices();
+  refreshDevicePanel();
+}
+
+// ---- 地面、种植床、滴灌管、储水罐、门口牌子 ----
+// 这些都是几何体搭的固定结构（不进摆放编辑器）。土和管子的材质要被“植物枯萎”那一段改颜色：
+// 浇水时整块床的土变深、所有滴灌管变蓝发光——学生一眼看出“灌溉阀开了，水正流到每块床上”。
+const BED_BY_KEY = Object.fromEntries(BEDS.map((b) => [b.key, b]));
+const bedSoil = {};                                   // 床的 key -> 土的材质
+const SOIL_DRY = new THREE.Color(0x9a7048), SOIL_WET = new THREE.Color(0x3b2617), SOIL_FLOOD = new THREE.Color(0x1f2e3d);
+const pipeMat = new THREE.MeshStandardMaterial({ color: 0x8a939e, emissive: 0x2a9dff, emissiveIntensity: 0, roughness: 0.4 });
+function flatPlane(w, d, x, y, z, color) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, y, z);
+  return addStatic(m);
+}
+function pipe(len, x, y, z, alongX) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, len, 8), pipeMat);
+  m.position.set(x, y, z);
+  if (alongX) m.rotation.z = Math.PI / 2; else m.rotation.x = Math.PI / 2;
+  return addStatic(m);
+}
+function textSprite(text, x, y, z, w = 1.8) {
+  const c = document.createElement("canvas");
+  c.width = 512; c.height = 128;
+  const g = c.getContext("2d");
+  g.fillStyle = "#2f6b3a"; g.beginPath(); g.roundRect(4, 4, 504, 120, 28); g.fill();
+  g.strokeStyle = "#f6e7b4"; g.lineWidth = 6; g.stroke();
+  g.fillStyle = "#fff8e1"; g.font = "bold 60px 'Microsoft YaHei', sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 256, 68);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false }));
+  sp.scale.set(w, w / 4, 1);
+  sp.position.set(x, y, z);
+  sp.raycast = noPick;
+  scene.add(sp);
+  return sp;
+}
+
+function buildGroundAndBeds() {
+  const W = ROOMS.greenhouse.w, D = ROOMS.greenhouse.d;
+  flatPlane(70, 70, W / 2, -0.01, -D / 2, 0x8cc66a);                 // 外面的草地
+  flatPlane(W, D, W / 2, 0.0, -D / 2, 0xd2c09c);                      // 大棚里的碎石地
+  flatPlane(DOOR_X1 - DOOR_X0, D, W / 2, 0.004, -D / 2, 0xe6e1d4);    // 中间走道
+  const wood = new THREE.MeshStandardMaterial({ color: 0xa06e40, roughness: 0.8 });
+  BEDS.forEach((b) => {
+    box(BED_LEN, BED_H, BED_W, b.x, BED_H / 2, b.z, wood);
+    const soil = new THREE.MeshStandardMaterial({ color: SOIL_DRY.clone(), roughness: 1 });
+    bedSoil[b.key] = soil;
+    box(BED_LEN - 0.12, 0.02, BED_W - 0.12, b.x, BED_H + 0.005, b.z, soil);
+    // 每块床北沿一根滴灌管，床靠走道那头一根接到南边的总管
+    pipe(BED_LEN - 0.1, b.x, BED_H + 0.04, b.z + BED_W / 2 - 0.08, true);
+    const endX = b.x < W / 2 ? b.x + BED_LEN / 2 + 0.08 : b.x - BED_LEN / 2 - 0.08;
+    const zTop = b.z + BED_W / 2 - 0.08, zMain = -4.85;
+    pipe(zTop - zMain, endX, 0.06, (zTop + zMain) / 2, false);
+  });
+  // 南边的总管：从东边的储水罐一路通到西边，过走道那一段贴着地面
+  pipe(W - 0.8, W / 2, 0.06, -4.85, true);
+  // 储水罐（南墙东段），灌溉阀控制箱挂在它上方的墙上
+  const tankMat = new THREE.MeshStandardMaterial({ color: 0x4f8fc0, roughness: 0.5 });
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.1, 24), tankMat);
+  tank.position.set(10.9, 0.55, -5.45);
+  addStatic(tank);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 24), frameMat);
+  lid.position.set(10.9, 1.12, -5.45);
+  addStatic(lid);
+  pipe(0.5, 10.9, 0.06, -5.1, false);
+  textSprite("🌱 智能温室", 4.7, 1.55, -6.9);
+}
+
+// ---- 监测屏的画面：每块床一根水分条 ----
+// 原来的“监测屏”只会亮、不显示东西。现在开着的时候真的在“监测”：
+// 六块床的水分各一根条，低于 30% 变黄、枯死变红，和头顶的标签是同一份数据。
+let tvScreen = null;
+function buildTvScreen() {
+  const tv = roomState[GREENHOUSE].deviceObjs.tvMesh;
+  if (!tv) return;
+  const c = document.createElement("canvas");
+  c.width = 512; c.height = 300;
+  const tex = new THREE.CanvasTexture(c);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.35), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+  mesh.position.set(0, 0.25, 0.075);       // 贴在电视正面（模型局部坐标，跟着电视一起挪）
+  mesh.visible = false;
+  mesh.raycast = noPick;
+  tv.add(mesh);
+  tvScreen = { mesh, ctx: c.getContext("2d"), tex, at: 0 };
+}
+
+async function buildScene() {
+  buildGroundAndBeds();
+  // 家具（如果本机之前保存过调整后的位置，会用保存的位置，否则用默认配置）
+  const savedLayout = loadSavedLayout();
+  savedLayout.removed.forEach((idx) => removedDefaults.add(idx));
+  FURNITURE.forEach((f, index) => placeFurnitureItem(index, f, savedLayout));
+  // 之前从目录里添加过的自定义家具，重新摆回去
+  for (const added of savedLayout.added) {
+    const item = await spawnDynamicItem(added.model, added.pos, added.rotY, added.id, added.scale || 1);
+    if (item) nextDynamicId = Math.max(nextDynamicId, added.id + 1);
+  }
+  // 每个房间的吸顶灯 + 点光源（颜色/亮度按房间风格来，不再千篇一律）
+  // 点光源用 lampMesh.add() 挂成灯具的子物体，之后用家具编辑模式拖动/缩放这盏灯，
+  // 光源会跟着一起动，不会留在原地。同时注册成"设施"，挪动过的位置能被保存/恢复。
+  //
+  // 关于"没有屋顶导致一盏灯亮起来像是全部都亮了"：这不是屋顶的问题，是点光源没有
+  // 物理阻挡（射线不会被墙挡住），光会直接穿墙照到隔壁房间去。真加一个实体屋顶反而
+  // 会挡住现在这种"从外面斜上方看整栋房子"的镜头，看不到室内。改成从根源上限制每盏灯
+  // 的照射距离（下面 PointLight 第三个参数），让它基本只在自己房间范围内衰减到 0，
+  // 照不到隔壁去，效果上等同于"被墙挡住了"，但不会挡住摄像机的视线。
+  CEILING_LIGHTS.forEach((cl) => {
+    const style = ROOM_LIGHT_STYLE[cl.room];
+    const room = ROOMS[cl.room];
+    const lampMesh = placeModel("lampSquareCeiling", cl.pos, 0);
+    // 用 SpotLight（朝正下方的锥形光）代替 PointLight（四面八方发光的点光源）——
+    // 点光源之前哪怕把照射距离调短，还是会直接往两边/斜上方照，隔着一堵矮墙就能
+    // 照进隔壁房间；锥形光从天花板朝地面照，光线基本不会往房间外面扩散，才是真正
+    // 有效果的"被墙挡住"，不是靠"照不远"硬凑。
+    //
+    // 锥形光的张角/照射距离默认按大棚自己的宽高算到刚好够着四个角（灯装在正中央），
+    // 如果"灯光参数调整"面板里手动调过，就用调过的数值，不用这个自动算的。
+    const { angle: autoAngle, distance: autoDistance } = computeAutoSpotParams(room);
+    const angle = style.angleDeg ? THREE.MathUtils.degToRad(style.angleDeg) : autoAngle;
+    const distance = style.distance ?? autoDistance;
+    const spot = new THREE.SpotLight(style.color, style.intensity, distance, angle, 0.55, 1.6);
+    spot.position.set(0, -0.1, 0);
+    const spotTarget = new THREE.Object3D();
+    spotTarget.position.set(0, -3, 0); // 灯具正下方，地板附近
+    lampMesh.add(spot);
+    lampMesh.add(spotTarget);
+    spot.target = spotTarget;
+    placeFixture(`${cl.room}Lamp`, lampMesh, savedLayout);
+    // 单独存一份引用，给"灯光参数调整"面板直接改张角/距离/高度用
+    roomState[cl.room].ceilingSpot = spot;
+    roomState[cl.room].ceilingLampMesh = lampMesh;
+    registerRoomLight(cl.room, lampMesh, spot, 1);
+  });
+  // 通风扇：装在北墙东段的排风扇，真温室就是这么通风的。默认镜头从东北方看过来，北墙正对镜头，
+  // 隔着玻璃能正面看到扇叶在转。原来吊在北边屋脊下，从镜头看过去跟值班台挤成一团，学生认不出那是风扇；
+  // 试过装东山墙，从镜头看几乎是侧面，只剩一个窄框，还被储水罐挡住。
+  // 素材只有吊扇：套一个绕 x 轴转 90° 的支架让它竖起来贴墙、扇叶朝屋里；
+  // 动画循环照旧转 fan.rotation.y —— 那是吊扇自己的轴，跟着支架一起变成了南北向。
+  fan = placeModel("ceilingFan", [0, 0, 0], 0, 1.6);
+  if (fan) {
+    const FX = 9.6, FY = 1.25, FZ = -0.06, S = 1.4, T = 0.09;
+    const fanMount = new THREE.Group();
+    fanMount.position.set(FX, FY, FZ);
+    fanMount.rotation.x = Math.PI / 2;
+    scene.add(fanMount);
+    fanMount.add(fan);
+    // 方形外框：一眼看出这是墙上的排风口（不加底板——底板在镜头这一侧，会把扇叶整个挡住）
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x5f6b78, roughness: 0.6, metalness: 0.3 });
+    [[0, S / 2, S + T, T], [0, -S / 2, S + T, T], [S / 2, 0, T, S], [-S / 2, 0, T, S]].forEach(([dx, dy, w, h]) => {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.12), frameMat);
+      bar.position.set(FX + dx, FY + dy, FZ);
+      bar.raycast = () => {};
+      scene.add(bar);
+    });
+  }
+
+  // 灌溉阀控制箱（素材库里没有对应模型，用简单几何体挂在大棚北墙上，靠近灌溉设备那一侧）
+  // 挪动过的话会用保存下来的位置。指示灯同样挂成子物体，跟着控制箱一起移动。
+  const AC_POSITIONS = {
+    greenhouse: { pos: [11.3, 1.55, -5.94], rotY: 180 },   // 南墙东段、储水罐正上方，朝北
+  };
+  Object.entries(AC_POSITIONS).forEach(([key, cfg]) => {
+    if (!DEVICE_CONFIG[key].includes("ac")) return;
+    const { group, indicatorMat } = createACUnit();
+    group.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
+    group.rotation.y = THREE.MathUtils.degToRad(cfg.rotY);
+    scene.add(group);
+    const acLight = new THREE.PointLight(0x2ec4ff, 0, 1.8, 2);
+    acLight.position.set(0.4, -0.1, -0.15);
+    group.add(acLight);
+    roomState[key].deviceObjs.acIndicatorMat = indicatorMat;
+    roomState[key].deviceObjs.acLight = acLight;
+    placeFixture(`${key}AC`, group, savedLayout);
+  });
+
+  buildTvScreen();
+  refreshAllDevices();
+  refreshRoomHighlight();
+  refreshDeviceSelection();
+}
+
+// ============ 家具摆放编辑：交互逻辑 ============
+const editModeToggle = document.getElementById("editModeToggle");
+const editPanel = document.getElementById("editPanel");
+const editSelNameEl = document.getElementById("editSelName");
+const raycaster = new THREE.Raycaster();
+const pointerNDC = new THREE.Vector2();
+let selectedItem = null;
+let selectedOutline = null;
+let pointerDownPos = null;
+
+function findEditableRoot(obj) {
+  let cur = obj;
+  while (cur) {
+    const item = editableItems.find((e) => e.obj === cur);
+    if (item) return item;
+    cur = cur.parent;
+  }
+  return null;
+}
+
+const editScaleValEl = document.getElementById("editScaleVal");
+
+function refreshScaleReadout() {
+  if (!selectedItem) { editScaleValEl.textContent = "--"; return; }
+  const s = selectedItem.obj.scale;
+  editScaleValEl.textContent =
+    `${Math.round(s.x * 100)}% / ${Math.round(s.y * 100)}% / ${Math.round(s.z * 100)}%`;
+}
+
+function fixtureOrItemLabel(item) {
+  if (item.kind === "static") return `${ROOMS[item.config.room].label} - ${item.config.model}`;
+  if (item.kind === "dynamic") return `自定义 - ${item.model}`;
+  // kind === "fixture"：id 形如 "greenhouseLamp" / "greenhouseAC"，拆成"温室大棚 - 吸顶灯"这样好读的文字
+  const roomKey = Object.keys(ROOMS).find((k) => item.fixtureId.startsWith(k));
+  const kindLabel = item.fixtureId.endsWith("AC") ? "空调" : "吸顶灯";
+  return `${roomKey ? ROOMS[roomKey].label : ""} - ${kindLabel}`;
+}
+
+function selectItem(item) {
+  if (selectedOutline) { scene.remove(selectedOutline); selectedOutline = null; }
+  selectedItem = item;
+  if (item) {
+    selectedOutline = new THREE.BoxHelper(item.obj, 0xff4d4d);
+    scene.add(selectedOutline);
+    editSelNameEl.textContent = fixtureOrItemLabel(item);
+  } else {
+    editSelNameEl.textContent = "无";
+  }
+  refreshScaleReadout();
+}
+
+const catalogPanel = document.getElementById("catalogPanel");
+editModeToggle.addEventListener("change", () => {
+  editPanel.classList.toggle("active", editModeToggle.checked);
+  catalogPanel.classList.toggle("active", editModeToggle.checked);
+  if (!editModeToggle.checked) selectItem(null);
+});
+
+renderer.domElement.addEventListener("pointerdown", (e) => {
+  pointerDownPos = { x: e.clientX, y: e.clientY };
+});
+
+renderer.domElement.addEventListener("pointerup", (e) => {
+  if (!editModeToggle.checked || !pointerDownPos) return;
+  const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+  pointerDownPos = null;
+  if (moved > 5) return; // 拖动镜头，不算点击选中
+
+  pointerNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointerNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointerNDC, camera);
+  const hits = raycaster.intersectObjects(editableItems.map((it) => it.obj), true);
+  if (hits.length > 0) {
+    selectItem(findEditableRoot(hits[0].object));
+  } else {
+    selectItem(null);
+  }
+});
+
+const MIN_SCALE = 0.05; // 缩放不让缩到 0 或负数，不然模型会翻转/消失
+
+window.addEventListener("keydown", (e) => {
+  if (!editModeToggle.checked || !selectedItem) return;
+  const posStep = e.shiftKey ? 0.5 : 0.1;
+  const rotStep = e.shiftKey ? 45 : 15;
+  const scaleStep = e.shiftKey ? 0.2 : 0.05;
+  const obj = selectedItem.obj;
+  let handled = true;
+
+  if (e.altKey) {
+    // 按住 Alt + 移动键 = 单独缩放某一根轴（不是移动位置）
+    switch (e.code) {
+      case "ArrowLeft": obj.scale.x = Math.max(MIN_SCALE, obj.scale.x - scaleStep); break;
+      case "ArrowRight": obj.scale.x += scaleStep; break;
+      case "ArrowUp": obj.scale.z = Math.max(MIN_SCALE, obj.scale.z - scaleStep); break;
+      case "ArrowDown": obj.scale.z += scaleStep; break;
+      case "PageUp": obj.scale.y += scaleStep; break;
+      case "PageDown": obj.scale.y = Math.max(MIN_SCALE, obj.scale.y - scaleStep); break;
+      default: handled = false;
+    }
+  } else {
+    switch (e.code) {
+      case "ArrowLeft": obj.position.x -= posStep; break;
+      case "ArrowRight": obj.position.x += posStep; break;
+      case "ArrowUp": obj.position.z -= posStep; break;
+      case "ArrowDown": obj.position.z += posStep; break;
+      case "PageUp": obj.position.y += posStep; break;
+      case "PageDown": obj.position.y -= posStep; break;
+      case "KeyQ": obj.rotation.y -= THREE.MathUtils.degToRad(rotStep); break;
+      case "KeyE": obj.rotation.y += THREE.MathUtils.degToRad(rotStep); break;
+      // − ＝ 整体（XYZ 一起）缩小/放大，日常用这两个键就够了
+      case "Minus": obj.scale.multiplyScalar(Math.max(MIN_SCALE, 1 - scaleStep)); break;
+      case "Equal": obj.scale.multiplyScalar(1 + scaleStep); break;
+      default: handled = false;
+    }
+  }
+
+  if (handled) {
+    e.preventDefault();
+    if (selectedOutline) selectedOutline.update();
+    refreshScaleReadout();
+  }
+});
+
+function collectLayout() {
+  const overrides = {};
+  const added = [];
+  const fixtures = {};
+  editableItems.forEach((item) => {
+    const pos = [item.obj.position.x, item.obj.position.y, item.obj.position.z];
+    const rotY = THREE.MathUtils.radToDeg(item.obj.rotation.y);
+    const scale = [item.obj.scale.x, item.obj.scale.y, item.obj.scale.z];
+    if (item.kind === "static") {
+      overrides[item.index] = { pos, rotY, scale };
+    } else if (item.kind === "dynamic") {
+      added.push({ id: item.id, model: item.model, pos, rotY, scale });
+    } else {
+      fixtures[item.fixtureId] = { pos, rotY, scale };
+    }
+  });
+  return { overrides, removed: [...removedDefaults], added, fixtures };
+}
+
+document.getElementById("editDeleteBtn").addEventListener("click", () => {
+  if (!selectedItem) return;
+  if (selectedItem.kind === "fixture") {
+    showToast("吸顶灯/灌溉阀是大棚自带的设施，不能删除，只能挪动/缩放");
+    return;
+  }
+  scene.remove(selectedItem.obj);
+  if (selectedItem.kind === "static") removedDefaults.add(selectedItem.index);
+  const idx = editableItems.indexOf(selectedItem);
+  if (idx >= 0) editableItems.splice(idx, 1);
+  selectItem(null);
+  showToast("已删除，别忘了点「保存到本机」或「下载布局文件」才会真正记住这个改动");
+});
+
+document.getElementById("editResetScaleBtn").addEventListener("click", () => {
+  if (!selectedItem) return;
+  selectedItem.obj.scale.setScalar(1);
+  if (selectedOutline) selectedOutline.update();
+  refreshScaleReadout();
+});
+
+document.getElementById("editSaveBtn").addEventListener("click", () => {
+  localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(collectLayout()));
+  showToast("已保存到本机浏览器，下次打开这台电脑会自动使用这个布局");
+});
+
+document.getElementById("editExportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(collectLayout(), null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "furniture_layout.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("已下载 furniture_layout.json，把这个文件发给开发者就能把新布局固化进默认配置");
+});
+
+// 导入：选一个之前下载过的 furniture_layout.json，直接存成这台电脑的保存布局，
+// 然后刷新页面——复用"保存到本机"之后原本就会走的那套加载逻辑，不用另外再写一套
+// "读文件直接摆家具"的代码，出错的风险也更小。
+document.getElementById("editImportBtn").addEventListener("click", () => {
+  document.getElementById("editImportInput").click();
+});
+
+document.getElementById("editImportInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (typeof data !== "object" || data === null) throw new Error("文件内容不是有效的布局数据");
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
+        overrides: data.overrides || {},
+        removed: data.removed || [],
+        added: data.added || [],
+        fixtures: data.fixtures || {},
+      }));
+      showToast("导入成功，正在刷新页面应用新布局…");
+      setTimeout(() => location.reload(), 800);
+    } catch (err) {
+      showToast("导入失败：文件内容看不懂，确认选的是之前下载的 furniture_layout.json");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ""; // 清空一下，方便下次选同一个文件也能触发 change 事件
+});
+
+// 追加导入：跟上面"导入布局文件"的区别是不会覆盖掉当前已经摆好的东西，而是把导入文件里的
+// 内容"合并"进当前布局——比如你已经调好了大部分家具，这时候导入一份只挪过其中几件的旧
+// 存档，之前调好的其它东西不会被冲掉，只有导入文件里提到的那几件会被更新成导入文件里的样子。
+document.getElementById("editImportMergeBtn").addEventListener("click", () => {
+  document.getElementById("editImportMergeInput").click();
+});
+
+document.getElementById("editImportMergeInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (typeof imported !== "object" || imported === null) throw new Error("文件内容不是有效的布局数据");
+
+      const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      const current = raw ? JSON.parse(raw) : {};
+      const currentOverrides = current.overrides || {};
+      const currentRemoved = current.removed || [];
+      const currentFixtures = current.fixtures || {};
+      const currentAdded = current.added || [];
+
+      // overrides / fixtures：按下标/id 合并，同一个下标两边都有的话，以导入文件为准
+      const overrides = { ...currentOverrides, ...(imported.overrides || {}) };
+      const fixtures = { ...currentFixtures, ...(imported.fixtures || {}) };
+      // removed：两边的"已删除"记录取并集
+      const removed = [...new Set([...currentRemoved, ...(imported.removed || [])])];
+      // added：自己从目录加的家具，两边各自的 id 是各自浏览器生成的，直接合并可能撞车，
+      // 导入进来的这批统一换成不会跟现有的冲突的新 id，位置/model 内容不变
+      let nextId = 1 + Math.max(0, ...currentAdded.map((it) => it.id || 0));
+      const importedAdded = (imported.added || []).map((it) => ({ ...it, id: nextId++ }));
+      const added = [...currentAdded, ...importedAdded];
+
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({ overrides, removed, added, fixtures }));
+      showToast("追加导入成功，正在刷新页面应用合并后的布局…");
+      setTimeout(() => location.reload(), 800);
+    } catch (err) {
+      showToast("导入失败：文件内容看不懂，确认选的是之前下载的 furniture_layout.json");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+document.getElementById("editResetBtn").addEventListener("click", () => {
+  localStorage.removeItem(LAYOUT_STORAGE_KEY);
+  showToast("已清除本机保存的布局，刷新页面后恢复默认");
+});
+
+// ============ 家具目录（浏览全部素材库家具 + 点击添加）============
+const catalogListEl = document.getElementById("catalogList");
+const catalogSearchEl = document.getElementById("catalogSearch");
+let catalogNames = [];
+
+function categoryOf(name) {
+  const m = name.match(/^[a-z]+/);
+  return m ? m[0] : name;
+}
+
+function renderCatalog(filterText) {
+  const filter = (filterText || "").trim().toLowerCase();
+  const names = catalogNames.filter((n) => n.toLowerCase().includes(filter));
+  catalogListEl.innerHTML = "";
+  let lastCat = null;
+  names.forEach((name) => {
+    const cat = categoryOf(name);
+    if (cat !== lastCat) {
+      const header = document.createElement("div");
+      header.className = "cat-header";
+      header.textContent = cat;
+      catalogListEl.appendChild(header);
+      lastCat = cat;
+    }
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.addEventListener("click", async () => {
+      const room = ROOMS[GREENHOUSE];
+      const center = [room.x0 + room.w / 2, 0, -(room.z0 + room.d / 2)];
+      const item = await spawnDynamicItem(name, center, 0);
+      if (item) { selectItem(item); showToast(`已添加 ${name} 到大棚正中央，用键盘移动到合适位置`); }
+    });
+    catalogListEl.appendChild(btn);
+  });
+  if (names.length === 0) catalogListEl.textContent = "没有匹配的模型";
+}
+
+catalogSearchEl.addEventListener("input", () => renderCatalog(catalogSearchEl.value));
+
+// 目录 = 家具包 + Nature Kit 两份清单合起来（作物、树、花都能自己往大棚里加）
+Promise.all(["assets/furniture/manifest.json", "assets/nature/manifest.json"].map((u) => fetch(u).then((r) => r.json()).catch(() => [])))
+  .then(([a, b]) => { catalogNames = a.concat(b).sort(); renderCatalog(""); })
+  .catch(() => { catalogListEl.textContent = "设施目录加载失败"; });
+
+// ============ 与桥接程序通信 ============
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
+const lightValEl = document.getElementById("lightVal");
+const fanValEl = document.getElementById("fanVal");
+const headingValEl = document.getElementById("headingVal");
+const compassToggle = document.getElementById("compassToggle");
+const threshSlider = document.getElementById("threshSlider");
+const threshValEl = document.getElementById("threshVal");
+threshSlider.addEventListener("input", () => { threshValEl.textContent = threshSlider.value; });
+
+const modeBadgeEl = document.getElementById("modeBadge");
+const modeHintEl = document.getElementById("modeHint");
+const lightRangeEl = document.getElementById("lightRange");
+const autoThreshSlider = document.getElementById("autoThreshSlider");
+const autoThreshValEl = document.getElementById("autoThreshVal");
+autoThreshSlider.addEventListener("input", () => { autoThreshValEl.textContent = autoThreshSlider.value; });
+
+// ============ 三种控制模式：按键 / 语音 / 自动，用按键 B 循环切换 ============
+const MODE_CYCLE = ["button", "voice", "auto"];
+const MODE_LABELS = { button: "按键模式", voice: "语音模式", auto: "自动模式" };
+const MODE_HINTS = {
+  button: "触摸 P/Y/T/H 选设备（补光灯/通风扇/监测屏，H 在报警器/灌溉阀间切换），O 总开关，N 复位视角<br>按键 A 开关当前选中的设备，按键 B 切换模式<br>摇一摇板子 = 紧急停机（全部关闭）",
+  voice: "触摸 P/Y/T/H 选设备（语音里不说设备名时，指的就是这个设备），O 总开关，N 复位视角<br>" +
+    "<b>按住按键 A 的同时说话</b>，比如「打开监测屏」「关闭灌溉阀」，松开按键处理指令，按键 B 切换模式",
+  auto: "补光灯和灌溉阀跟着光照传感器自动开关，按键 A 不起作用<br>触摸 P/Y/T/H 选设备，O 总开关，N 复位视角，按键 B 切换模式<br>摇一摇板子 = 紧急停机（全部关闭）",
+};
+let controlMode = "button";
+let lastLightValue = null;
+
+function refreshModeUI() {
+  modeBadgeEl.textContent = MODE_LABELS[controlMode];
+  modeBadgeEl.className = controlMode === "voice" ? "mode-voice" : controlMode === "auto" ? "mode-auto" : "";
+  modeHintEl.innerHTML = MODE_HINTS[controlMode];
+  document.getElementById("voiceStatusRow").style.display = controlMode === "voice" ? "flex" : "none";
+  document.getElementById("voiceTranscriptRow").style.display = controlMode === "voice" ? "flex" : "none";
+}
+
+function cycleControlMode() {
+  if (controlMode === "voice") stopVoiceListening();
+  const idx = MODE_CYCLE.indexOf(controlMode);
+  controlMode = MODE_CYCLE[(idx + 1) % MODE_CYCLE.length];
+  refreshModeUI();
+  showToast(`已切换到：${MODE_LABELS[controlMode]}`);
+  if (controlMode === "auto" && lastLightValue !== null) updateAutoMode(lastLightValue);
+}
+
+const lightObserved = { min: null, max: null };
+
+function updateAutoMode(lightValue) {
+  if (lightObserved.min === null || lightValue < lightObserved.min) lightObserved.min = lightValue;
+  if (lightObserved.max === null || lightValue > lightObserved.max) lightObserved.max = lightValue;
+  lightRangeEl.textContent = `${lightObserved.min} ~ ${lightObserved.max}`;
+  if (controlMode !== "auto") return;
+  if (lightObserved.max - lightObserved.min < 5) return; // 范围还没撑开，先不动作，避免瞎跳
+  const ratio = Number(autoThreshSlider.value) / 100;
+  const threshold = lightObserved.min + (lightObserved.max - lightObserved.min) * ratio;
+  const isDark = lightValue < threshold;
+  Object.keys(ROOMS).forEach((key) => {
+    roomState[key].lightOn = isDark;
+    if (DEVICE_CONFIG[key].includes("ac")) roomState[key].acOn = isDark;
+  });
+  refreshAllDevices();
+  refreshDevicePanel();
+}
+
+// ============ 语音模式：用浏览器自带的 Web Speech API 识别中文语音指令 ============
+// 注意：这里用的是电脑/浏览器的麦克风，不是掌控板上的麦克风——板载语音识别 API
+// 是否能在自定义脚本里调用还不确定，用浏览器识别更稳，且需要联网（Chrome 语音识别
+// 是把录音传到网上识别的）。
+let recognition = null;
+let recognitionActive = false;
+
+function getRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  if (recognition) return recognition;
+  recognition = new SR();
+  recognition.lang = "zh-CN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    document.getElementById("voiceTranscript").textContent = text;
+    executeVoiceCommand(text);
+  };
+  recognition.onerror = (event) => {
+    recognitionActive = false;
+    setVoiceListeningUI(false);
+    if (event.error !== "aborted" && event.error !== "no-speech") {
+      showToast("语音识别出错：" + event.error);
+    }
+  };
+  recognition.onend = () => {
+    recognitionActive = false;
+    setVoiceListeningUI(false);
+  };
+  return recognition;
+}
+
+function setVoiceListeningUI(listening) {
+  const el = document.getElementById("voiceStatus");
+  if (el) el.textContent = listening ? "🎤 正在聆听..." : "未在聆听";
+}
+
+function startVoiceListening() {
+  if (controlMode !== "voice") return;
+  const rec = getRecognition();
+  if (!rec) { showToast("这个浏览器不支持语音识别，换 Chrome / Edge 试试"); return; }
+  if (recognitionActive) return;
+  try {
+    rec.start();
+    recognitionActive = true;
+    setVoiceListeningUI(true);
+  } catch {
+    // start() 在已经是聆听状态时会抛错，忽略即可
+  }
+}
+
+function stopVoiceListening() {
+  if (recognition && recognitionActive) recognition.stop();
+}
+
+// 只有一个大棚了，语音指令不用再认"分区名"，只要认清"开/关 + 哪个设备"就够了。
+const DEVICE_KEYWORDS = {
+  灯: "light", 灯光: "light", 补光灯: "light",
+  风扇: "fan", 通风扇: "fan", 通风: "fan",
+  屏: "tv", 监测屏: "tv", 屏幕: "tv", 显示屏: "tv",
+  报警器: "speaker", 报警: "speaker", 警报: "speaker",
+  灌溉: "ac", 灌溉阀: "ac", 水肥: "ac",
+};
+
+function parseVoiceCommand(text) {
+  if (/紧急停机|紧急停止|停止运行|全部停止/.test(text)) return { special: "leave" };
+  if (/恢复运行|开始运行|恢复监护/.test(text)) return { special: "comehome" };
+
+  // "打开/开启"都含有"开"字，"关闭/关掉"都含有"关"字，直接认单字就够了，不用堆一串同义词
+  let action = null;
+  if (/关/.test(text)) action = false;
+  else if (/开/.test(text)) action = true;
+
+  let device = null;
+  for (const [word, key] of Object.entries(DEVICE_KEYWORDS)) {
+    if (text.includes(word)) { device = key; break; }
+  }
+
+  if (action === null || device === null) return null;
+  return { action, device };
+}
+
+function executeVoiceCommand(text) {
+  const parsed = parseVoiceCommand(text);
+  if (!parsed) {
+    showToast(`没听懂"${text}"，试试"打开监测屏"这样说`);
+    return;
+  }
+  if (parsed.special === "leave") { leaveHomeMode(); return; }
+  if (parsed.special === "comehome") {
+    masterOn = true;
+    document.getElementById("masterState").textContent = "开";
+    refreshAllDevices();
+    refreshDevicePanel();
+    showToast("已恢复运行，总电源已开启");
+    return;
+  }
+
+  if (!DEVICE_CONFIG[GREENHOUSE].includes(parsed.device)) {
+    showToast(`大棚里没有${DEVICE_LABELS[parsed.device]}这个设备`);
+    return;
+  }
+  setDeviceState(GREENHOUSE, parsed.device, parsed.action);
+  showToast(`语音指令：${parsed.action ? "打开" : "关闭"}${DEVICE_LABELS[parsed.device]}`);
+}
+
+const debugEls = { p: document.getElementById("dp"), y: document.getElementById("dy"), t: document.getElementById("dt"), h: document.getElementById("dh"), o: document.getElementById("do_"), n: document.getElementById("dn") };
+const dSoundEl = document.getElementById("dSound");
+const soundThreshSlider = document.getElementById("soundThreshSlider");
+const soundThreshValEl = document.getElementById("soundThreshVal");
+soundThreshSlider.addEventListener("input", () => { soundThreshValEl.textContent = soundThreshSlider.value; });
+
+let lastBtnA = 1, lastBtnB = 1;
+let fanSpeed = 0;
+let targetHeading = null;
+
+// 麦克风声音强度：和触摸点一样用自适应基准值 + 边沿检测，读数明显超过环境噪音的
+// 基准值就算"拍了一下手/喊了一声"，触发一次总电源切换。不是语音识别，只认音量大小。
+let soundBaseline = null;
+let soundState = false;
+function soundSpike(raw) {
+  if (typeof raw !== "number") return false;
+  if (soundBaseline === null) { soundBaseline = raw; return false; }
+  const ratio = Number(soundThreshSlider.value);
+  const isLoud = raw > soundBaseline * ratio;
+  if (!isLoud) soundBaseline = soundBaseline * 0.9 + raw * 0.1; // 环境噪音变化比触摸基准快，跟得更紧一点
+  const was = soundState;
+  soundState = isLoud;
+  return isLoud && !was;
+}
+
+// 触摸点的判定方式：实测发现不摸时读数在两万多，摸上去读数会大幅变大（和一开始按
+// "摸了会变小"设计的方向相反，不同批次固件/板子这个方向也可能不一样）。
+// 这里改成自适应基准值：持续跟踪"没摸的时候"的读数，一旦当前读数明显超过基准值
+// 的若干倍(倍数由调试面板的滑块决定)，就判定为"摸到了"，不需要事先知道具体数字。
+const touchBaseline = { p: null, y: null, t: null, h: null, o: null, n: null };
+const touchState = { p: false, y: false, t: false, h: false, o: false, n: false };
+
+function touchPressed(rawValue, key) {
+  if (typeof rawValue !== "number") return false;
+
+  if (touchBaseline[key] === null) {
+    touchBaseline[key] = rawValue;
+    return false;
+  }
+
+  const ratio = Number(threshSlider.value);
+  const isTouched = rawValue > touchBaseline[key] * ratio;
+
+  if (!isTouched) {
+    // 没摸的时候让基准值缓慢跟随（应对光线/温度导致的读数漂移），
+    // 摸着的时候不更新，避免"按住不放"把基准值也顶上去。
+    touchBaseline[key] = touchBaseline[key] * 0.95 + rawValue * 0.05;
+  }
+
+  const wasTouched = touchState[key];
+  touchState[key] = isTouched;
+  return isTouched && !wasTouched; // 只在"刚碰到"的瞬间返回 true
+}
+
+function handleData(data) {
+  if (data.error) return;
+
+  if (typeof data.light === "number") {
+    lightValEl.textContent = data.light;
+    // 玻璃温室在“室外”：天亮时整个大棚应该是亮的（原来按室内房间调，最亮也只有 0.22）
+    targetAmbientIntensity = THREE.MathUtils.clamp(data.light / 4095 * 0.45, 0.03, 0.45);
+    lastLightValue = data.light;
+    updateAutoMode(data.light);
+  }
+
+  if (typeof data.btn_a === "number") {
+    const pressedEdge = lastBtnA === 1 && data.btn_a === 0;
+    const releasedEdge = lastBtnA === 0 && data.btn_a === 1;
+    if (controlMode === "button") {
+      if (pressedEdge) toggleDevice(GREENHOUSE, selectedDevice);
+    } else if (controlMode === "voice") {
+      if (pressedEdge) startVoiceListening();
+      if (releasedEdge) stopVoiceListening();
+    } else if (controlMode === "auto") {
+      if (pressedEdge) showToast("当前是自动模式，全部由传感器自动控制，按键 A 不起作用");
+    }
+    lastBtnA = data.btn_a;
+  }
+  if (typeof data.btn_b === "number") {
+    if (lastBtnB === 1 && data.btn_b === 0) cycleControlMode();
+    lastBtnB = data.btn_b;
+  }
+
+  ["p", "y", "t", "h", "o", "n"].forEach((k) => {
+    const raw = data["touch_" + k];
+    if (typeof raw === "number") {
+      const base = touchBaseline[k];
+      debugEls[k].textContent = base ? `${raw} (基准${Math.round(base)})` : raw;
+    }
+  });
+
+  // 大棚只有一个分区了，P/Y/T/H 不再用来"选分区"，改成"选设备"（选中哪个设备，
+  // 按键模式下按键 A 就开关它）。H 上原来的第四个分区名额换给了"灌溉阀"，跟"报警器"
+  // 轮流切换（两个设备共用这一个触摸点）。
+  if (touchPressed(data.touch_p, "p")) { selectedDevice = "light"; refreshDeviceSelection(); }
+  if (touchPressed(data.touch_y, "y")) { selectedDevice = "fan"; refreshDeviceSelection(); }
+  if (touchPressed(data.touch_t, "t")) { selectedDevice = "tv"; refreshDeviceSelection(); }
+  if (touchPressed(data.touch_h, "h")) {
+    selectedDevice = selectedDevice === "speaker" ? "ac" : "speaker";
+    refreshDeviceSelection();
+  }
+  if (touchPressed(data.touch_o, "o")) {
+    toggleMasterPower();
+  }
+  if (touchPressed(data.touch_n, "n")) {
+    cameraAzimuth = Math.PI * 0.25;
+    cameraElevation = 7.5;
+    cameraTarget.set(6, 0.5, -3);
+    desiredCameraTarget.set(6, 0.5, -3);
+    controls.reset();
+    compassFollowEnabled = true; // 复位的时候也恢复指南针自动跟随，鼠标拖拽的暂停状态解除
+    showToast("视角已复位（鼠标也能重新拖动了）");
+  }
+
+  if (typeof data.accel_x === "number" && typeof data.accel_y === "number") {
+    fanSpeed = THREE.MathUtils.clamp(Math.abs(data.accel_x) + Math.abs(data.accel_y), 0, 4);
+    fanValEl.textContent = fanSpeed.toFixed(2);
+  }
+
+  if (data.shake === true) leaveHomeMode();
+
+  if (typeof data.sound === "number") {
+    dSoundEl.textContent = soundBaseline ? `${data.sound} (基准${Math.round(soundBaseline)})` : data.sound;
+    if (soundSpike(data.sound)) {
+      masterOn = !masterOn;
+      document.getElementById("masterState").textContent = masterOn ? "开" : "关";
+      refreshAllDevices();
+      refreshDevicePanel();
+      showToast(masterOn ? "👏 声控：总电源已开启" : "👏 声控：总电源已关闭");
+    }
+  }
+
+  if (typeof data.heading === "number") {
+    headingValEl.textContent = Math.round(data.heading) + "°";
+    if (compassToggle.checked) targetHeading = THREE.MathUtils.degToRad(data.heading);
+  }
+}
+
+// ============ 模拟掌控板（不接硬件也能测试）============
+// 用页面上的控件直接拼出和真实板子一模一样的 JSON，喂给 handleData()，
+// 所有下游逻辑（选房间、开关设备、自动模式……）完全复用，不用另外写一套。
+function simSeedDefaults() {
+  // 注意：这里故意不塞 light 字段——点击任何一个模拟控件（不管是不是跟光敏有关）
+  // 都会first触发这个函数，如果这里顺带把 light 也设成固定值，会导致"点一下任意按钮，
+  // 环境亮度突然跳一下"这种和你实际点的东西毫不相关的副作用（之前选房间按钮点一下
+  // 整个场景变亮，就是这个原因）。光敏读数就让它保持"没数据"，等真的拖光敏滑块或者
+  // 板子传真实数据的时候再更新，不要在这里顺带塞一个无关的默认值。
+  handleData({
+    touch_p: 20000, touch_y: 20000, touch_t: 20000, touch_h: 20000, touch_o: 20000, touch_n: 20000,
+    accel_x: 0, accel_y: 0, heading: 90, btn_a: 1, btn_b: 1, sound: 500,
+  });
+}
+let simSeeded = false;
+function ensureSimSeeded() {
+  if (simSeeded) return;
+  simSeeded = true;
+  simSeedDefaults();
+}
+
+function simPressButton(field, buttonEl) {
+  const down = () => { ensureSimSeeded(); handleData({ [field]: 0 }); buttonEl.classList.add("active"); };
+  const up = () => { handleData({ [field]: 1 }); buttonEl.classList.remove("active"); };
+  buttonEl.addEventListener("mousedown", down);
+  buttonEl.addEventListener("touchstart", (e) => { e.preventDefault(); down(); });
+  buttonEl.addEventListener("mouseup", up);
+  buttonEl.addEventListener("mouseleave", up);
+  buttonEl.addEventListener("touchend", up);
+}
+simPressButton("btn_a", document.getElementById("simBtnA"));
+simPressButton("btn_b", document.getElementById("simBtnB"));
+
+document.getElementById("simShake").addEventListener("click", () => {
+  ensureSimSeeded();
+  handleData({ shake: true });
+});
+
+document.querySelectorAll(".simTouch").forEach((btn) => {
+  const key = btn.dataset.key;
+  btn.addEventListener("click", () => {
+    ensureSimSeeded();
+    btn.classList.add("active");
+    handleData({ ["touch_" + key]: 90000 }); // 一下子跳很高，模拟"摸到了"
+    setTimeout(() => {
+      handleData({ ["touch_" + key]: touchBaseline[key] || 20000 }); // 松开，回到基准值附近
+      btn.classList.remove("active");
+    }, 150);
+  });
+});
+
+function bindSimSlider(sliderId, labelId, field, transform) {
+  const slider = document.getElementById(sliderId);
+  const label = document.getElementById(labelId);
+  slider.addEventListener("input", () => {
+    ensureSimSeeded();
+    const value = transform ? transform(Number(slider.value)) : Number(slider.value);
+    label.textContent = slider.value;
+    handleData({ [field]: value });
+  });
+}
+bindSimSlider("simLight", "simLightVal", "light");
+bindSimSlider("simTiltX", "simTiltXVal", "accel_x");
+bindSimSlider("simTiltY", "simTiltYVal", "accel_y");
+bindSimSlider("simHeading", "simHeadingVal", "heading");
+bindSimSlider("simSound", "simSoundVal", "sound");
+
+document.getElementById("simClap").addEventListener("click", () => {
+  ensureSimSeeded();
+  handleData({ sound: 4000 });
+  setTimeout(() => handleData({ sound: soundBaseline || 500 }), 150);
+});
+
+// 嵌在“掌控板实验室”里（自由农场关）时：数据不走 bridge.exe 的 WebSocket，
+// 由外面那个页面从 USB 串口读到板子的数据后用 postMessage 转进来——学生机上不用再开 bridge.exe，
+// 串口也只有一个页面在用，不会两边抢。只认父页面发来的消息。
+const EMBED = window.parent !== window;
+let embedGotData = false;
+window.addEventListener("message", (e) => {
+  if (!EMBED || e.source !== window.parent) return;
+  const d = e.data;
+  if (!d || d.type !== "mpl-farm" || !d.data) return;
+  if (!embedGotData) {
+    embedGotData = true;
+    statusDot.className = "dot ok";
+    statusText.textContent = "掌控板数据已接通";
+  }
+  handleData(d.data);
+});
+
+function connect() {
+  if (GAME) return;   // 温室栽培关不收传感器数据，只收栽培命令
+  if (EMBED) {
+    statusText.textContent = "等掌控板发来数据（刷入自由农场关的程序）";
+    return;
+  }
+  const ws = new WebSocket("ws://localhost:8765");
+  ws.onopen = () => { statusDot.className = "dot ok"; statusText.textContent = "已连接"; };
+  ws.onclose = () => { statusDot.className = "dot bad"; statusText.textContent = "未连接，2 秒后重试"; setTimeout(connect, 2000); };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (evt) => {
+    let data;
+    try { data = JSON.parse(evt.data); } catch { return; }
+    handleData(data);
+  };
+}
+
+// ============ 植物生长 / 缺水 / 枯萎 ============
+// 监护单位是“一块种植床”（几十棵作物共用一份水分，一块床一个标签），外加单独标了 watch 的盆栽、
+// 以及在摆放编辑里从目录加进来的作物/盆栽（各算一个）。每个单位：
+//   - 灌溉阀开着（总电源也开）→ 水分往上涨；关着 → 按各自的“喝水快慢”往下掉，
+//     几块床不会同时渴，学生能看出“哪块先不行了”。
+//   - 水分低于 30%（和智能花盆仿真页的“警示 30%”一致）健康度开始掉，越干掉得越快；
+//     健康度到 0 就是枯死。重新浇到 30% 以上会慢慢缓过来——课堂上要能救回来，不然一节课只能演示一次。
+// 样子跟着健康度变：叶子从绿变黄再变枯草色、整株往下塌、往一边歪；床的土跟着水分深浅变。
+// 速度按“一节课里看得到”调的：不浇水大约 40~70 秒开始缺水，再过半分钟左右枯死。
+const PLANT_WARN = 30;          // 水分低于这个就“缺水”
+const PLANT_DRY_RATE = 1.2;     // 不浇水时每秒掉多少水分（再乘每个单位自己的口渴系数）
+const PLANT_WATER_RATE = 8;     // 浇水时每秒涨多少
+const PLANT_HURT_RATE = 3.5;    // 水分为 0 时健康度每秒掉多少（水分越接近 30 掉得越慢）
+const PLANT_HEAL_RATE = 4;      // 水分够时健康度每秒回多少
+const WILT_YELLOW = new THREE.Color(0xe0c84e);   // 发黄
+const WILT_BROWN = new THREE.Color(0xb07a42);    // 枯草色：再深在大棚的灯光下就看成一团黑了
+// 从目录里加进来的模型，名字像作物/盆栽的才算“要浇水的植物”（树、花、灌木是室外装饰，不算）
+const WATCH_RE = /^(crop_|crops_(corn|leafs|wheat|bamboo)|plantSmall|pottedPlant)/;
+const plantLabelHolder = document.getElementById("plantLabels");
+const plantValEl = document.getElementById("plantVal");
+const plantState = {};           // 单位 key -> {moisture, health, thirst, label, shown}
+const _plantPos = new THREE.Vector3();
+let lastPlantTick = performance.now(), lastPlantText = 0, plantWarned = false, plantDeadWarned = false;
+let alarmOn = false;
+
+function plantUnits() {
+  const map = new Map();
+  editableItems.forEach((it) => {
+    if (!it.obj.parent) return;
+    let key = null, name = "", icon = "🌱", bed = null;
+    if (it.kind === "static" && it.config.bed) {
+      bed = BED_BY_KEY[it.config.bed]; key = "bed:" + bed.key; name = bed.name; icon = bed.icon;
+    } else if (it.kind === "static" && it.config.watch) {
+      key = "s" + it.index; name = "盆栽"; icon = "🌿";   // 🪴 机房的系统字体里没有，会显示成方框
+    } else if (it.kind === "dynamic" && WATCH_RE.test(it.model)) {
+      key = "d" + it.id; name = "新种的"; icon = "🌱";
+    }
+    if (!key) return;
+    let u = map.get(key);
+    if (!u) { u = { key, name, icon, bed, objs: [] }; map.set(key, u); }
+    u.objs.push(it.obj);
+  });
+  return [...map.values()];
+}
+
+// 每棵（每个模型）第一次参与时记下：哪些材质是“叶子”、要塌要歪的子节点、原始高度
+function wiltParts(obj, n) {
+  if (obj.userData.wilt) return obj.userData.wilt;
+  // 只给“绿色”的材质上枯萎色：南瓜本身、花盆、泥土不该一起变褐
+  const leaves = [];
+  obj.traverse((c) => {
+    if (!c.isMesh) return;
+    (Array.isArray(c.material) ? c.material : [c.material]).forEach((m) => {
+      if (m && m.color && m.color.g > m.color.r * 1.05 && m.color.g > m.color.b * 1.02) leaves.push({ m, orig: m.color.clone() });
+    });
+  });
+  // 塌、歪做在模型的子节点上，不动 obj 本身：obj 的缩放/旋转是摆放编辑器在管、还会存进布局文件，
+  // 直接改它的话“植物枯了”会被当成“老师把它压扁了”存下来
+  const parts = obj.children.filter((c) => !c.isLight).map((c) => ({ c, sy: c.scale.y, rx: c.rotation.x, rz: c.rotation.z }));
+  const box3 = new THREE.Box3().setFromObject(obj);
+  obj.userData.wilt = { leaves, parts, top: box3.max.y, tiltDir: (n * 2.399) % (Math.PI * 2) };
+  return obj.userData.wilt;
+}
+
+function applyWilt(u, st) {
+  const w = 1 - st.health / 100;                 // 0 = 健康，1 = 枯死
+  if (Math.abs(w - st.shown) < 0.004) return;
+  st.shown = w;
+  const toYellow = THREE.MathUtils.clamp(w / 0.6, 0, 1) * 0.85;
+  const toBrown = THREE.MathUtils.clamp((w - 0.6) / 0.4, 0, 1);
+  const tilt = 0.45 * w * w;
+  u.objs.forEach((obj, n) => {
+    const p = wiltParts(obj, n);
+    p.leaves.forEach(({ m, orig }) => { m.color.copy(orig).lerp(WILT_YELLOW, toYellow).lerp(WILT_BROWN, toBrown); });
+    p.parts.forEach(({ c, sy, rx, rz }) => {
+      c.scale.y = sy * (1 - 0.3 * w);
+      c.rotation.x = rx + Math.cos(p.tiltDir) * tilt;
+      c.rotation.z = rz + Math.sin(p.tiltDir) * tilt;
+    });
+  });
+}
+
+function drawTvScreen(units, watering) {
+  const { ctx, tex } = tvScreen, W = 512, H = 300;
+  ctx.fillStyle = "#0b1a14"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#8ff0b0"; ctx.font = "bold 30px 'Microsoft YaHei', sans-serif";
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText("大棚监测 · 土壤水分", 20, 28);
+  ctx.textAlign = "right"; ctx.fillStyle = watering ? "#6cc8ff" : "#7a8f86";
+  ctx.font = "bold 24px 'Microsoft YaHei', sans-serif";
+  ctx.fillText(watering ? "💧 灌溉中" : "灌溉阀：关", W - 20, 28);
+  const rows = units.slice(0, 7), rowH = (H - 60) / Math.max(rows.length, 1);
+  rows.forEach((u, i) => {
+    const st = plantState[u.key], y = 60 + i * rowH + rowH / 2, m = st.moisture;
+    ctx.textAlign = "left"; ctx.fillStyle = "#dfeee7"; ctx.font = "22px 'Microsoft YaHei', sans-serif";
+    ctx.fillText(u.icon + " " + u.name, 20, y);
+    ctx.fillStyle = "#1f3a30"; ctx.fillRect(150, y - 10, 270, 20);
+    ctx.fillStyle = st.health <= 0 ? "#ff6b5a" : m < PLANT_WARN ? "#ffd04a" : "#45d483";
+    ctx.fillRect(150, y - 10, 270 * m / 100, 20);
+    ctx.fillStyle = "#dfeee7"; ctx.textAlign = "right";
+    ctx.fillText(st.health <= 0 ? "枯死" : Math.round(m) + "%", W - 20, y);
+  });
+  tex.needsUpdate = true;
+}
+
+function updatePlants() {
+  const now = performance.now();
+  const dt = Math.min(0.5, (now - lastPlantTick) / 1000);   // 切到别的标签页回来，不一下子扣掉几分钟的水
+  lastPlantTick = now;
+  if (GAME) { gameFrame(now, dt); return; }   // 温室栽培关：水分、健康由栽培游戏算，不走灌溉阀那一套
+  const gs = roomState[GREENHOUSE];
+  const watering = masterOn && gs && gs.acOn;
+  const units = plantUnits();
+  const writeText = now - lastPlantText > 250;
+  if (writeText) lastPlantText = now;
+  const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
+  let sum = 0, dry = 0, dead = 0;
+  units.forEach((u, i) => {
+    let st = plantState[u.key];
+    if (!st) {
+      st = plantState[u.key] = {
+        moisture: 70 + ((i * 13) % 25), health: 100, shown: -1,
+        thirst: 0.7 + ((i * 37) % 7) / 10,       // 0.7 ~ 1.3，每块床渴得快慢不一样
+        label: document.createElement("div"),
+      };
+      st.label.className = "plantTag";
+      plantLabelHolder.appendChild(st.label);
+    }
+    st.seen = now;
+    st.moisture = watering ? Math.min(100, st.moisture + PLANT_WATER_RATE * dt)
+                           : Math.max(0, st.moisture - PLANT_DRY_RATE * st.thirst * dt);
+    if (st.moisture < PLANT_WARN) st.health = Math.max(0, st.health - (PLANT_WARN - st.moisture) / PLANT_WARN * PLANT_HURT_RATE * dt);
+    else st.health = Math.min(100, st.health + PLANT_HEAL_RATE * dt);
+    applyWilt(u, st);
+    if (u.bed && bedSoil[u.bed.key]) bedSoil[u.bed.key].color.copy(SOIL_DRY).lerp(SOIL_WET, st.moisture / 100);
+    sum += st.moisture;
+    if (st.moisture < PLANT_WARN) dry++;
+    if (st.health <= 0) dead++;
+
+    // 标签：种植床的标在床中央上方，单盆的标在它头顶
+    let x = 0, z = 0, top = 0;
+    u.objs.forEach((obj, n) => { x += obj.position.x; z += obj.position.z; top = Math.max(top, wiltParts(obj, n).top); });
+    x /= u.objs.length; z /= u.objs.length;
+    _plantPos.set(x, top * (1 - 0.25 * (1 - st.health / 100)) + 0.15, z).project(camera);
+    const visible = _plantPos.z < 1 && Math.abs(_plantPos.x) < 1.1 && Math.abs(_plantPos.y) < 1.1;
+    st.label.style.display = visible ? "" : "none";
+    if (visible) {
+      st.label.style.left = ((_plantPos.x + 1) / 2 * w) + "px";
+      st.label.style.top = ((1 - _plantPos.y) / 2 * h) + "px";
+    }
+    if (writeText) {
+      const m = Math.round(st.moisture), who = u.icon + " " + u.name + " ";
+      if (st.health <= 0) { st.label.className = "plantTag dead"; st.label.textContent = who + "🥀 枯死"; }
+      else if (st.moisture < PLANT_WARN) { st.label.className = "plantTag warn"; st.label.textContent = who + "⚠ 缺水 " + m + "%"; }
+      else { st.label.className = "plantTag"; st.label.textContent = who + (watering ? "🚿 " : "💧 ") + m + "%"; }
+    }
+  });
+  // 被删掉的植物（摆放编辑里点了删除）把它的标签也收掉
+  Object.keys(plantState).forEach((k) => {
+    if (plantState[k].seen !== now) { plantState[k].label.remove(); delete plantState[k]; }
+  });
+
+  // 滴灌管：浇水时变蓝发光
+  pipeMat.color.setHex(watering ? 0x3aa8ff : 0x8a939e);
+  pipeMat.emissiveIntensity = watering ? 0.9 + 0.3 * Math.sin(now / 180) : 0;
+
+  // 报警器：开着、又有床缺水时闪红灯（关着就不吵——这正是“报警器要不要开”的意义）
+  const wantAlarm = dry > 0 && masterOn && gs && gs.speakerOn;
+  const sl = gs && gs.deviceObjs.speakerLight;
+  if (sl) {
+    if (wantAlarm) {
+      sl.color.setHex(0xff3b30);
+      sl.intensity = Math.sin(now / 160) > 0 ? 3 : 0.2;
+    } else if (alarmOn) {
+      sl.color.setHex(0x9dffcf);
+      applyRoomSpeaker(GREENHOUSE);
+    }
+  }
+  alarmOn = wantAlarm;
+
+  // 监测屏：开着才有画面，半秒刷新一次
+  if (tvScreen) {
+    const tvOn = masterOn && gs && gs.tvOn;
+    tvScreen.mesh.visible = !!tvOn;
+    if (tvOn && now - tvScreen.at > 500) { tvScreen.at = now; drawTvScreen(units, watering); }
+  }
+
+  if (!units.length) return;
+  if (writeText) {
+    plantValEl.textContent = "平均水分 " + Math.round(sum / units.length) + "%" +
+      (dry ? " · 缺水 " + dry : "") + (dead ? " · 枯死 " + dead : "");
+    plantValEl.style.color = dead ? "#ff9b85" : dry ? "#ffd27a" : "";
+    const mini = document.getElementById("miniPlant");
+    mini.textContent = plantValEl.textContent;
+    mini.style.color = plantValEl.style.color;
+  }
+  // 第一次出现缺水 / 枯死时提醒一句；恢复后再出现会再提醒
+  if (dry && !plantWarned) showToast("⚠ 有作物缺水了（水分低于 30%），快打开灌溉阀！");
+  if (dead && !plantDeadWarned) showToast("🥀 有作物枯死了——打开灌溉阀浇水，它还能慢慢缓过来");
+  plantWarned = dry > 0;
+  plantDeadWarned = dead > 0;
+}
+
+// ============ 动画循环 ============
+function animate() {
+  requestAnimationFrame(animate);
+  updatePlants();
+
+  ambient.intensity += (targetAmbientIntensity - ambient.intensity) * 0.05;
+  // 太阳光跟着光照一起变，光有环境光物体没有明暗面。栽培模式是白天：底子亮，光照指标只让它在亮的范围里浮动
+  sun.intensity = GAME ? 1.6 + ambient.intensity * 1.6 : 0.1 + ambient.intensity * 1.6;
+  skyFill.intensity = GAME ? 1.4 : 0;
+
+  if (fan) {
+    const fanRunning = masterOn && roomState[GREENHOUSE].fanOn;
+    fan.rotation.y += fanRunning ? 0.02 + fanSpeed * 0.15 : 0;
+  }
+
+  // desiredCameraTarget 现在固定指向大棚中心（不再有分区可切换，这个 lerp 主要在
+  // "复位视角"时把镜头平滑带回中心用），用户手动拖动过镜头之后暂停，不然会跟手动
+  // 拖拽/平移打架
+  if (compassFollowEnabled) cameraTarget.lerp(desiredCameraTarget, 0.06);
+
+  if (targetHeading !== null && compassFollowEnabled) {
+    // 让相机方位角平滑跟随指南针朝向，转动板子 = 环绕房子转视角
+    let diff = targetHeading - cameraAzimuth;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    cameraAzimuth += diff * 0.05;
+    camera.position.set(
+      cameraTarget.x + cameraRadius * Math.sin(cameraAzimuth),
+      cameraElevation,
+      cameraTarget.z + cameraRadius * Math.cos(cameraAzimuth)
+    );
+    camera.lookAt(cameraTarget);
+  }
+
+  if (compassFollowEnabled) controls.target.copy(cameraTarget);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ============ 灯光参数调整面板 ============
+function buildLightPanel() {
+  const body = document.getElementById("lightPanelBody");
+  body.innerHTML = "";
+
+  function addSlider(container, labelText, min, max, step, getVal, setVal) {
+    const label = document.createElement("label");
+    const valSpan = document.createElement("span");
+    valSpan.textContent = getVal();
+    label.appendChild(document.createTextNode(labelText + "："));
+    label.appendChild(valSpan);
+    const input = document.createElement("input");
+    input.type = "range";
+    input.min = min; input.max = max; input.step = step;
+    input.value = getVal();
+    input.addEventListener("input", () => {
+      setVal(Number(input.value));
+      valSpan.textContent = input.value;
+    });
+    label.appendChild(document.createElement("br"));
+    label.appendChild(input);
+    container.appendChild(label);
+  }
+
+  Object.keys(ROOMS).forEach((key) => {
+    const style = ROOM_LIGHT_STYLE[key];
+    const room = ROOMS[key];
+    const { angle: autoAngle, distance: autoDistance } = computeAutoSpotParams(room);
+    const autoAngleDeg = Math.round(THREE.MathUtils.radToDeg(autoAngle));
+
+    const block = document.createElement("div");
+    block.className = "lightRoomBlock";
+
+    const title = document.createElement("h4");
+    title.textContent = room.label;
+    block.appendChild(title);
+
+    const colorLabel = document.createElement("label");
+    colorLabel.appendChild(document.createTextNode("颜色"));
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.value = "#" + style.color.toString(16).padStart(6, "0");
+    colorInput.addEventListener("input", () => {
+      style.color = parseInt(colorInput.value.slice(1), 16);
+      applyRoomLight(key);
+    });
+    colorLabel.appendChild(colorInput);
+    block.appendChild(colorLabel);
+
+    addSlider(block, "亮度", 0, 10, 0.1, () => style.intensity, (v) => { style.intensity = v; applyRoomLight(key); });
+    addSlider(block, "灯泡自身亮度", 0, 3, 0.05, () => style.emissiveIntensity, (v) => { style.emissiveIntensity = v; applyRoomLight(key); });
+    addSlider(block, "锥形光张角(度)", 10, 89, 1,
+      () => style.angleDeg ?? autoAngleDeg,
+      (v) => {
+        style.angleDeg = v;
+        if (roomState[key].ceilingSpot) roomState[key].ceilingSpot.angle = THREE.MathUtils.degToRad(v);
+      });
+    addSlider(block, "照射距离", 1, 10, 0.1,
+      () => style.distance ?? Math.round(autoDistance * 10) / 10,
+      (v) => {
+        style.distance = v;
+        if (roomState[key].ceilingSpot) roomState[key].ceilingSpot.distance = v;
+      });
+    addSlider(block, "灯具高度(离地面)", 1.8, 2.9, 0.05,
+      () => style.height ?? 2.55,
+      (v) => {
+        style.height = v;
+        if (roomState[key].ceilingLampMesh) roomState[key].ceilingLampMesh.position.y = v;
+      });
+
+    body.appendChild(block);
+  });
+}
+
+document.getElementById("lightSaveBtn").addEventListener("click", () => {
+  localStorage.setItem(LIGHT_STYLE_STORAGE_KEY, JSON.stringify(ROOM_LIGHT_STYLE));
+  showToast("灯光参数已保存，下次打开这台电脑会自动使用");
+});
+
+document.getElementById("lightResetBtn").addEventListener("click", () => {
+  localStorage.removeItem(LIGHT_STYLE_STORAGE_KEY);
+  showToast("已清除保存的灯光参数，刷新页面恢复默认");
+});
+
+// ============ 场景模式（3 个槽位，整屋设备开关组合一键切换）============
+const SCENE_SLOTS_STORAGE_KEY = "smartFarmSceneSlots_v2"; // 分区结构改成单一大棚，设备开关组合存的 room key 也变了，换新存档位
+const SCENE_SLOT_COUNT = 3;
+
+function loadSceneSlots() {
+  try {
+    const raw = localStorage.getItem(SCENE_SLOTS_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    while (arr.length < SCENE_SLOT_COUNT) arr.push(null);
+    return arr;
+  } catch {
+    return new Array(SCENE_SLOT_COUNT).fill(null);
+  }
+}
+let sceneSlots = loadSceneSlots();
+
+function saveSceneSlots() {
+  localStorage.setItem(SCENE_SLOTS_STORAGE_KEY, JSON.stringify(sceneSlots));
+}
+
+// 把当前"每个房间每个设备是开是关"整体抓一份快照
+function captureCurrentState() {
+  const snapshot = {};
+  Object.keys(ROOMS).forEach((key) => {
+    snapshot[key] = {};
+    DEVICE_CONFIG[key].forEach((device) => {
+      snapshot[key][device] = !!roomState[key][device + "On"];
+    });
+  });
+  return snapshot;
+}
+
+// 把一份快照套用回场景里——复用 setDeviceState，这样每个设备该有的灯光/音效/
+// 总电源联动效果都一样不会漏掉，不用另外再写一套"直接改状态"的逻辑
+function applySceneSnapshot(snapshot) {
+  Object.keys(ROOMS).forEach((key) => {
+    const roomSnapshot = snapshot[key];
+    if (!roomSnapshot) return;
+    DEVICE_CONFIG[key].forEach((device) => {
+      if (device in roomSnapshot) setDeviceState(key, device, !!roomSnapshot[device]);
+    });
+  });
+}
+
+function buildScenePanel() {
+  const body = document.getElementById("scenePanelBody");
+  body.innerHTML = "";
+  for (let i = 0; i < SCENE_SLOT_COUNT; i++) {
+    const row = document.createElement("div");
+    row.className = "sceneRow";
+
+    const label = document.createElement("b");
+    label.textContent = `模式 ${i + 1}`;
+    row.appendChild(label);
+
+    const status = document.createElement("span");
+    status.className = "sceneEmpty";
+    status.textContent = sceneSlots[i] ? "" : "(空)";
+    row.appendChild(status);
+
+    const applyBtn = document.createElement("button");
+    applyBtn.textContent = "应用";
+    applyBtn.addEventListener("click", () => {
+      if (!sceneSlots[i]) { showToast(`模式 ${i + 1} 还没保存过，先点"保存当前状态"`); return; }
+      applySceneSnapshot(sceneSlots[i]);
+      showToast(`已切换到「模式 ${i + 1}」`);
+    });
+    row.appendChild(applyBtn);
+
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "保存当前状态";
+    saveBtn.addEventListener("click", () => {
+      sceneSlots[i] = captureCurrentState();
+      saveSceneSlots();
+      showToast(`当前全部设备状态已存进「模式 ${i + 1}」`);
+      buildScenePanel();
+    });
+    row.appendChild(saveBtn);
+
+    body.appendChild(row);
+  }
+}
+
+// ============ 启动 ============
+camera.position.set(
+  cameraTarget.x + cameraRadius * Math.sin(cameraAzimuth),
+  cameraElevation,
+  cameraTarget.z + cameraRadius * Math.cos(cameraAzimuth)
+);
+camera.lookAt(cameraTarget);
+refreshModeUI();
+
+// ============ 温室栽培关：智能温室栽培（网址带 ?game=1 时才启用，自由农场关的自由农场不受影响）============
+// 温室只认六个命令（浇水/施肥/补光/遮阳/加温/通风），由外面的学生页从掌控板读到后转进来。
+// 每一轮随机一种作物 + 三天天气；四项指标（土壤水分、温度、光照、养分）被天气推着走，
+// 学生用命令把它们拉回这株植物喜欢的范围。范围内植物长大，范围外健康度掉；没有失败：不会枯死、不限天数，
+// 健康度低于 30% 时植物蔫了、长不动，得先救回来；生长到 100% 就收获。
+// 设计上故意不让“乱按一通”过关：做过头同样伤植物（水太多烂根、肥太多烧苗、遮阳过度太暗），
+// 同一个命令要隔 3 秒才能再用——得先看说明、看指标，再决定按哪个。
+// 随机数按组号播种（网址里的 seed）+ 第几轮：同一组刷新还是那一轮，邻组种的、碰到的天气都不一样。
+const GAME_Q = new URLSearchParams(location.search);
+const GAME = GAME_Q.get("game") === "1";
+const GAME_SEED = parseInt(GAME_Q.get("seed"), 10) || 1;
+const DRILL = GAME && GAME_Q.get("drill") === "1";   // 温室巡检小关：只演示设备，不种植（见 newRound）
+const DAY_SEC = 45, COOLDOWN = 3, WILT_STOP = 30;   // 一天 45 秒；健康度低于 WILT_STOP 就长不动
+const IND = {
+  moist: { name: "土壤水分", icon: "💧", unit: "%", max: 100, low: "太干", high: "太湿（会烂根）", soft: 10 },
+  temp:  { name: "温度",     icon: "🌡", unit: "°C", max: 40, low: "太冷", high: "太热", soft: 4 },
+  light: { name: "光照",     icon: "☀", unit: "%", max: 100, low: "太暗", high: "太晒", soft: 10 },
+  nutri: { name: "养分",     icon: "🧪", unit: "%", max: 100, low: "缺肥", high: "肥太多（烧苗）", soft: 10 },
+};
+const GROW_PLANTS = [
+  { name: "胡萝卜", icon: "🥕", model: "crop_carrot",       needs: { moist: [55, 75], temp: [15, 25], light: [50, 80], nutri: [40, 70] }, tip: "喜欢凉爽，怕高温；土别太湿。" },
+  { name: "生菜",   icon: "🥬", model: "crops_leafsStageB", needs: { moist: [65, 85], temp: [12, 22], light: [40, 65], nutri: [45, 70] }, tip: "爱喝水、怕热，不需要太强的光。" },
+  { name: "玉米",   icon: "🌽", model: "crops_cornStageD",  needs: { moist: [50, 70], temp: [22, 32], light: [65, 95], nutri: [55, 85] }, tip: "喜欢阳光和温暖，长得快、吃肥多。" },
+  { name: "南瓜",   icon: "🎃", model: "crop_pumpkin",      needs: { moist: [55, 75], temp: [20, 30], light: [60, 90], nutri: [50, 80] }, tip: "喜欢温暖，结瓜要很多养分。" },
+  { name: "西瓜",   icon: "🍉", model: "crop_melon",        needs: { moist: [45, 65], temp: [24, 34], light: [70, 95], nutri: [50, 75] }, tip: "爱晒太阳、耐热；水多了反而不甜。" },
+  { name: "小麦",   icon: "🌾", model: "crops_wheatStageB", needs: { moist: [40, 60], temp: [12, 24], light: [55, 85], nutri: [40, 65] }, tip: "耐旱，喜欢凉爽，水不用浇太多。" },
+];
+// target：天气把光照/温度往哪儿推；dry：土干的速度倍数
+const GROW_WEATHER = [
+  { name: "晴天", icon: "☀", desc: "光照强、升温快，土干得快", sky: 0xbfe4ff, target: { light: 90, temp: 31 }, dry: 1.3 },
+  { name: "多云", icon: "⛅", desc: "光照一般，气温平稳", sky: 0xc9d6df, target: { light: 55, temp: 22 }, dry: 0.8 },
+  { name: "雨天", icon: "🌧", desc: "光线暗、气温偏低，土干得慢", sky: 0x8d9aa6, target: { light: 28, temp: 17 }, dry: 0.4, fx: "rain" },
+  { name: "高温", icon: "🔥", desc: "又晒又热，土干得特别快", sky: 0xffe2b0, target: { light: 95, temp: 38 }, dry: 1.8 },
+  { name: "寒潮", icon: "❄", desc: "气温骤降，光照偏弱", sky: 0xe3ecf4, target: { light: 40, temp: 6 }, dry: 0.5, fx: "snow" },
+];
+const GROW_FX = {
+  water: { name: "💧 浇水", desc: "土壤水分 +20%", d: { moist: 20 } },
+  fert:  { name: "🧪 施肥", desc: "养分 +20%", d: { nutri: 20 } },
+  glow:  { name: "💡 补光", desc: "光照 +20%（补光灯亮一会儿）", d: { light: 20 } },
+  shade: { name: "🕶 遮阳", desc: "光照 −20%，温度 −3°C", d: { light: -20, temp: -3 } },
+  heat:  { name: "🔥 加温", desc: "温度 +5°C", d: { temp: 5 } },
+  vent:  { name: "🌀 通风", desc: "温度 −5°C，土壤水分 −5%", d: { temp: -5, moist: -5 } },
+};
+const GROW_RULES = [
+  "四项指标都在上面的范围里，植物才会长；离开范围越远，健康掉得越快。",
+  "健康低于 30% 植物会蔫、长不动——先把指标拉回范围，它会慢慢恢复。",
+  "做过头一样伤植物：水太多烂根、肥太多烧苗。",
+  "同一个操作做完要等 3 秒才能再做。生长到 100% 就收获，不限天数。",
+];
+const STAGES = [[0, "种子"], [10, "发芽"], [35, "幼苗"], [65, "开花"], [100, "结果"]];
+
+const G = { state: "loading", round: 0, plant: null, weather: [], t: 0, v: {}, health: 100, grow: 0, cool: {}, log: [], fxUntil: {}, _floodLogged: false };
+
+function growRng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function growDay() { return Math.floor(G.t / DAY_SEC); }
+// 天气按天现算（不限天数）：同一轮同一天永远是同一种天气，预报和实际对得上
+function weatherFor(d) {
+  if (DRILL) return GROW_WEATHER[0];
+  while (G.weather.length <= d) {
+    const r = growRng(GAME_SEED * 1000 + G.round * 31 + G.weather.length * 977 + 5);
+    G.weather.push(GROW_WEATHER[Math.floor(r() * GROW_WEATHER.length)]);
+  }
+  return G.weather[d];
+}
+function stageName(p) { let s = STAGES[0][1]; STAGES.forEach(([v, n]) => { if (p >= v) s = n; }); return s; }
+function postParent(msg) { if (EMBED) window.parent.postMessage(msg, location.origin === "null" ? "*" : location.origin); }
+
+function sendCard() {
+  postParent({ type: "mpl-grow-card", card: {
+    plant: { name: G.plant.name, icon: G.plant.icon, needs: G.plant.needs, tip: G.plant.tip },
+    // 预报：今天起 3 天
+    weather: [0, 1, 2].map((i) => { const d = growDay() + i, w = weatherFor(d); return { day: d + 1, name: w.name, icon: w.icon, desc: w.desc }; }),
+    effects: Object.entries(GROW_FX).map(([key, e]) => ({ key, name: e.name, desc: e.desc })),
+    rules: GROW_RULES,
+  } });
+}
+
+// 新的一轮：换作物（不和上一轮重复）、换三天天气，把种植床上的作物模型整个换掉
+async function newRound() {
+  G.round++;
+  const r = growRng(GAME_SEED * 1000 + G.round * 31);
+  let p;
+  do { p = GROW_PLANTS[Math.floor(r() * GROW_PLANTS.length)]; } while (G.plant && p === G.plant && GROW_PLANTS.length > 1);
+  G.plant = p;
+  G.weather = [];
+  const w0 = weatherFor(0), n = p.needs;
+  G.v = {
+    moist: n.moist[0] + 2 + r() * 10, nutri: n.nutri[0] + 4 + r() * 10,
+    temp: w0.target.temp + (r() - 0.5) * 4, light: w0.target.light,
+  };
+  G.t = 0; G.health = 100; G.grow = 0; G.cool = {}; G.log = []; G.fxUntil = {}; G._floodLogged = false;
+  lastDay = 0;
+  G.state = "loading";
+  await ensureModelLoaded(p.model);
+  editableItems.forEach((it) => {
+    if (it.kind !== "static" || !it.config.bed) return;
+    const old = it.obj;
+    const obj = placeModel(p.model, [old.position.x, old.position.y, old.position.z], THREE.MathUtils.radToDeg(old.rotation.y), it.config.scale || 1);
+    scene.remove(old);
+    it.obj = obj;
+  });
+  Object.keys(plantState).forEach((k) => { plantState[k].label.remove(); delete plantState[k]; });
+  // 练习模式（温室巡检的小关）：不种植、不计时、不会枯死，只看设备有没有照命令动。
+  // 小关要的只是“温室有反应”，学生改程序改上十分钟很正常——真种的话植物早枯死了，
+  // 枯死之后温室不再收命令，学生修好了程序也看不到反应，只会以为还没修好
+  if (DRILL) { G.state = "drill"; renderGrowPanel(true); return; }
+  G.state = "ready";
+  sendCard();
+  showGrowOverlay("ready");
+  renderGrowPanel(true);
+}
+
+function growAction(a) {
+  const fx = GROW_FX[a];
+  if (!fx) return;
+  if (G.state === "ready") startGrow();
+  if (G.state !== "running" && G.state !== "drill") return;
+  // 练习模式里 G.t 不走（不种植），冷却改按真实时间算；冷却也短一些——
+  // “按住 A 连着浇了好几次水”这种故障，冷却太长就看不出来
+  const t = G.state === "drill" ? performance.now() / 1000 : G.t;
+  const left = (G.cool[a] || 0) - t;
+  if (left > 0) { growLog(fx.name + "：冷却中，" + Math.ceil(left) + " 秒后再试", "cool"); return; }
+  G.cool[a] = t + (G.state === "drill" ? 1 : COOLDOWN);
+  Object.entries(fx.d).forEach(([k, d]) => { G.v[k] = THREE.MathUtils.clamp(G.v[k] + d, 0, IND[k].max); });
+  G.fxUntil[a] = performance.now() + 3000;
+  growLog(fx.name + "  " + fx.desc.replace(/（.*）/, ""), "ok");
+  // 设备跟着动一下：补光灯亮、风扇转、加温灯亮、屋顶拉遮阳网、滴灌管变蓝（在 gameFrame 里按 fxUntil 画）
+}
+function growLog(text, cls) {
+  G.log.unshift({ text, cls });
+  G.log = G.log.slice(0, 4);
+  renderGrowPanel(true);
+}
+function startGrow() {
+  G.state = "running";
+  showGrowOverlay(null);
+  growLog("开始栽培：" + G.plant.icon + " " + G.plant.name, "ok");
+}
+function endGrow(result) {
+  G.state = "over";
+  showGrowOverlay(result);
+  postParent({ type: "mpl-grow-result", result });
+}
+
+// 每帧：天气推指标 → 算健康和生长 → 更新植物样子、设备动画、面板
+let growPanelAt = 0, lastDay = 0;
+function gameFrame(now, dt) {
+  const units = plantUnits().filter((u) => u.bed);
+  if (G.state === "running") {
+    G.t += dt;
+    const day = growDay(), w = weatherFor(day), n = G.plant.needs;
+    if (day !== lastDay) { lastDay = day; sendCard(); growLog("第 " + (day + 1) + " 天：" + w.icon + " " + w.name + "，" + w.desc, "day"); }
+    // 越长越大，越能喝水、吃肥——但原来到 100% 时 growing=2，指标掉速翻倍，越接近收获
+    // 越手忙脚乱，大多数人卡在终点前。growing 封顶改到 1.5 倍，再把两个基础速率压低一点，
+    // 全程掉速都更和缓，不是只在最后冲刺那段改
+    const growing = 1 + G.grow / 200;
+    G.v.light += (w.target.light - G.v.light) * 0.06 * dt;
+    G.v.temp += (w.target.temp - G.v.temp) * 0.04 * dt;
+    G.v.moist = Math.max(0, G.v.moist - 0.7 * w.dry * growing * dt);
+    G.v.nutri = Math.max(0, G.v.nutri - 0.35 * growing * dt);
+    let inRange = 0, hurt = 0;
+    Object.keys(IND).forEach((k) => {
+      const [lo, hi] = n[k], v = G.v[k];
+      const off = v < lo ? lo - v : v > hi ? v - hi : 0;
+      if (!off) inRange++;
+      hurt += Math.min(off / IND[k].soft, 3);
+    });
+    if (inRange === 4) G.health = Math.min(100, G.health + 3 * dt);
+    // 掉得慢一点：离开范围一点点要二三十秒才伤到危险线，给学生留出“看说明 → 找程序 → 动手”的时间
+    else G.health = Math.max(0, G.health - hurt * 0.9 * dt);
+    // 蔫了（健康 < 30%）就长不动；没有失败结局，只有“生长到 100% 收获”
+    if (G.health >= WILT_STOP) G.grow = Math.min(100, G.grow + (inRange === 4 ? 1.1 : inRange === 3 ? 0.35 : 0) * dt);
+    if (G.grow >= 100) endGrow("harvest");
+  }
+
+  // 设备动画：刚执行过的命令让对应设备动 3 秒（挪到前面，下面画土壤的时候"施肥"也要用它）
+  const on = (a) => (G.fxUntil[a] || 0) > now;
+  // 浇水浇过头：一键浇水那一关的故障就是"按住 A 连着浇了好几次，土都快淹了"——
+  // 练习模式不种植、不枯死，原来浇再多水也只是土色深一点，看不出"淹了"这个后果。
+  // 水分超过 90% 就把土色压得比"湿"更深、更蓝，再弹一次性的日志提醒，踩过线才会出现
+  const flooded = G.v.moist >= 90;
+  if (flooded && !G._floodLogged) { G._floodLogged = true; growLog("💦 水都溢出来了，土都快成泥潭了！", "bad"); }
+  else if (!flooded) G._floodLogged = false;
+
+  // 植物样子：大小跟着生长进度，枯萎跟着健康度（复用自由农场那套枯萎效果）
+  const growScale = 0.35 + 0.65 * (G.grow / 100);
+  units.forEach((u) => {
+    let st = plantState[u.key];
+    if (!st) {
+      st = plantState[u.key] = { moisture: 50, health: 100, shown: -1, label: document.createElement("div") };
+      plantLabelHolder.appendChild(st.label);
+    }
+    st.seen = now;
+    st.health = G.health;
+    applyWilt(u, st);
+    u.objs.forEach((obj) => {
+      if (obj.userData.baseScale == null) obj.userData.baseScale = obj.scale.x;
+      obj.scale.setScalar(obj.userData.baseScale * growScale);
+    });
+    if (bedSoil[u.bed.key]) {
+      const soil = bedSoil[u.bed.key];
+      soil.color.copy(SOIL_DRY).lerp(SOIL_WET, THREE.MathUtils.clamp(G.v.moist / 100, 0, 1));
+      if (flooded) soil.color.lerp(SOIL_FLOOD, THREE.MathUtils.clamp((G.v.moist - 90) / 10, 0, 1));
+      // 施肥同理：原来只有文字日志，水管/补光灯/风扇都有设备动画，施肥没有——
+      // 刚施肥的 3 秒内土壤泛一下暖绿色光，算是"肥料洒下去"的反馈
+      const fertOn = on("fert");
+      soil.emissive.setHex(fertOn ? 0x5a8a2e : 0x000000);
+      soil.emissiveIntensity = fertOn ? 0.5 + 0.25 * Math.sin(now / 140) : 0;
+    }
+  });
+  pipeMat.color.setHex(on("water") ? 0x3aa8ff : 0x8a939e);
+  pipeMat.emissiveIntensity = on("water") ? 0.9 + 0.3 * Math.sin(now / 180) : 0;
+  const gs = roomState[GREENHOUSE];
+  if (gs) {
+    const glowOn = on("glow");
+    if (gs.lightOn !== glowOn) { gs.lightOn = glowOn; applyRoomLight(GREENHOUSE); }
+    gs.fanOn = on("vent");
+    if (gs.fanOn) fanSpeed = 4;
+  }
+  heatLight.intensity = on("heat") ? 4 + Math.sin(now / 120) : 0;
+  glassMat.opacity = on("shade") ? 0.55 : 0.16;
+  glassMat.color.setHex(on("shade") ? 0x3c5a48 : 0xd6f1ff);
+  // 环境亮度跟着“光照”指标走（不再看板子的光线传感器）
+  if (G.v.light != null) targetAmbientIntensity = 0.35 + (G.v.light / 100) * 0.4;
+  if (G.plant) { const w = weatherFor(growDay()); scene.background.setHex(w.sky); updateWeatherParticles(w.fx, dt); }
+
+  if (now - growPanelAt > 200) { growPanelAt = now; renderGrowPanel(false); }
+}
+
+// 雨 / 雪：一团粒子在大棚上空落下，天气不是雨雪时藏起来
+const heatLight = new THREE.PointLight(0xff8a3d, 0, 9, 2);
+heatLight.position.set(6, 1.6, -3);
+scene.add(heatLight);
+let weatherPts = null;
+function updateWeatherParticles(kind, dt) {
+  if (!weatherPts) {
+    const N = 900, pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) { pos[i * 3] = -3 + Math.random() * 18; pos[i * 3 + 1] = Math.random() * 7; pos[i * 3 + 2] = -10 + Math.random() * 13; }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    weatherPts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.06, transparent: true, opacity: 0.8, depthWrite: false }));
+    weatherPts.raycast = noPick;
+    scene.add(weatherPts);
+  }
+  weatherPts.visible = !!kind;
+  if (!kind) return;
+  weatherPts.material.color.setHex(kind === "rain" ? 0x9cc8ff : 0xffffff);
+  weatherPts.material.size = kind === "rain" ? 0.05 : 0.09;
+  const p = weatherPts.geometry.attributes.position, speed = kind === "rain" ? 7 : 1.2;
+  for (let i = 0; i < p.count; i++) {
+    let y = p.getY(i) - speed * dt;
+    if (y < 0) y += 7;
+    p.setY(i, y);
+    if (kind === "snow") p.setX(i, p.getX(i) + Math.sin(y * 2 + i) * 0.004);
+  }
+  p.needsUpdate = true;
+}
+
+// ---- 面板（左上角）和开始 / 结束遮罩 ----
+function renderGrowPanel(force) {
+  const el = document.getElementById("growPanel");
+  if (!el || !G.plant) return;
+  const day = growDay(), w = weatherFor(day), n = G.plant.needs;
+  const left = G.state === "running" ? Math.max(0, Math.ceil((day + 1) * DAY_SEC - G.t)) : DAY_SEC;
+  let rows = "";
+  Object.entries(IND).forEach(([k, m]) => {
+    const v = G.v[k], [lo, hi] = n[k], bad = v < lo ? m.low : v > hi ? m.high : "";
+    const pct = (x) => (x / m.max * 100).toFixed(1) + "%";
+    rows += '<div class="gp-ind' + (bad ? " bad" : "") + '"><span class="gp-n">' + m.icon + " " + m.name + '</span>' +
+      '<span class="gp-track"><i class="gp-band" style="left:' + pct(lo) + ";width:" + pct(hi - lo) + '"></i>' +
+      '<i class="gp-dot" style="left:' + pct(THREE.MathUtils.clamp(v, 0, m.max)) + '"></i></span>' +
+      '<span class="gp-v">' + Math.round(v) + m.unit + '</span><span class="gp-s">' + (bad || "✓") + "</span></div>";
+  });
+  // 练习模式没在种：天数、生长、健康都没意义，只留指标和设备日志
+  if (G.state === "drill") {
+    el.innerHTML = '<div class="gp-head"><b>🔧 巡检中</b><span>看设备有没有照命令动</span></div>' + rows +
+      '<div class="gp-log">' + G.log.map((l) => '<div class="gl-' + l.cls + '">' + l.text + "</div>").join("") + "</div>";
+    return;
+  }
+  el.innerHTML =
+    '<div class="gp-head"><b>第 ' + (day + 1) + " 天</b><span>" + w.icon + " " + w.name + "</span><span>⏱ " + left + " 秒</span></div>" +
+    '<div class="gp-plant">' + G.plant.icon + " <b>" + G.plant.name + "</b> · " + stageName(G.grow) +
+      (G.health < WILT_STOP ? ' <span style="color:#ffb36b">· 蔫了，长不动</span>' : "") + "</div>" +
+    '<div class="gp-bar"><span>生长</span><span class="gp-tr"><i style="width:' + G.grow.toFixed(1) + '%;background:#34c46e"></i></span><b>' + Math.floor(G.grow) + "%</b></div>" +
+    '<div class="gp-bar"><span>健康</span><span class="gp-tr"><i style="width:' + G.health.toFixed(1) + "%;background:" +
+      (G.health > 60 ? "#34c46e" : G.health > 30 ? "#f3b234" : "#ef5a4a") + '"></i></span><b>' + Math.round(G.health) + "%</b></div>" +
+    rows +
+    '<div class="gp-log">' + G.log.map((l) => '<div class="gl-' + l.cls + '">' + l.text + "</div>").join("") + "</div>";
+}
+
+function showGrowOverlay(kind) {
+  const ov = document.getElementById("growOverlay");
+  if (!kind) { ov.style.display = "none"; return; }
+  const p = G.plant;
+  const msg = {
+    ready: ["🌻 第 " + G.round + " 轮：种 " + p.icon + " " + p.name,
+      "• 先修好程序、刷入<br>• 在掌控板上做任意操作就开始<br>• 长到 100% 收获，不限时间", "开始栽培"],
+    harvest: ["🎉 收获了！", p.icon + " " + p.name + " 长到了结果，用了 " + (growDay() + 1) + " 天（" + Math.ceil(G.t) + " 秒），最后健康度 " + Math.round(G.health) + "%。", "再种一轮（换植物和天气）"],
+  }[kind];
+  ov.innerHTML = '<div class="go-box"><h3>' + msg[0] + "</h3><p>" + msg[1] + '</p><button id="goBtn">' + msg[2] + "</button></div>";
+  ov.style.display = "flex";
+  document.getElementById("goBtn").onclick = () => { if (kind === "ready") startGrow(); else newRound(); };
+}
+function worstReason() {
+  let worst = null, score = 0;
+  Object.entries(IND).forEach(([k, m]) => {
+    const [lo, hi] = G.plant.needs[k], v = G.v[k];
+    const off = (v < lo ? lo - v : v > hi ? v - hi : 0) / m.soft;
+    if (off > score) { score = off; worst = m.icon + " " + m.name + (v < lo ? m.low : m.high); }
+  });
+  return worst ? "主要原因：" + worst : "几项指标都偏离了太久";
+}
+
+if (GAME) {
+  document.body.classList.add("game");
+  document.body.insertAdjacentHTML("beforeend", '<div id="growPanel"></div><div id="growOverlay"></div>' +
+    (EMBED ? "" : '<div id="growSim">' + Object.entries(GROW_FX).map(([k, f]) => '<button data-a="' + k + '">' + f.name + "</button>").join("") + "</div>"));
+  // 不嵌在学生页里单独打开时（老师试玩），底下给一排按钮代替掌控板
+  document.querySelectorAll("#growSim button").forEach((b) => b.addEventListener("click", () => growAction(b.dataset.a)));
+  window.addEventListener("message", (e) => {
+    if (!EMBED || e.source !== window.parent || !e.data || e.data.type !== "mpl-grow") return;
+    growAction(e.data.action);
+  });
+}
+
+loadAllModels()
+  .then(buildScene)
+  .then(() => { if (GAME) return newRound(); })
+  .then(buildLightPanel)
+  .then(buildScenePanel)
+  .then(() => { document.getElementById("loading").style.display = "none"; })
+  .catch((err) => {
+    document.getElementById("loading").textContent = "模型加载失败: " + err.message;
+    console.error(err);
+  });
+
+connect();
+animate();
+</script>
+</body>
+</html>
