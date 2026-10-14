@@ -3,7 +3,7 @@
     <template #header>
       <div class="head">
         <span>应急工具</span>
-        <span class="warn">处理非常规情况的小工具，操作不可撤销，请谨慎使用</span>
+        <span class="warn">操作不可撤销</span>
       </div>
     </template>
     <el-tabs v-model="tab">

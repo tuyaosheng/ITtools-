@@ -3,7 +3,6 @@
     <el-tabs v-model="tab">
       <el-tab-pane label="我的问题" name="mine">
         <div class="bar">
-          <div><Hint block>遇到不会的问题可以向老师提问，老师答复后会收到系统消息</Hint></div>
           <el-button type="primary" @click="open">提问</el-button>
         </div>
         <el-empty v-if="!mine.length" description="还没有提过问题" />
@@ -48,7 +47,7 @@
         </el-form-item>
         <el-form-item label="标题" required><el-input v-model="form.title" maxlength="200" /></el-form-item>
         <el-form-item label="问题" required>
-          <el-input v-model="form.content" type="textarea" :rows="5" maxlength="2000" show-word-limit placeholder="把问题描述清楚，可以附上你写的代码或出错信息" />
+          <el-input v-model="form.content" type="textarea" :rows="5" maxlength="2000" show-word-limit placeholder="描述你的问题" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -88,7 +87,7 @@ async function ask() {
   try {
     await api.post('/student/qa', form)
     visible.value = false
-    ElMessage.success('已提交，老师答复后会通知你')
+    ElMessage.success('已提交')
     await load()
   } catch (err) {
     ElMessage.error(errMsg(err))

@@ -38,9 +38,8 @@
             <el-radio-button value="TEST">测验错题</el-radio-button>
           </el-radio-group>
           <el-checkbox v-model="showMastered" @change="loadWrong">显示已掌握的题</el-checkbox>
-          <Hint>老师公布答案后，答错的题会收集到这里</Hint>
         </div>
-        <el-empty v-if="!wrong.length" description="没有错题，继续保持！" />
+        <el-empty v-if="!wrong.length" description="没有错题" />
         <div v-for="(q, i) in wrong" :key="q.id" class="wq">
           <div class="src">
             来自：{{ q.source }}

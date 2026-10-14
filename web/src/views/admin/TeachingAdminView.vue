@@ -25,7 +25,6 @@
       </el-tab-pane>
 
       <el-tab-pane label="班级绑定教师" name="bindings">
-        <div><Hint block>绑定后该班级只对绑定教师可见（开课、管理学生）；未绑定的班级所有教师都可使用。</Hint></div>
         <el-table :data="bindings" stripe>
           <el-table-column prop="className" label="班级" />
           <el-table-column label="绑定教师">
@@ -39,7 +38,6 @@
       </el-tab-pane>
 
       <el-tab-pane label="当前课堂" name="active">
-        <div><Hint block>正在进行的课堂。若教师忘记下课导致班级无法再开课，可在此强制下课（原“解除班级课程”）。</Hint></div>
         <el-table :data="active" stripe>
           <el-table-column prop="className" label="班级" />
           <el-table-column prop="courseName" label="课程" />

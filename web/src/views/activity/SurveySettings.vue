@@ -41,11 +41,9 @@
         <el-radio value="TEACHER">仅教师端显示</el-radio>
         <el-radio value="ALL">全部显示</el-radio>
       </el-radio-group>
-      <Hint>控制查看结果时填空题是否显示学生名字；判断、单选、多选始终为无记名统计。</Hint>
     </el-form-item>
     <el-form-item label="学生看结果">
       <el-switch v-model="showResult" />
-      <Hint>提交后可查看全班统计结果</Hint>
     </el-form-item>
     <el-form-item>
       <el-button size="small" type="primary" @click="save">保存调查题目</el-button>

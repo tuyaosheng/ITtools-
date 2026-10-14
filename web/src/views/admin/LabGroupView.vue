@@ -33,7 +33,7 @@
           </div>
         </div>
       </template>
-      <el-empty v-if="!current" description="请选择左侧的分组模型" />
+      <el-empty v-if="!current" description="选择左侧的分组模型" />
       <template v-else>
         <div class="summary">
           <el-tag v-for="g in groupSummary" :key="g.no" class="tag">第 {{ g.no }} 组：{{ g.count }} 台</el-tag>

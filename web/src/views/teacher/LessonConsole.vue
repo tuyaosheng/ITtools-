@@ -68,7 +68,7 @@
         </el-tab-pane>
 
         <el-tab-pane label="座位图" name="seats">
-          <el-empty v-if="!seatMap?.room" description="该班级未配置上课机房（管理员在“固定机位”中设置）" />
+          <el-empty v-if="!seatMap?.room" description="该班级还没有配置机房" />
           <template v-else>
             <div class="podium">讲 台 · {{ seatMap.room.name }}</div>
             <div class="grid" :style="{ gridTemplateColumns: `repeat(${seatMap.room.cols}, minmax(84px, 1fr))` }">
@@ -122,7 +122,7 @@
               </div>
             </div>
             <div class="page-view">
-              <el-empty v-if="!currentPage" description="点击左侧页面查看内容与学生完成情况" />
+              <el-empty v-if="!currentPage" description="选择左侧页面" />
               <template v-else>
                 <h3>{{ currentPage.title }}</h3>
                 <PageContent :page="currentPage" />

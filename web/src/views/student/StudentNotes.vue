@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>学习笔记 <Hint>关联课程并勾选「提交给老师」即作为课后学习心得</Hint></span>
+        <span>学习笔记</span>
         <el-button type="primary" @click="open()">写笔记</el-button>
       </div>
     </template>

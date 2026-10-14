@@ -63,7 +63,6 @@
     </div>
 
     <el-dialog v-model="historyVisible" title="加载历史分组" width="560px" append-to-body>
-      <div><Hint block>把本班以往某节课的分组和组长加载到本节课。尚未进课的学生会在进课时自动加入对应小组。</Hint></div>
       <el-table :data="history" size="small" empty-text="本班还没有分组记录" highlight-current-row @current-change="(r: any) => (historyPick = r?.id)">
         <el-table-column prop="courseName" label="课程" />
         <el-table-column label="上课时间" width="150"><template #default="{ row }">{{ fmtTime(row.startedAt) }}</template></el-table-column>

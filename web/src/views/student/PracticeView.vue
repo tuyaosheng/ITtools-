@@ -63,7 +63,7 @@
           </el-select>
           <el-button type="primary" @click="next">{{ q ? '换一题' : '开始练习' }}</el-button>
         </div>
-        <el-empty v-if="empty" description="题库中暂无可练习的题目" />
+        <el-empty v-if="empty" description="暂无题目" />
         <template v-if="q">
           <QuestionItem v-model="answer" :q="shown" :index="count - 1" :readonly="!!result" :show-key="!!result" />
           <el-alert v-if="result" :type="result.correct ? 'success' : 'error'" :closable="false" :title="result.correct ? '回答正确！' : '回答错误，看看解析吧'" class="mb" />

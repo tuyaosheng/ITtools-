@@ -2,7 +2,7 @@
   <div class="discuss">
     <el-divider content-position="left">小组讨论{{ data.groupNo ? ` · 第 ${data.groupNo} 组` : '（未分组，全班讨论区）' }}</el-divider>
     <div ref="box" class="posts">
-      <el-empty v-if="!data.posts.length" description="还没有人发言，来说说你的想法吧" :image-size="40" />
+      <el-empty v-if="!data.posts.length" description="还没有人发言" :image-size="40" />
       <div v-for="p in data.posts" :key="p.id" class="post" :class="{ mine: p.authorId === auth.user?.userId, teacher: p.role === 'TEACHER', conclusion: p.conclusion }">
         <div class="meta">{{ p.authorName }}{{ p.role === 'TEACHER' ? '（老师）' : '' }} · {{ fmtTime(p.createdAt).slice(11) }}
           <el-tag v-if="p.conclusion" size="small" type="success">小组结论</el-tag></div>

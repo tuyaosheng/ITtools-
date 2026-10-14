@@ -1,6 +1,6 @@
 <template>
   <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
-  <el-empty v-else-if="data && !data.problem" description="该页面还没有选择 Python 题目，请在课程编辑中设置" />
+  <el-empty v-else-if="data && !data.problem" description="还没有选择 Python 题目" />
   <div v-else-if="data">
     <div class="head">
       <div>

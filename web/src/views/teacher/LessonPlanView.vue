@@ -66,7 +66,6 @@
         </el-form-item>
         <el-form-item label="教学设计">
           <RichEditor v-model="form.content" />
-          <Hint>可写教学目标、重难点、教学过程，以及课后的教学反思。</Hint>
         </el-form-item>
         <el-form-item label="教学资料">
           <input ref="docInput" type="file" @change="e => (doc = pick(e))" />

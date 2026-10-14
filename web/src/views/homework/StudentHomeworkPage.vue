@@ -5,14 +5,14 @@
       <el-alert v-if="data.config.allowedExts" type="info" :closable="false" :title="`允许的文件类型：${data.config.allowedExts}`" />
       <el-alert v-if="sub?.returned" type="error" :closable="false" show-icon
         :title="`老师发回了你的作品，请修改后重新提交${sub.returnNote ? '：' + sub.returnNote : ''}`" />
-      <el-alert v-if="!data.canSubmit" type="warning" :closable="false" title="课堂已结束，暂不接收提交" />
+      <el-alert v-if="!data.canSubmit" type="warning" :closable="false" title="课堂已结束" />
       <template v-else>
         <div class="meta-row">
           <el-input v-model="title" placeholder="作品名（可选）" maxlength="100" class="w240" />
           <span class="muted">自我评分</span>
           <el-input-number v-model="selfScore" :min="0" :max="100" controls-position="right" class="w120" />
         </div>
-        <el-input v-model="description" placeholder="作品简介（可选，500 字内）" maxlength="500" type="textarea" :rows="2" />
+        <el-input v-model="description" placeholder="作品简介（可选）" maxlength="500" type="textarea" :rows="2" />
         <div class="upload-row">
           <input ref="fileInput" type="file" @change="onFile" />
           <el-button type="primary" :loading="uploading" :disabled="!file" @click="submit">

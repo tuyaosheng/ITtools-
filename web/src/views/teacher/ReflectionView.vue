@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>学生学习心得 <Hint>学生提交到你课程的课后反思</Hint></span>
+        <span>学生学习心得</span>
         <div class="filters">
           <el-select v-model="course" placeholder="全部课程" clearable class="w180">
             <el-option v-for="c in courses" :key="c" :label="c" :value="c" />

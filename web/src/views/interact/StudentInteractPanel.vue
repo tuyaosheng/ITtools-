@@ -7,7 +7,7 @@
         <el-button size="small" class="mt" @click="cancel">放下手</el-button>
       </template>
       <template v-else>
-        <el-input v-model="message" size="small" placeholder="遇到什么问题？（可选）" maxlength="100" />
+        <el-input v-model="message" size="small" placeholder="遇到什么问题？" maxlength="100" />
         <el-button type="warning" size="small" class="mt full" :disabled="!active" @click="raise">✋ 举手</el-button>
       </template>
       <div v-if="active && classmates.length" class="thanks">
@@ -69,7 +69,7 @@ async function thanks() {
     await api.post(`/student/interact/lessons/${props.lesson.id}/help/thanks`, { helperId: helperId.value })
     myHelp.value = null
     helperId.value = undefined
-    ElMessage.success('已记录，TA 的互助次数 +1')
+    ElMessage.success('已记录')
   } catch (err) {
     ElMessage.error(errMsg(err))
   }
@@ -79,7 +79,7 @@ async function raise() {
   try {
     myHelp.value = await api.post(`/student/interact/lessons/${props.lesson.id}/help`, { message: message.value })
     message.value = ''
-    ElMessage.success('已举手，老师会尽快过来')
+    ElMessage.success('已举手')
   } catch (err) {
     ElMessage.error(errMsg(err))
   }

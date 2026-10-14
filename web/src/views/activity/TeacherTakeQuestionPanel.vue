@@ -1,6 +1,6 @@
 <template>
   <div v-if="data">
-    <el-empty v-if="!data.questions.length" description="还没有设置题目（在课程编辑中设置）" />
+    <el-empty v-if="!data.questions.length" description="还没有设置题目" />
     <template v-else>
       <div class="bar">
         <span class="muted">已抽取 {{ drawn }} / {{ data.students.length }} 人</span>

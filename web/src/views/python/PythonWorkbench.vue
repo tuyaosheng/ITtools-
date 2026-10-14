@@ -38,12 +38,12 @@
       </div>
       <PyEditor v-model="code" height="360px" />
       <div class="stdin">
-        <span class="muted">标准输入（每行对应一次 input()；注意 input('提示') 里的提示文字也算作输出，评分时可能导致不一致）</span>
-        <el-input v-model="stdin" type="textarea" :rows="2" placeholder="运行时提供给程序的输入" />
+        <span class="muted">标准输入</span>
+        <el-input v-model="stdin" type="textarea" :rows="2" placeholder="每行对应一次 input()" />
       </div>
       <div class="console">
         <div class="console-head">
-          <span>运行结果 <Hint>浏览器内运行，仅供调试，以提交评分为准</Hint></span>
+          <span>运行结果</span>
           <el-button link size="small" @click="output = []">清空</el-button>
         </div>
         <pre class="console-body"><span v-for="(o, i) in output" :key="i" :class="o.kind">{{ o.text }}</span><span v-if="!output.length" class="muted">点击「运行」查看输出</span></pre>

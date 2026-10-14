@@ -1,6 +1,6 @@
 <template>
   <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
-  <el-empty v-else-if="data && !data.groups.length" description="还没有小组，请先在「分组管理」中分组" />
+  <el-empty v-else-if="data && !data.groups.length" description="还没有小组" />
   <div v-else-if="data" class="grid">
     <el-card v-for="g in data.groups" :key="g.groupNo" shadow="never">
       <div class="g-head">

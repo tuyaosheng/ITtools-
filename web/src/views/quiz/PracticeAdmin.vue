@@ -2,7 +2,6 @@
   <el-tabs v-model="sub" tab-position="left" class="pa" @tab-change="load">
     <el-tab-pane label="指定刷题题库" name="sets">
       <div class="bar">
-        <div><Hint block>把一份试卷开放给班级，学生在「刷题练习 → 指定题库」中抽题练习。也可以在测验详情的「更多」里一键生成。</Hint></div>
         <el-button type="primary" size="small" @click="openSet()">新建</el-button>
       </div>
       <el-table :data="sets" size="small" stripe empty-text="还没有刷题题库">
@@ -69,7 +68,7 @@
     </el-tab-pane>
 
     <el-tab-pane label="题库查重" name="dups">
-      <div class="bar"><Hint>题型相同、去掉空格标点后题干相同的文字题。可以把多余的移入回收站（图片题在批量传图时已自动去重）。</Hint></div>
+      <div class="bar"></div>
       <el-empty v-if="!dups.length" description="没有发现重复题目" />
       <div v-for="(g, gi) in dups" :key="gi" class="dup">
         <div class="muted">第 {{ gi + 1 }} 组 · {{ typeLabel[g.qtype] }} · {{ g.questions.length }} 题</div>

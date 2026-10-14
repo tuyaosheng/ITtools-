@@ -21,7 +21,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="学生">
-              <el-select v-model="studentIds" multiple filterable placeholder="选择一名或多名学生（可搜索）" class="full">
+              <el-select v-model="studentIds" multiple filterable placeholder="选择学生" class="full">
                 <el-option v-for="s in students" :key="s.id" :label="`${s.studentNo || ''} ${s.name}`" :value="s.id" />
               </el-select>
             </el-form-item>

@@ -15,7 +15,7 @@
     </el-form-item>
     <el-form-item label="自动评分">
       <el-switch v-model="cfg.autoGrade" />
-      <span class="muted" style="margin-left: 8px">总分 {{ total }}</span><Hint>学生提交后按下列评分点自动检测评分</Hint>
+      <span class="muted" style="margin-left: 8px">总分 {{ total }}</span>
     </el-form-item>
     <template v-if="cfg.autoGrade">
       <el-form-item label="学生看成绩">
@@ -27,7 +27,6 @@
       </el-form-item>
       <el-form-item label="课后练习">
         <el-checkbox v-model="cfg.practice">作为课后操作题开放</el-checkbox>
-        <Hint>上过本课程的班级学生可在“课后操作题”中下载素材、反复提交并即时得分（保留最好成绩）</Hint>
       </el-form-item>
       <el-form-item label="评分点">
         <div class="rules">
@@ -38,7 +37,6 @@
             <el-upload :show-file-list="false" :http-request="testRules">
               <el-button size="small" :loading="testing" :disabled="!rules.length">用标准答案检验</el-button>
             </el-upload>
-            <div><Hint block>上传做好的标准答案，查看各段落/单元格/幻灯片的格式，或检验评分点能否全部通过</Hint></div>
           </div>
           <div v-for="(r, i) in rules" :key="i" class="rule">
             <span class="no">{{ i + 1 }}</span>

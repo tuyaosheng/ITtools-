@@ -30,7 +30,6 @@
     </el-table>
 
     <el-dialog v-model="importVisible" title="批量导入机位" width="520px" append-to-body>
-      <div><Hint block label="表格怎么填？">表头需包含“计算机名”“IP地址”两列，支持 .xlsx / .xls / .csv；可先下载导入模板照着填</Hint></div>
       <div class="import-row">
         <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" @change="onFile" />
       </div>

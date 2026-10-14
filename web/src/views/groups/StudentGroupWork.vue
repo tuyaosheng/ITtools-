@@ -1,6 +1,6 @@
 <template>
   <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
-  <el-empty v-else-if="data && !data.groupNo" description="你还没有加入小组，请先在「分组」页面加入或等待老师分组" />
+  <el-empty v-else-if="data && !data.groupNo" description="你还没有加入小组" />
   <div v-else-if="data" class="work">
     <div class="head">
       <b>第 {{ data.groupNo }} 组</b>
@@ -11,7 +11,7 @@
     <section>
       <div class="sec-title">研究主题</div>
       <div v-if="data.isLeader" class="row">
-        <el-input v-model="topic" maxlength="200" placeholder="组长填写本组研究主题" />
+        <el-input v-model="topic" maxlength="200" placeholder="研究主题" />
         <el-button type="primary" @click="saveTopic">保存</el-button>
       </div>
       <div v-else class="topic">{{ group.topic || '组长还没有设置主题' }}</div>
@@ -59,7 +59,7 @@
     <section>
       <div class="sec-title">小组成果</div>
       <template v-if="data.isLeader">
-        <el-input v-model="resultText" type="textarea" :rows="3" placeholder="组长总结本组的研究结论或成果说明" />
+        <el-input v-model="resultText" type="textarea" :rows="3" placeholder="研究结论" />
         <div class="row mt8">
           <span class="muted">成果文件</span>
           <el-select v-model="resultFileId" clearable placeholder="从组内资源中选择" class="w240">
@@ -75,7 +75,7 @@
     </section>
 
     <section v-if="data.myEvaluations.length">
-      <div class="sec-title">组员互评 <Hint>评价其他组员在本次合作中的表现</Hint></div>
+      <div class="sec-title">组员互评</div>
       <div v-for="e in data.myEvaluations" :key="e.studentId" class="peer">
         <span class="p-name">{{ e.name }}</span>
         <el-rate v-model="peerScore[e.studentId]" />

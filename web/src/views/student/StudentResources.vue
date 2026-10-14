@@ -15,7 +15,7 @@
       </div>
     </template>
 
-    <el-empty v-if="!shown.length" description="老师还没有给你们班分发资源" />
+    <el-empty v-if="!shown.length" description="暂无资源" />
     <div class="grid">
       <el-card v-for="r in shown" :key="r.id" shadow="hover">
         <div class="r-head">

@@ -41,7 +41,7 @@
           </div>
         </div>
       </template>
-      <el-empty v-if="!current" description="请选择左侧的机房模型" />
+      <el-empty v-if="!current" description="选择左侧的机房" />
       <template v-else>
         <el-alert v-if="swapMode" type="warning" :closable="false" class="mb"
           :title="swapPick ? `已选 ${wsName(swapPick)}，再点另一台电脑完成交换` : '依次点两台电脑，交换它们的 IP'" />
@@ -122,7 +122,7 @@
         </div>
         <el-form-item label="排版文本" class="mt">
           <el-input v-model="scheme.layoutText" type="textarea" :rows="8" class="mono"
-            placeholder="一行一排（第一行靠讲台），座位号用空格隔开，过道/空位写 .，例：1 2 3 . 4 5 6" />
+            placeholder="1 2 3 . 4 5 6" />
         </el-form-item>
         <div><Hint block>可以直接改文本：调整个别座位号、加过道、删掉坏机位。计算机名 = 前缀 + 编号，IP = 1号 IP {{ scheme.step > 0 ? '+' : '−' }}（编号 − 1）。</Hint></div>
         <div v-if="preview.error" class="err">{{ preview.error }}</div>
@@ -141,7 +141,6 @@
         </template>
       </el-form>
       <template #footer>
-        <div><Hint block>保存后按方案新增/更新机位（同名或同 IP 的机位会被复用），并重建座位布局</Hint></div>
         <el-button @click="schemeVisible = false">取消</el-button>
         <el-button type="primary" :loading="schemeSaving" :disabled="!!preview.error" @click="saveScheme">保存方案</el-button>
       </template>

@@ -3,7 +3,6 @@
     <div class="hello">
       <div>
         <h1>{{ greeting }}，{{ auth.user?.displayName }}</h1>
-        <p class="sub">{{ lesson ? '有课正在进行，快进教室吧' : '现在没有课，可以复习一下' }}</p>
       </div>
       <div v-if="notices.unreadMessages" class="sticker" @click="router.push('/student/messages')">🔔 {{ notices.unreadMessages }} 条新消息</div>
     </div>
@@ -19,14 +18,14 @@
           </div>
           <el-button type="primary" size="large" class="go" @click="enter">{{ lesson.myAttendance?.status === 'PRESENT' ? '回到课堂' : '进入课堂' }}</el-button>
         </template>
-        <el-empty v-else description="现在没有正在上的课" :image-size="90">
+        <el-empty v-else description="现在没有课" :image-size="90">
           <el-button @click="load">刷新</el-button>
         </el-empty>
       </el-card>
 
       <div class="tiles">
         <div v-for="t in tiles" :key="t.path" class="tile" @click="router.push(t.path)">
-          <span class="ic">{{ t.icon }}</span>{{ t.label }}<small>{{ t.sub }}</small>
+          <span class="ic">{{ t.icon }}</span>{{ t.label }}
         </div>
       </div>
     </div>
@@ -50,10 +49,10 @@ const greeting = computed(() => {
   return h < 5 ? '你好' : h < 11 ? '早上好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好'
 })
 const tiles = [
-  { path: '/student/tests', icon: '📝', label: '作业与测验', sub: '看看有没有待交的' },
-  { path: '/student/works', icon: '🎨', label: '我的作品', sub: '交过的作品都在这' },
-  { path: '/student/practice', icon: '✏️', label: '刷题练习', sub: '错题本也在里面' },
-  { path: '/student/typing', icon: '⌨️', label: '指法练习', sub: '冲一冲英雄榜' }
+  { path: '/student/tests', icon: '📝', label: '作业与测验' },
+  { path: '/student/works', icon: '🎨', label: '我的作品' },
+  { path: '/student/practice', icon: '✏️', label: '刷题练习' },
+  { path: '/student/typing', icon: '⌨️', label: '指法练习' }
 ]
 
 async function load() {

@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span v-if="!current">Python 课后练习 <Hint>老师开放的课后题库，可反复提交，记录最高分</Hint></span>
+        <span v-if="!current">Python 课后练习</span>
         <el-button v-else link type="primary" @click="back">← 返回题目列表</el-button>
       </div>
     </template>

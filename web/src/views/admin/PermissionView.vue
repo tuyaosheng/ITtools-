@@ -8,7 +8,6 @@
     @dialog-cancel="() => {}"
   >
     <template #actions>
-      <div><Hint block>全局启用/停用各权限（作用域：GLOBAL）</Hint></div>
     </template>
 
     <div v-loading="loading">

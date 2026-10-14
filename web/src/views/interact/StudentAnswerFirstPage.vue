@@ -1,7 +1,7 @@
 <template>
   <div class="af">
     <el-divider content-position="left">抢答</el-divider>
-    <el-empty v-if="!round" description="老师还没有开始抢答，请留意通知" :image-size="50" />
+    <el-empty v-if="!round" description="抢答还没开始" :image-size="50" />
     <template v-else>
       <div class="question">{{ round.question }}</div>
       <el-tag :type="round.status === 'OPEN' ? 'danger' : 'info'">{{ round.status === 'OPEN' ? '抢答进行中' : '抢答已结束' }}</el-tag>

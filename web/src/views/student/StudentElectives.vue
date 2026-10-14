@@ -7,7 +7,7 @@
       </div>
     </template>
 
-    <el-empty v-if="!list.length" description="当前没有面向你的选课活动" />
+    <el-empty v-if="!list.length" description="暂无选课" />
     <div v-for="a in list" :key="a.id" class="activity">
       <div class="a-head">
         <b>{{ a.name }}</b>

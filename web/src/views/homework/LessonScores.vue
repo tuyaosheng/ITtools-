@@ -1,11 +1,10 @@
 <template>
   <div>
     <div class="bar">
-      <div><Hint block>本节课各测验页、作品提交页、Python 页的得分加上课堂表现分（原“测验 + 操作组合统分”）</Hint></div>
       <el-button size="small" @click="load">刷新</el-button>
       <el-button size="small" type="primary" @click="api.download(`/teacher/lessons/${lesson.id}/scores/export`)">导出 Excel</el-button>
     </div>
-    <el-empty v-if="data && !data.columns.length" description="本节课还没有可计分的测验、作品或 Python 成绩" />
+    <el-empty v-if="data && !data.columns.length" description="还没有成绩" />
     <el-table v-else-if="data" :data="data.rows" size="small" stripe border max-height="560">
       <el-table-column prop="studentNo" label="学号" width="70" fixed />
       <el-table-column prop="name" label="姓名" width="90" fixed />

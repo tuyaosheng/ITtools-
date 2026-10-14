@@ -15,16 +15,13 @@
     </el-form-item>
     <el-form-item label="公布答案">
       <el-switch v-model="cfg.showAnswer" />
-      <Hint>结束后（提交即批改为交卷后）向学生显示标准答案与解析</Hint>
     </el-form-item>
     <el-form-item label="每人乱序">
         <el-checkbox v-model="cfg.shuffleQuestions">题目顺序</el-checkbox>
         <el-checkbox v-model="cfg.shuffleOptions">单选/多选的选项顺序</el-checkbox>
-        <Hint>每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</Hint>
     </el-form-item>
     <el-form-item>
       <el-button size="small" type="primary" @click="save">保存考试设置</el-button>
-      <Hint>对之后开课时新建的测验生效</Hint>
     </el-form-item>
   </div>
 </template>

@@ -34,7 +34,7 @@
       </el-card>
 
       <el-card shadow="never" class="editor">
-        <el-empty v-if="!current" description="选择左侧页面进行编辑，或添加新页面" />
+        <el-empty v-if="!current" description="选择左侧页面" />
         <template v-else-if="!isOwner">
           <h3>{{ current.title }}</h3>
           <PageContent :page="current" />
@@ -68,20 +68,17 @@
             <el-select v-model="current.refId" filterable clearable placeholder="从题库试卷中选择" class="w240">
               <el-option v-for="p in papers" :key="p.id" :label="p.name" :value="p.id" />
             </el-select>
-            <Hint>在“题库与试卷”中编辑试卷</Hint>
           </el-form-item>
           <el-form-item v-if="current.pageType === 'PYTHON'" label="Python 题目">
             <el-select v-model="current.refId" filterable clearable placeholder="从 Python 题库中选择" class="w240">
               <el-option v-for="p in pyProblems" :key="p.id" :label="p.title + (p.mine ? '' : '（共享）')" :value="p.id" />
             </el-select>
-            <Hint>在“Python 题库”中编辑题目和测试点</Hint>
           </el-form-item>
           <el-form-item v-if="['HOMEWORK', 'QUIZ'].includes(current.pageType)" label="分值">
             <el-input-number v-model="current.score" :min="0" :max="1000" />
           </el-form-item>
           <el-form-item label="学生可见">
             <el-switch v-model="current.studentVisible" />
-            <Hint>开课后教师仍可在课堂控制台随时开放/隐藏</Hint>
           </el-form-item>
           <component :is="settingsComponent" v-if="settingsComponent && current.id" :page="current" />
           <el-form-item>

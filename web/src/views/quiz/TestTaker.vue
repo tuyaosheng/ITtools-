@@ -14,18 +14,17 @@
     <div v-if="waiting" class="waiting">
       <div class="big">⏳</div>
       <div>等待老师发出开考指令…</div>
-      <div class="muted">开考后试题会自动出现，不用刷新页面</div>
     </div>
     <template v-else>
       <el-alert v-if="!data.attempt && data.test.status === 'CLOSED'" type="warning" :closable="false" title="已停止回收，你没有参加" />
       <el-alert v-if="data.attempt?.status === 'RETURNED'" type="error" :closable="false" show-icon class="mb"
         :title="`老师发还了你的答卷，请修改后重新提交${data.attempt.returnedNote ? '：' + data.attempt.returnedNote : ''}`" />
       <el-alert v-if="data.test.status === 'STANDBY' && data.attempt?.status === 'IN_PROGRESS'" type="warning" :closable="false" class="mb"
-        title="老师暂停了作答，请等待继续指令（已填写的答案不会丢失）" />
+        title="老师暂停了作答" />
       <el-alert v-if="submitted && !data.scoreVisible" type="success" :closable="false" class="mb"
-        title="已提交。老师批改并结分后可以看到成绩和答案。" />
+        title="已提交" />
       <el-alert v-else-if="submitted && !data.answerRevealed" type="success" :closable="false" class="mb"
-        :title="data.test.showAnswer ? '已交卷。老师结束后将公布答案与解析。' : '已交卷。'" />
+        title="已交卷" />
 
       <QuestionItem v-for="(q, i) in data.questions" :key="q.id" v-model="answers[q.id]" :q="q" :index="i"
         :readonly="!data.canEdit" :show-key="data.answerRevealed" />

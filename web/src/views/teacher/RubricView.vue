@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>评价量规 <Hint>用于作品批阅，按评价项逐项打分</Hint></span>
+        <span>评价量规</span>
         <el-button type="primary" @click="open()">新建量规</el-button>
       </div>
     </template>

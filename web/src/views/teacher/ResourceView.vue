@@ -75,7 +75,7 @@
           <div v-if="form.fileName && !file" class="muted">当前：{{ form.fileName }}（重新选择将替换）</div>
         </el-form-item>
         <el-form-item label="链接"><el-input v-model="form.linkUrl" placeholder="可选，如 https://..." /></el-form-item>
-        <el-form-item label="共享"><el-switch v-model="form.shared" /> <Hint>共享后其他教师可查看和下载</Hint></el-form-item>
+        <el-form-item label="共享"><el-switch v-model="form.shared" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="visible = false">取消</el-button>
@@ -102,7 +102,6 @@
     </el-dialog>
 
     <el-dialog v-model="distVisible" title="分发给班级" width="480px" append-to-body>
-      <div><Hint block>勾选的班级学生可在「学习资源」中查看该资源。</Hint></div>
       <el-checkbox-group v-model="distClassIds">
         <el-checkbox v-for="k in classes" :key="k.id" :label="k.id">{{ k.name }}</el-checkbox>
       </el-checkbox-group>

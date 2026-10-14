@@ -7,7 +7,6 @@
           <el-select v-model="classId" placeholder="选择班级" class="w160" @change="loadDisks">
             <el-option v-for="k in classes" :key="k.id" :label="k.name" :value="k.id" />
           </el-select>
-          <Hint>可以删除与学习无关的文件，勾选“扣除空间”后被删文件的大小继续计入该生已用空间作为惩罚；也可以单独关闭某个学生的网盘。</Hint>
         </div>
         <el-table :data="disks" size="small" stripe max-height="460" empty-text="请选择班级" highlight-current-row @current-change="openStudent">
           <el-table-column prop="studentNo" label="学号" width="70" />

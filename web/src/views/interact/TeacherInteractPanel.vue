@@ -18,7 +18,7 @@
       </el-card>
 
       <el-card v-if="data.helpers?.length" shadow="never">
-        <template #header>互助榜 <Hint>同学登记“收到谁的帮助”</Hint></template>
+        <template #header>互助榜</template>
         <div v-for="(h, i) in data.helpers" :key="h.studentId" class="bmsg">{{ i + 1 }}. {{ h.name }} <b>帮助 {{ h.count }} 人次</b></div>
       </el-card>
 
@@ -35,7 +35,7 @@
     <div class="col">
       <el-card shadow="never">
         <template #header>
-          <div class="head">在线监控 <span class="muted">在线 {{ online }}/{{ data.monitor.length }}</span><Hint>学生课堂页每 20 秒上报一次</Hint></div>
+          <div class="head">在线监控 <span class="muted">在线 {{ online }}/{{ data.monitor.length }}</span></div>
         </template>
         <el-table :data="data.monitor" size="small" max-height="360">
           <el-table-column prop="name" label="姓名" width="80" />

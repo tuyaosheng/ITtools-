@@ -166,7 +166,7 @@
             <div v-for="t in stats.byStars || []" :key="t.stars" class="kv"><span class="stars">{{ t.stars ? '★'.repeat(t.stars) : '未评星' }}</span><b>{{ t.count }}</b></div>
           </div>
           <div class="tag-admin">
-            <div class="sub-title">标签维护 <Hint>改名与已有标签同名时自动合并</Hint></div>
+            <div class="sub-title">标签维护</div>
             <el-empty v-if="!tags.length" description="还没有标签" :image-size="40" />
             <div v-for="t in tags" :key="t.tag" class="kv">
               <span>{{ t.tag }} <span class="muted">{{ t.count }} 题</span></span>
@@ -201,7 +201,6 @@
                 <input type="file" accept="image/*" hidden @change="pickImage" />
               </label>
               <el-button v-if="qForm.hasImage && qForm.id" size="small" @click="removeImage">移除图片</el-button>
-              <Hint>图片可代替题干文字，选项内容可以都在图片里</Hint>
             </div>
           </div>
         </el-form-item>
@@ -223,7 +222,7 @@
         <el-form-item v-if="qForm.qtype === 'FILL'" label="答案">
           <div class="fill-answers">
             <div v-for="(b, i) in qForm.blanks" :key="i" class="opt-row">
-              <el-input v-model="qForm.blanks[i]" :placeholder="`第 ${i + 1} 空答案，多个可接受答案用 | 分隔`" />
+              <el-input v-model="qForm.blanks[i]" :placeholder="`第 ${i + 1} 空，多个答案用 | 分隔`" />
               <el-button link type="danger" :disabled="qForm.blanks.length <= 1" @click="qForm.blanks.splice(i, 1)">删</el-button>
             </div>
             <el-button size="small" @click="qForm.blanks.push('')">+ 添加一空</el-button>
@@ -302,7 +301,6 @@
           </el-radio-group>
         </el-form-item>
       </el-form>
-      <div><Hint block>题库包由「打包导出」生成。与你已有的题目重复的（图片相同，或题型+题干相同）不会重复添加。</Hint></div>
       <template #footer>
         <el-button @click="packVisible = false">取消</el-button>
         <el-button type="primary" :loading="importing" @click="importPack">导入</el-button>

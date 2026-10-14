@@ -54,7 +54,7 @@ async function load() {
 async function answer(q: any) {
   try {
     await api.put(`/teacher/qa/${q.id}/answer`, { answer: drafts[q.id], isPublic: publics[q.id] })
-    ElMessage.success('已答复，学生会收到系统消息')
+    ElMessage.success('已答复')
     await load()
     notices.refresh()
   } catch (err) {

@@ -3,7 +3,6 @@
     <template #header>
       <div class="card-head">
         <span>班级机房与固定机位</span>
-        <div><Hint block>启用固定机位后，该班学生只能在绑定的机位上登录（原“班级+姓名+固定机位模式”）</Hint></div>
       </div>
     </template>
     <el-table v-loading="loading" :data="configs" stripe>

@@ -8,7 +8,7 @@
       <span v-else class="muted">我还没有加入小组</span>
       <el-button v-if="data.joinOpen && me.groupNo" size="small" link type="danger" @click="join(0)">退出小组</el-button>
     </div>
-    <el-alert v-if="!me.joined" title="请先进入课堂签到后再分组" type="info" :closable="false" class="mb" />
+    <el-alert v-if="!me.joined" title="先进入课堂再分组" type="info" :closable="false" class="mb" />
     <el-empty v-if="!data.groups.length" description="老师还没有设置小组" />
 
     <div class="board">

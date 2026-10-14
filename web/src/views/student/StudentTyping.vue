@@ -25,13 +25,12 @@
             :class="{ cur: offset + i === index, ok: results[offset + i] === true, bad: results[offset + i] === false }">{{ w }}</span>
         </div>
         <el-input ref="inputRef" v-model="typed" size="large" class="typing-input" :disabled="finished"
-          :placeholder="finished ? '时间到！' : '在这里输入上面高亮的单词，空格或回车确认（开始输入即计时）'"
+          :placeholder="finished ? '时间到！' : '输入高亮的单词'"
           :class="{ wrong: typed && !current.startsWith(typed.trim()) }" @keydown="onKey" />
 
         <el-alert v-if="result" type="success" :closable="false" class="mt"
           :title="`本次成绩：${result.speed} 字符/分，正确率 ${result.accuracy}%`"
-          :description="`该级别最好成绩 ${result.best ?? '—'}${result.rank ? `，全校第 ${result.rank} 名` : '（正确率达到 90% 才能上榜）'}`" />
-        <p class="tip">提示：手指放在基本键位 A S D F 与 J K L ; 上，两个食指找到 F 和 J 键上的小凸起，眼睛看屏幕，不看键盘。</p>
+          :description="`该级别最好成绩 ${result.best ?? '—'}${result.rank ? `，全校第 ${result.rank} 名` : ''}`" />
       </el-tab-pane>
 
       <el-tab-pane label="全校指法英雄榜" name="rank" lazy>

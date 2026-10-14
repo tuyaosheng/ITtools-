@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="bar">
-      <div><Hint block>学生在各页面的停留时间（分:秒）与访问次数，由学生课堂页面心跳累计，每 20 秒刷新。</Hint></div>
       <div class="actions">
         <el-checkbox v-model="showVisits" size="small">显示访问次数</el-checkbox>
         <el-button size="small" @click="load">刷新</el-button>

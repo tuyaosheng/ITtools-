@@ -8,7 +8,6 @@
         <el-option v-for="k in classes" :key="k.id" :label="k.name" :value="k.id" />
       </el-select>
       <el-button type="primary" :disabled="!pageId || !classId" @click="load">查询</el-button>
-      <Hint>在作品提交页的设置中勾选“作为课后操作题开放”后出现在这里</Hint>
     </div>
     <template v-if="report">
       <el-row :gutter="16">

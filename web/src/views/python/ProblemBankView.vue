@@ -58,13 +58,11 @@
         <el-form-item label="半成品代码">
           <div class="full">
             <PyEditor v-model="form.starterCode" :readonly="readonly" height="160px" />
-            <Hint>学生打开题目时编辑器里的初始代码，可留空</Hint>
           </div>
         </el-form-item>
         <el-form-item label="参考代码">
           <div class="full">
             <PyEditor v-model="form.referenceCode" :readonly="readonly" height="180px" />
-            <Hint>课堂中可「开放参考代码」给学生；也用于自动生成测试点的期望输出</Hint>
           </div>
         </el-form-item>
         <el-form-item label="测试点">
@@ -94,7 +92,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <span v-if="form.id && !readonly" class="muted footer-tip">修改测试点会使版本号 +1，已有成绩会标记为「需重测」</span>
+        <span v-if="form.id && !readonly" class="muted footer-tip">修改测试点后已有成绩需重测</span>
         <el-button @click="visible = false">{{ readonly ? '关闭' : '取消' }}</el-button>
         <el-button v-if="!readonly" type="primary" :loading="saving" @click="save">保存</el-button>
       </template>

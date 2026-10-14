@@ -30,35 +30,30 @@
 
       <el-form-item label="学生单处登录">
         <el-switch v-model="singleLogin" />
-        <Hint>开启后同一学生账号在另一台电脑登录时，原电脑自动下线</Hint>
       </el-form-item>
       <el-divider content-position="left">教学</el-divider>
       <el-form-item label="允许作业补交">
         <el-switch v-model="allowLate" />
-        <Hint>关闭后，课堂结束的作业不再接收提交</Hint>
       </el-form-item>
       <el-form-item label="敏感词过滤">
         <el-input v-model="form['interact.sensitiveWords']" type="textarea" :rows="3"
-          placeholder="讨论区、论坛中出现的敏感词将被替换为 *，多个用逗号分隔" />
+          placeholder="多个用逗号分隔" />
       </el-form-item>
 
       <el-divider content-position="left">登录页与学生权限</el-divider>
       <el-form-item label="登录页公告">
-        <el-input v-model="form['site.notice']" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="显示在登录页，如机房使用须知、本周安排（留空不显示）" />
+        <el-input v-model="form['site.notice']" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="显示在登录页" />
       </el-form-item>
       <el-form-item label="学生改密码">
         <el-switch v-model="studentPassword" />
-        <Hint>关闭后学生不能自行修改密码，由老师或管理员重置</Hint>
       </el-form-item>
       <el-form-item label="学生传头像">
         <el-switch v-model="studentAvatar" />
-        <Hint>默认关闭：学生头像由管理员或老师统一采集导入</Hint>
       </el-form-item>
 
       <el-divider content-position="left">第三方程序登录</el-divider>
       <el-form-item label="开启">
         <el-switch v-model="ssoEnabled" />
-        <Hint>允许学校的其他系统通过签名链接直接登录学生界面（原 weblogin 接口）</Hint>
       </el-form-item>
       <el-form-item label="签名密钥">
         <el-input :model-value="form['sso.secret'] || '（未生成）'" readonly class="w420">
@@ -66,24 +61,23 @@
         </el-input>
       </el-form-item>
       <el-form-item label="接入说明">
-        <div class="doc">
+        <Hint>
           链接格式：<code>{{ origin }}/api/auth/sso?u=学籍号&amp;t=当前Unix秒&amp;s=签名[&amp;r=/student/页面]</code><br>
           签名：<code>s = HMAC-SHA256(密钥, 学籍号 + "|" + t)</code> 的小写十六进制。链接 5 分钟内有效，只能使用一次；登录后进入学生首页（或 r 指定的学生页面）。<br>
           密钥只保存在服务器和第三方系统中，不要放在网页里；生成新密钥后旧密钥立即失效。
-        </div>
+        </Hint>
       </el-form-item>
 
       <el-divider content-position="left">网络控制器（CTR）</el-divider>
       <el-form-item label="启用">
         <el-switch v-model="netEnabled" />
-        <Hint>对接教师机上的“电脑室网络控制器”：课堂上按学生所在电脑开网/断网，闯关达标自动开网</Hint>
       </el-form-item>
       <el-form-item label="控制器地址">
         <el-input v-model="form['net.ctrUrl']" placeholder="http://127.0.0.1:8770" class="w420" />
         <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</Hint>
       </el-form-item>
       <el-form-item label="访问令牌">
-        <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="与网络控制器 api_token 一致（未设置可留空）" class="w420" />
+        <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="未设置可留空" class="w420" />
       </el-form-item>
       <el-form-item label="测试">
         <el-button :loading="testing" @click="testNet">保存并测试连接</el-button>
@@ -147,7 +141,7 @@ async function newSecret() {
   try {
     const r = await api.post('/admin/settings/sso-secret')
     form['sso.secret'] = r.secret
-    ElMessage.success('已生成新密钥，请同步到第三方系统')
+    ElMessage.success('已生成新密钥')
   } catch (err) {
     ElMessage.error(errMsg(err))
   }

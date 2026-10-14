@@ -18,7 +18,6 @@
         <el-select v-model="form.groupModelId" clearable placeholder="不分组" class="full">
           <el-option v-for="g in groupModels" :key="g.id" :label="g.name" :value="g.id" />
         </el-select>
-        <Hint>选择后，学生进课时按所坐机位自动归入小组</Hint>
       </el-form-item>
     </el-form>
     <template #footer>

@@ -57,7 +57,7 @@
       <el-form :model="form" label-width="80px">
         <el-form-item label="课程名称"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="form.category" filterable allow-create clearable default-first-option placeholder="选择或输入新分类，如 网络基础、Python" class="full">
+          <el-select v-model="form.category" filterable allow-create clearable default-first-option placeholder="选择或输入分类" class="full">
             <el-option v-for="c in myCategories" :key="c" :label="c" :value="c" />
           </el-select>
         </el-form-item>
@@ -67,7 +67,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="简介"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="共享"><el-switch v-model="form.shared" /><Hint>共享后其他教师可查看，并可作为模板新建课程</Hint></el-form-item>
+        <el-form-item label="共享"><el-switch v-model="form.shared" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialog = false">取消</el-button>
