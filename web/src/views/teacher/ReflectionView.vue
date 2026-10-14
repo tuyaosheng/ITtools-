@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>学生学习心得 <span class="muted">（学生提交到你课程的课后反思）</span></span>
+        <span>学生学习心得 <Hint>学生提交到你课程的课后反思</Hint></span>
         <div class="filters">
           <el-select v-model="course" placeholder="全部课程" clearable class="w180">
             <el-option v-for="c in courses" :key="c" :label="c" :value="c" />
@@ -70,10 +70,10 @@ onMounted(load)
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .filters { display: flex; gap: 8px; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w140 { width: 140px; }
 .w180 { width: 180px; }
-.note { border: 1px solid #ebeef5; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.note { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
 .n-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .n-body { margin: 8px 0; font-size: 14px; }
 .n-comment { display: flex; gap: 8px; }

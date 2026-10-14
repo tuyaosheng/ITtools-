@@ -3,7 +3,7 @@
     <el-tabs v-model="tab">
       <el-tab-pane label="我的问题" name="mine">
         <div class="bar">
-          <span class="muted">遇到不会的问题可以向老师提问，老师答复后会收到系统消息</span>
+          <div><Hint block>遇到不会的问题可以向老师提问，老师答复后会收到系统消息</Hint></div>
           <el-button type="primary" @click="open">提问</el-button>
         </div>
         <el-empty v-if="!mine.length" description="还没有提过问题" />
@@ -108,12 +108,12 @@ onMounted(load)
 
 <style scoped>
 .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w240 { width: 240px; }
 .mb { margin-bottom: 12px; }
-.q { border: 1px solid #ebeef5; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+.q { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
 .q-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .meta { margin-left: auto; }
 .pre { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
-.answer { margin-top: 8px; padding: 8px 10px; background: #f0f9eb; border-radius: 4px; }
+.answer { margin-top: 8px; padding: 8px 10px; background: var(--el-color-success-light-9); border-radius: 4px; }
 </style>

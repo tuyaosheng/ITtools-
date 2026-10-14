@@ -73,8 +73,7 @@
       </el-tab-pane>
 
       <el-tab-pane v-if="hasFill" label="填空批改" name="fill">
-        <el-alert type="info" :closable="false" class="mb"
-          title="同一道填空题答案相同的学生归为一组，给一组打分即作用于组内所有人（原“答案归类批改”）。系统已按标准答案自动判分，这里用来处理同义、写法不同的答案。" />
+        <div><Hint block>同一道填空题答案相同的学生归为一组，给一组打分即作用于组内所有人。系统已按标准答案自动判分，这里用来处理同义、写法不同的答案。</Hint></div>
         <el-empty v-if="!fillGroups.length" description="还没有学生提交" />
         <div v-for="q in fillGroups" :key="q.id" class="fq">
           <div class="fq-head">
@@ -126,7 +125,7 @@
           <el-table-column label="及格率" width="90"><template #default="{ row }: { row: any }">{{ row.passRate == null ? '—' : row.passRate + '%' }}</template></el-table-column>
           <el-table-column label="优秀率" width="90"><template #default="{ row }: { row: any }">{{ row.goodRate == null ? '—' : row.goodRate + '%' }}</template></el-table-column>
         </el-table>
-        <div class="muted mt">及格 = 得分 ≥ 60%，优秀 = 得分 ≥ 85%（满分 {{ grade?.totalScore }}）</div>
+        <div><Hint block>及格 = 得分 ≥ 60%，优秀 = 得分 ≥ 85%（满分 {{ grade?.totalScore }}）</Hint></div>
       </el-tab-pane>
     </el-tabs>
 
@@ -279,7 +278,7 @@ defineExpose({ reload })
 <style scoped>
 .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .title { font-size: 16px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml { margin-left: 6px; }
 .mt { margin-top: 8px; }
 .mb { margin-bottom: 10px; }
@@ -288,13 +287,13 @@ defineExpose({ reload })
 .fq { margin-bottom: 16px; }
 .fq-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
 .fq-stem :deep(p) { margin: 0; }
-.aq { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.aq { padding: 10px 0; border-bottom: 1px solid var(--el-border-color-lighter); }
 .aq-head { display: flex; gap: 6px; }
 .aq-stem :deep(p) { margin: 0; }
 .aq-stat { display: flex; align-items: center; gap: 12px; margin: 6px 0; flex-wrap: wrap; }
 .prog { width: 260px; }
 .dist { display: flex; flex-wrap: wrap; gap: 8px; }
-.dist-item { font-size: 12px; background: #f4f4f5; padding: 2px 8px; border-radius: 10px; }
+.dist-item { font-size: 12px; background: var(--el-fill-color-light); padding: 2px 8px; border-radius: 10px; }
 .att-q { margin-bottom: 6px; }
 .adjust { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: -4px 0 12px; }
 </style>

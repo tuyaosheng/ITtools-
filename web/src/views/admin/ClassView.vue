@@ -167,7 +167,7 @@ async function remove(row: ClassItem) {
 }
 
 .filter-label {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
 }
 

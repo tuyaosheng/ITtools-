@@ -8,7 +8,7 @@
     @dialog-cancel="() => {}"
   >
     <template #actions>
-      <span class="hint">全局启用/停用各权限（作用域：GLOBAL）</span>
+      <div><Hint block>全局启用/停用各权限（作用域：GLOBAL）</Hint></div>
     </template>
 
     <div v-loading="loading">
@@ -101,11 +101,11 @@ async function toggle(row: PermissionItem, value: boolean) {
   margin: 0 0 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .hint {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 </style>

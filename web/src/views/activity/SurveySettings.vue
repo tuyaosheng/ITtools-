@@ -2,7 +2,7 @@
   <div>
     <el-divider content-position="left">调查题目</el-divider>
     <el-alert v-if="hasAnswers" type="info" :closable="false" show-icon class="mb"
-      title="已有学生作答：作答过的题目不能删除、不能修改题型和选项个数，只能修改文字。" />
+      title="已有学生作答，题目只能改文字" />
     <div v-for="(it, i) in items" :key="it.id || it.key" class="item">
       <div class="item-head">
         <span class="no">{{ i + 1 }}</span>
@@ -41,11 +41,11 @@
         <el-radio value="TEACHER">仅教师端显示</el-radio>
         <el-radio value="ALL">全部显示</el-radio>
       </el-radio-group>
-      <div class="muted full">控制查看结果时填空题是否显示学生名字；判断、单选、多选始终为无记名统计。</div>
+      <Hint>控制查看结果时填空题是否显示学生名字；判断、单选、多选始终为无记名统计。</Hint>
     </el-form-item>
     <el-form-item label="学生看结果">
       <el-switch v-model="showResult" />
-      <span class="muted ml">提交后可查看全班统计结果</span>
+      <Hint>提交后可查看全班统计结果</Hint>
     </el-form-item>
     <el-form-item>
       <el-button size="small" type="primary" @click="save">保存调查题目</el-button>
@@ -108,7 +108,7 @@ watch(() => props.page.id, load)
 <style scoped>
 .item { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 8px; margin: 0 0 8px 90px; }
 .item-head { display: flex; align-items: center; gap: 6px; }
-.no { width: 22px; height: 22px; border-radius: 50%; background: #e5eaf3; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.no { width: 22px; height: 22px; border-radius: 50%; background: var(--el-fill-color); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
 .stem { flex: 1; }
 .opts { margin: 6px 0 0 28px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .opt { display: flex; align-items: center; gap: 4px; width: 100%; max-width: 420px; }

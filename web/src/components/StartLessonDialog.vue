@@ -18,7 +18,7 @@
         <el-select v-model="form.groupModelId" clearable placeholder="不分组" class="full">
           <el-option v-for="g in groupModels" :key="g.id" :label="g.name" :value="g.id" />
         </el-select>
-        <div class="tip">选择后，学生进课时按所坐机位自动归入小组</div>
+        <Hint>选择后，学生进课时按所坐机位自动归入小组</Hint>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -68,6 +68,6 @@ async function start() {
 
 <style scoped>
 .full { width: 100%; }
-.opt-sub { float: right; color: #909399; font-size: 12px; margin-left: 12px; }
-.tip { font-size: 12px; color: #909399; }
+.opt-sub { float: right; color: var(--el-text-color-secondary); font-size: 12px; margin-left: 12px; }
+.tip { font-size: 12px; color: var(--el-text-color-secondary); }
 </style>

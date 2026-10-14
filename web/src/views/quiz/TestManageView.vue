@@ -79,5 +79,5 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 </style>

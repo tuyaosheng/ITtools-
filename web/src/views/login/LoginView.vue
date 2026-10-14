@@ -3,8 +3,9 @@
     <el-card class="login-card" shadow="always">
       <template #header>
         <div class="login-header">
+          <span class="login-logo">IT</span>
           <h1>{{ schoolName }}</h1>
-          <div class="login-sub">ITtools 信息技术教学平台</div>
+          <div class="login-sub">信息课堂 · 上课签到</div>
         </div>
       </template>
 
@@ -283,34 +284,30 @@ async function submitAdmin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
   padding: 16px;
 }
-
 .login-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 430px;
+  transform: rotate(-0.6deg);
 }
-
-.login-header h1 {
-  margin: 0;
-  font-size: 20px;
-  text-align: center;
+.login-card :deep(.el-card__body) { transform: rotate(0.6deg); }
+.login-header { text-align: center; position: relative; }
+.login-logo {
+  display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--el-color-primary); color: #fff; font-weight: 800; font-size: 19px; font-family: var(--el-font-family);
+  border: 2px solid var(--hb-ink); box-shadow: 3px 3px 0 var(--hb-ink); transform: rotate(-8deg); margin-bottom: 6px;
 }
-
+.login-header h1 { margin: 0; font-size: 28px; color: var(--hb-ink); }
 .login-sub {
-  text-align: center;
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  display: inline-block; font-size: 13px; color: var(--hb-ink); margin-top: 6px; padding: 0 6px;
+  background: linear-gradient(transparent 55%, var(--hb-marker) 55%);
 }
-
-.login-alert {
-  margin-bottom: 16px;
+.login-alert { margin-bottom: 16px; }
+.full-width { width: 100%; }
+.login-notice {
+  white-space: pre-wrap; background: #fff8e1; border: 1.5px dashed var(--hb-line);
+  padding: 8px 12px; border-radius: 6px; font-size: 13px; line-height: 1.7; margin-bottom: 12px; color: var(--el-text-color-regular);
 }
-
-.full-width {
-  width: 100%;
-}
-.login-notice { white-space: pre-wrap; background: var(--el-color-primary-light-9); border-left: 3px solid var(--el-color-primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; line-height: 1.7; margin-bottom: 12px; }
+.login-card :deep(.el-button--primary) { width: 100%; height: 44px; font-size: 17px; letter-spacing: 4px; }
 </style>

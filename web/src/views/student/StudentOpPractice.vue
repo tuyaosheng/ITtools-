@@ -1,7 +1,7 @@
 <template>
   <el-card shadow="never">
     <template #header>课后操作题</template>
-    <p class="muted">老师开放的 Word / Excel / PPT 等操作题：下载素材，完成后上传即可自动评分，可以反复提交，保留最好成绩。</p>
+    <div><Hint block>老师开放的 Word / Excel / PPT 等操作题：下载素材，完成后上传即可自动评分，可以反复提交，保留最好成绩。</Hint></div>
     <el-table :data="list" stripe empty-text="暂时没有开放的课后操作题">
       <el-table-column label="题目" min-width="200">
         <template #default="{ row }: { row: any }"><el-link type="primary" @click="open(row)">{{ row.title }}</el-link></template>

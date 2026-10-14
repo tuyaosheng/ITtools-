@@ -74,19 +74,19 @@ function answerText(q: any) {
 </script>
 
 <style scoped>
-.q { padding: 14px 16px; border: 1px solid #ebeef5; border-radius: 10px; margin-bottom: 12px; background: #fff; }
-.q.right { border-color: #b3e19d; background: #f7fdf3; }
-.q.wrong { border-color: #fab6b6; background: #fff8f8; }
+.q { padding: 14px 16px; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; margin-bottom: 12px; background: var(--el-bg-color); }
+.q.right { border-color: var(--el-color-success-light-5); background: var(--el-color-success-light-9); }
+.q.wrong { border-color: var(--el-color-danger-light-5); background: var(--el-color-danger-light-9); }
 .q-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .no { font-weight: 700; }
-.score { color: #909399; font-size: 12px; }
+.score { color: var(--el-text-color-secondary); font-size: 12px; }
 .got { margin-left: auto; font-weight: 600; color: var(--el-color-primary); }
 .stem { margin-bottom: 10px; line-height: 1.7; }
-.stem-img { display: block; max-width: 100%; max-height: 420px; margin-bottom: 10px; border: 1px solid #ebeef5; border-radius: 6px; cursor: zoom-in; }
+.stem-img { display: block; max-width: 100%; max-height: 420px; margin-bottom: 10px; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; cursor: zoom-in; }
 .opts { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .opt { height: auto; white-space: normal; }
 .blanks { display: flex; gap: 8px; flex-wrap: wrap; }
 .blank { width: 200px; }
-.key { margin-top: 10px; padding: 8px 12px; background: #f4f4f5; border-radius: 6px; font-size: 13px; }
-.analysis { margin-top: 4px; color: #606266; }
+.key { margin-top: 10px; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; }
+.analysis { margin-top: 4px; color: var(--el-text-color-regular); }
 </style>

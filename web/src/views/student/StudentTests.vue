@@ -38,7 +38,7 @@
             <el-radio-button value="TEST">测验错题</el-radio-button>
           </el-radio-group>
           <el-checkbox v-model="showMastered" @change="loadWrong">显示已掌握的题</el-checkbox>
-          <span class="muted">老师公布答案后，答错的题会收集到这里</span>
+          <Hint>老师公布答案后，答错的题会收集到这里</Hint>
         </div>
         <el-empty v-if="!wrong.length" description="没有错题，继续保持！" />
         <div v-for="(q, i) in wrong" :key="q.id" class="wq">
@@ -94,7 +94,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .wb-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.src { font-size: 12px; color: #909399; margin: 4px 0; display: flex; align-items: center; gap: 8px; }
+.src { font-size: 12px; color: var(--el-text-color-secondary); margin: 4px 0; display: flex; align-items: center; gap: 8px; }
 </style>

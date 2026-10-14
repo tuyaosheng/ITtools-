@@ -15,16 +15,16 @@
     </el-form-item>
     <el-form-item label="公布答案">
       <el-switch v-model="cfg.showAnswer" />
-      <span class="muted ml">结束后（提交即批改为交卷后）向学生显示标准答案与解析</span>
+      <Hint>结束后（提交即批改为交卷后）向学生显示标准答案与解析</Hint>
     </el-form-item>
     <el-form-item label="每人乱序">
         <el-checkbox v-model="cfg.shuffleQuestions">题目顺序</el-checkbox>
         <el-checkbox v-model="cfg.shuffleOptions">单选/多选的选项顺序</el-checkbox>
-        <span class="muted ml">每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</span>
+        <Hint>每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</Hint>
     </el-form-item>
     <el-form-item>
       <el-button size="small" type="primary" @click="save">保存考试设置</el-button>
-      <span class="muted ml">对之后开课时新建的测验生效</span>
+      <Hint>对之后开课时新建的测验生效</Hint>
     </el-form-item>
   </div>
 </template>
@@ -61,7 +61,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml { margin-left: 8px; }
 .full { width: 100%; }
 </style>

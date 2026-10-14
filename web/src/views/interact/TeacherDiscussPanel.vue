@@ -70,12 +70,12 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .ops { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
 .layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 .posts { max-height: 420px; overflow-y: auto; }
-.post { padding: 6px 0; border-bottom: 1px dashed #ebeef5; font-size: 13px; }
-.post.conclusion { background: #f0f9eb; }
-.grp { display: inline-block; background: #e5eaf3; border-radius: 4px; padding: 0 6px; margin-right: 6px; font-size: 12px; }
+.post { padding: 6px 0; border-bottom: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
+.post.conclusion { background: var(--el-color-success-light-9); }
+.grp { display: inline-block; background: var(--el-fill-color); border-radius: 4px; padding: 0 6px; margin-right: 6px; font-size: 12px; }
 .content { margin-top: 2px; white-space: pre-wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .send { display: flex; gap: 6px; margin-top: 10px; }
 .sub { font-weight: 600; margin-bottom: 8px; }
-.conc { padding: 6px 8px; background: #f5f7fa; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+.conc { padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
 </style>

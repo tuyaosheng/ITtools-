@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-.stage-wrap { width: 100%; max-width: 640px; aspect-ratio: 4 / 3; background: #fff; border: 1px solid var(--el-border-color); border-radius: 6px; overflow: hidden; }
+.stage-wrap { width: 100%; max-width: 640px; aspect-ratio: 4 / 3; background: var(--el-bg-color); border: 1px solid var(--el-border-color); border-radius: 6px; overflow: hidden; }
 .stage-wrap:fullscreen { max-width: none; border: none; background: #000; }
 .stage { width: 100%; height: 100%; }
 .muted { color: var(--el-text-color-secondary); font-size: 12px; }

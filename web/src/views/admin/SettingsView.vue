@@ -13,10 +13,8 @@
           <el-radio value="XJH">学籍+密码模式</el-radio>
           <el-radio value="FIXED_SEAT">班级+姓名+固定机位模式</el-radio>
         </el-radio-group>
-        <div class="tip">
-          正常：班级+姓名+密码登录；公开课：学生登录后直接进入当前课堂；学籍模式：仅显示学籍号登录；
-          固定机位：班级+姓名登录，已启用固定机位的班级须在绑定机位登录（在“固定机位”中配置）。
-        </div>
+        <Hint>正常：班级+姓名+密码登录；公开课：学生登录后直接进入当前课堂；学籍模式：仅显示学籍号登录；
+          固定机位：班级+姓名登录，已启用固定机位的班级须在绑定机位登录（在“固定机位”中配置）。</Hint>
       </el-form-item>
 
       <el-divider content-position="left">文件</el-divider>
@@ -32,12 +30,12 @@
 
       <el-form-item label="学生单处登录">
         <el-switch v-model="singleLogin" />
-        <span class="tip inline">开启后同一学生账号在另一台电脑登录时，原电脑自动下线</span>
+        <Hint>开启后同一学生账号在另一台电脑登录时，原电脑自动下线</Hint>
       </el-form-item>
       <el-divider content-position="left">教学</el-divider>
       <el-form-item label="允许作业补交">
         <el-switch v-model="allowLate" />
-        <span class="tip inline">关闭后，课堂结束的作业不再接收提交</span>
+        <Hint>关闭后，课堂结束的作业不再接收提交</Hint>
       </el-form-item>
       <el-form-item label="敏感词过滤">
         <el-input v-model="form['interact.sensitiveWords']" type="textarea" :rows="3"
@@ -50,17 +48,17 @@
       </el-form-item>
       <el-form-item label="学生改密码">
         <el-switch v-model="studentPassword" />
-        <span class="tip inline">关闭后学生不能自行修改密码，由老师或管理员重置</span>
+        <Hint>关闭后学生不能自行修改密码，由老师或管理员重置</Hint>
       </el-form-item>
       <el-form-item label="学生传头像">
         <el-switch v-model="studentAvatar" />
-        <span class="tip inline">默认关闭：学生头像由管理员或老师统一采集导入</span>
+        <Hint>默认关闭：学生头像由管理员或老师统一采集导入</Hint>
       </el-form-item>
 
       <el-divider content-position="left">第三方程序登录</el-divider>
       <el-form-item label="开启">
         <el-switch v-model="ssoEnabled" />
-        <span class="tip inline">允许学校的其他系统通过签名链接直接登录学生界面（原 weblogin 接口）</span>
+        <Hint>允许学校的其他系统通过签名链接直接登录学生界面（原 weblogin 接口）</Hint>
       </el-form-item>
       <el-form-item label="签名密钥">
         <el-input :model-value="form['sso.secret'] || '（未生成）'" readonly class="w420">
@@ -78,11 +76,11 @@
       <el-divider content-position="left">网络控制器（CTR）</el-divider>
       <el-form-item label="启用">
         <el-switch v-model="netEnabled" />
-        <span class="tip inline">对接教师机上的“电脑室网络控制器”：课堂上按学生所在电脑开网/断网，闯关达标自动开网</span>
+        <Hint>对接教师机上的“电脑室网络控制器”：课堂上按学生所在电脑开网/断网，闯关达标自动开网</Hint>
       </el-form-item>
       <el-form-item label="控制器地址">
         <el-input v-model="form['net.ctrUrl']" placeholder="http://127.0.0.1:8770" class="w420" />
-        <div class="tip">网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</div>
+        <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</Hint>
       </el-form-item>
       <el-form-item label="访问令牌">
         <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="与网络控制器 api_token 一致（未设置可留空）" class="w420" />
@@ -186,7 +184,7 @@ onMounted(load)
 
 <style scoped>
 .form { max-width: 820px; }
-.tip { font-size: 12px; color: #909399; line-height: 1.6; margin-top: 4px; }
+.tip { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; margin-top: 4px; }
 .tip.inline { margin: 0 0 0 10px; }
 .w420 { width: 420px; }
 .ok { color: var(--el-color-success); }

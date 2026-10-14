@@ -136,10 +136,10 @@ onMounted(async () => {
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ops { display: flex; align-items: center; gap: 6px; font-size: 13px; }
 .item { padding: 10px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 6px; }
-.item:hover { background: #f5f7fa; }
+.item:hover { background: var(--el-fill-color-light); }
 .item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
 .name { font-weight: 600; }
-.meta { font-size: 12px; color: #909399; }
+.meta { font-size: 12px; color: var(--el-text-color-secondary); }
 .summary { margin-bottom: 12px; }
 .tag { margin: 0 6px 6px 0; }
 @media (max-width: 900px) { .page-grid { grid-template-columns: 1fr; } }

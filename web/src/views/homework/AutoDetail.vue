@@ -24,12 +24,12 @@ const items = computed<any[]>(() => {
 </script>
 
 <style scoped>
-.auto-detail { border: 1px solid #ebeef5; border-radius: 8px; overflow: hidden; }
-.row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 13px; border-bottom: 1px solid #f2f3f5; color: #f56c6c; }
+.auto-detail { border: 1px solid var(--el-border-color-lighter); border-radius: 8px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 13px; border-bottom: 1px solid var(--el-fill-color-light); color: var(--el-color-danger); }
 .row:last-child { border-bottom: none; }
-.row.ok { color: #67c23a; }
-.name { color: #303133; min-width: 150px; }
-.note { color: #909399; }
-.msg { flex: 1; color: #606266; }
+.row.ok { color: var(--el-color-success); }
+.name { color: var(--el-text-color-primary); min-width: 150px; }
+.note { color: var(--el-text-color-secondary); }
+.msg { flex: 1; color: var(--el-text-color-regular); }
 .score { font-weight: 600; }
 </style>

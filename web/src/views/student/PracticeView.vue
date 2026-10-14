@@ -191,12 +191,12 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.stats { display: flex; gap: 16px; font-size: 13px; color: #606266; }
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--el-text-color-regular); }
 .stats b { color: var(--el-color-primary); font-size: 16px; }
 .filters { display: flex; gap: 8px; margin-bottom: 14px; }
 .w140 { width: 140px; } .w160 { width: 160px; } .w200 { width: 200px; } .w280 { width: 280px; }
 .full { width: 100%; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .draw { max-width: 640px; }
 .s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .score { margin-left: auto; }

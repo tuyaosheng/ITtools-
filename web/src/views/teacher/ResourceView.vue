@@ -75,7 +75,7 @@
           <div v-if="form.fileName && !file" class="muted">当前：{{ form.fileName }}（重新选择将替换）</div>
         </el-form-item>
         <el-form-item label="链接"><el-input v-model="form.linkUrl" placeholder="可选，如 https://..." /></el-form-item>
-        <el-form-item label="共享"><el-switch v-model="form.shared" /> <span class="muted ml8">共享后其他教师可查看和下载</span></el-form-item>
+        <el-form-item label="共享"><el-switch v-model="form.shared" /> <Hint>共享后其他教师可查看和下载</Hint></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="visible = false">取消</el-button>
@@ -102,7 +102,7 @@
     </el-dialog>
 
     <el-dialog v-model="distVisible" title="分发给班级" width="480px" append-to-body>
-      <p class="muted">勾选的班级学生可在「学习资源」中查看该资源。</p>
+      <div><Hint block>勾选的班级学生可在「学习资源」中查看该资源。</Hint></div>
       <el-checkbox-group v-model="distClassIds">
         <el-checkbox v-for="k in classes" :key="k.id" :label="k.id">{{ k.name }}</el-checkbox>
       </el-checkbox-group>
@@ -244,7 +244,7 @@ onMounted(async () => {
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .filters { display: flex; gap: 8px; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ellipsis { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w140 { width: 140px; }
 .w160 { width: 160px; }

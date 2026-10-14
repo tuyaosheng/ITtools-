@@ -123,11 +123,11 @@ onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(poll) 
 
 <style scoped>
 .bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 14px; gap: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; margin: 0 8px; }
-.timer { font-weight: 600; color: #e6a23c; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; margin: 0 8px; }
+.timer { font-weight: 600; color: var(--el-color-warning); }
 .result b { font-size: 22px; color: var(--el-color-primary); }
 .ops { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 10px; }
 .mb { margin-bottom: 12px; }
-.waiting { text-align: center; padding: 48px 0; color: #606266; }
+.waiting { text-align: center; padding: 48px 0; color: var(--el-text-color-regular); }
 .waiting .big { font-size: 40px; margin-bottom: 8px; }
 </style>

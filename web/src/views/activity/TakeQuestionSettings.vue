@@ -2,7 +2,7 @@
   <div>
     <el-divider content-position="left">抽题题目</el-divider>
     <el-form-item label="说明">
-      <span class="muted">学生点“随机抽取我的问题”后，按 学号 ÷ 题目数 的余数分到一道题（余 0 为最后一题），相邻座位的同学拿到不同题目。</span>
+      <div><Hint block>学生点“随机抽取我的问题”后，按 学号 ÷ 题目数 的余数分到一道题（余 0 为最后一题），相邻座位的同学拿到不同题目。</Hint></div>
     </el-form-item>
     <el-form-item v-for="(q, i) in questions" :key="i" :label="`第 ${i + 1} 题`">
       <div class="row">

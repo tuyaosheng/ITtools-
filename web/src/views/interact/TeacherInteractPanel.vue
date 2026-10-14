@@ -18,7 +18,7 @@
       </el-card>
 
       <el-card v-if="data.helpers?.length" shadow="never">
-        <template #header>互助榜 <span class="muted">（同学登记“收到谁的帮助”）</span></template>
+        <template #header>互助榜 <Hint>同学登记“收到谁的帮助”</Hint></template>
         <div v-for="(h, i) in data.helpers" :key="h.studentId" class="bmsg">{{ i + 1 }}. {{ h.name }} <b>帮助 {{ h.count }} 人次</b></div>
       </el-card>
 
@@ -35,7 +35,7 @@
     <div class="col">
       <el-card shadow="never">
         <template #header>
-          <div class="head">在线监控 <span class="muted">在线 {{ online }}/{{ data.monitor.length }}（学生课堂页每 20 秒上报）</span></div>
+          <div class="head">在线监控 <span class="muted">在线 {{ online }}/{{ data.monitor.length }}</span><Hint>学生课堂页每 20 秒上报一次</Hint></div>
         </template>
         <el-table :data="data.monitor" size="small" max-height="360">
           <el-table-column prop="name" label="姓名" width="80" />
@@ -118,12 +118,12 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .interact { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .col { display: flex; flex-direction: column; gap: 16px; }
 .head { display: flex; align-items: center; gap: 8px; }
-.muted { color: #909399; font-size: 12px; font-weight: normal; }
-.help { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #ebeef5; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; font-weight: normal; }
+.help { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .help.done { opacity: 0.6; }
-.hmsg { font-size: 13px; color: #606266; margin-top: 2px; }
+.hmsg { font-size: 13px; color: var(--el-text-color-regular); margin-top: 2px; }
 .send { display: flex; gap: 8px; margin-bottom: 10px; }
-.bmsg { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #f0f0f0; }
+.bmsg { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .activity { max-height: 260px; overflow-y: auto; font-size: 13px; }
 .act { padding: 3px 0; }
 @media (max-width: 1000px) { .interact { grid-template-columns: 1fr; } }

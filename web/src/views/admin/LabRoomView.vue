@@ -44,7 +44,7 @@
       <el-empty v-if="!current" description="请选择左侧的机房模型" />
       <template v-else>
         <el-alert v-if="swapMode" type="warning" :closable="false" class="mb"
-          :title="swapPick ? `已选 ${wsName(swapPick)}，再点另一台电脑完成交换` : '依次点两台电脑，交换它们的 IP（两台电脑网线/IP 对调时用）'" />
+          :title="swapPick ? `已选 ${wsName(swapPick)}，再点另一台电脑完成交换` : '依次点两台电脑，交换它们的 IP'" />
         <div class="podium">讲 台</div>
         <div class="grid" :style="{ gridTemplateColumns: `repeat(${current.cols}, minmax(96px, 1fr))` }">
           <template v-for="r in current.rows" :key="'r' + r">
@@ -124,7 +124,7 @@
           <el-input v-model="scheme.layoutText" type="textarea" :rows="8" class="mono"
             placeholder="一行一排（第一行靠讲台），座位号用空格隔开，过道/空位写 .，例：1 2 3 . 4 5 6" />
         </el-form-item>
-        <div class="muted">可以直接改文本：调整个别座位号、加过道、删掉坏机位。计算机名 = 前缀 + 编号，IP = 1号 IP {{ scheme.step > 0 ? '+' : '−' }}（编号 − 1）。</div>
+        <div><Hint block>可以直接改文本：调整个别座位号、加过道、删掉坏机位。计算机名 = 前缀 + 编号，IP = 1号 IP {{ scheme.step > 0 ? '+' : '−' }}（编号 − 1）。</Hint></div>
         <div v-if="preview.error" class="err">{{ preview.error }}</div>
         <template v-else-if="preview.rows.length">
           <div class="muted">预览：{{ preview.count }} 个座位，{{ preview.rows.length }} 排 × {{ preview.cols }} 列</div>
@@ -141,7 +141,7 @@
         </template>
       </el-form>
       <template #footer>
-        <span class="muted foot-tip">保存后按方案新增/更新机位（同名或同 IP 的机位会被复用），并重建座位布局</span>
+        <div><Hint block>保存后按方案新增/更新机位（同名或同 IP 的机位会被复用），并重建座位布局</Hint></div>
         <el-button @click="schemeVisible = false">取消</el-button>
         <el-button type="primary" :loading="schemeSaving" :disabled="!!preview.error" @click="saveScheme">保存方案</el-button>
       </template>
@@ -422,16 +422,16 @@ onMounted(async () => {
 .page-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
 .card-head { display: flex; justify-content: space-between; align-items: center; }
 .room-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 6px; }
-.room-item:hover { background: #f5f7fa; }
+.room-item:hover { background: var(--el-fill-color-light); }
 .room-item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
-.room-name { font-weight: 600; color: #303133; }
-.room-meta { font-size: 12px; color: #909399; margin-top: 2px; }
+.room-name { font-weight: 600; color: var(--el-text-color-primary); }
+.room-meta { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 2px; }
 .room-ops { margin-top: 4px; }
-.podium { text-align: center; background: #e5eaf3; border-radius: 6px; padding: 6px; margin-bottom: 12px; color: #606266; letter-spacing: 8px; }
+.podium { text-align: center; background: var(--el-fill-color); border-radius: 6px; padding: 6px; margin-bottom: 12px; color: var(--el-text-color-regular); letter-spacing: 8px; }
 .grid { display: grid; gap: 8px; overflow-x: auto; }
-.cell { border: 1px dashed #dcdfe6; border-radius: 6px; padding: 6px; background: #fff; }
+.cell { border: 1px dashed var(--el-border-color); border-radius: 6px; padding: 6px; background: var(--el-bg-color); }
 .cell.filled { border-style: solid; border-color: var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); }
-.pos { font-size: 11px; color: #a8abb2; margin-bottom: 4px; }
+.pos { font-size: 11px; color: var(--el-text-color-placeholder); margin-bottom: 4px; }
 .cell-select { width: 100%; }
 .ip { float: right; color: var(--el-color-primary); }
 .cell.swappable { cursor: pointer; }
@@ -449,7 +449,7 @@ onMounted(async () => {
 .pv { display: grid; gap: 4px; max-height: 300px; overflow: auto; }
 .pv-cell { border: 1px solid var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); border-radius: 4px; padding: 2px; text-align: center; line-height: 1.2; }
 .pv-cell b { display: block; font-size: 12px; }
-.pv-cell small { font-size: 10px; color: #909399; }
+.pv-cell small { font-size: 10px; color: var(--el-text-color-secondary); }
 .pv-cell.gap { border: none; background: transparent; }
 @media (max-width: 900px) { .page-grid { grid-template-columns: 1fr; } }
 </style>

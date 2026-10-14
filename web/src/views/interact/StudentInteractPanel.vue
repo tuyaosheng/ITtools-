@@ -117,10 +117,10 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .mt { margin-top: 8px; }
 .full { width: 100%; }
 .members { display: flex; flex-wrap: wrap; gap: 6px; }
-.pc { margin-left: 4px; color: #a8abb2; font-size: 11px; }
-.msg { padding: 8px 10px; background: #ecf5ff; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
-.time { font-size: 11px; color: #909399; margin-top: 2px; }
-.muted { color: #909399; font-size: 12px; }
+.pc { margin-left: 4px; color: var(--el-text-color-placeholder); font-size: 11px; }
+.msg { padding: 8px 10px; background: var(--el-color-primary-light-9); border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+.time { font-size: 11px; color: var(--el-text-color-secondary); margin-top: 2px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .thanks { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .helper { width: 120px; }
 </style>

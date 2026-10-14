@@ -92,7 +92,7 @@
       </template>
     </el-dialog>
     <el-dialog v-model="statsDlg" title="评分点通过率" width="620px" append-to-body>
-      <p class="muted">按本堂课已提交作品的自动评分统计，通过率低的操作就是学生普遍没掌握的地方。</p>
+      <div><Hint block>按本堂课已提交作品的自动评分统计，通过率低的操作就是学生普遍没掌握的地方。</Hint></div>
       <el-table :data="stats" size="small" border empty-text="没有自动评分记录">
         <el-table-column prop="seq" label="#" width="40" />
         <el-table-column label="评分点" min-width="200">
@@ -233,10 +233,10 @@ onMounted(load)
 
 <style scoped>
 .ops { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; margin-left: 6px; }
-.batch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: #ecf5ff; border-radius: 6px; font-size: 13px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; margin-left: 6px; }
+.batch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: var(--el-color-primary-light-9); border-radius: 6px; font-size: 13px; }
 .w90 { width: 90px; } .w110 { width: 110px; } .w200 { width: 200px; }
 .ml { margin-left: 6px; }
 .w-title { font-weight: 600; font-size: 13px; }
-.rating { margin-left: 6px; font-size: 12px; color: #e6a23c; }
+.rating { margin-left: 6px; font-size: 12px; color: var(--el-color-warning); }
 </style>

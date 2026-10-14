@@ -8,14 +8,14 @@
     </template>
     <el-tabs v-model="tab">
       <el-tab-pane label="全部强制下课" name="end">
-        <p class="desc">将所有教师、所有班级的进行中课堂设置为下课（未进课的学生记为缺席）。一般用于出错后通过正常的下课、强制下课都无法解决时。</p>
+        <div><Hint block>将所有教师、所有班级的进行中课堂设置为下课（未进课的学生记为缺席）。一般用于出错后通过正常的下课、强制下课都无法解决时。</Hint></div>
         <el-popconfirm title="确定让所有进行中的课堂下课？" width="240" @confirm="endAll">
           <template #reference><el-button type="danger">全部强制下课</el-button></template>
         </el-popconfirm>
       </el-tab-pane>
 
       <el-tab-pane label="消除缺勤记录" name="absence">
-        <p class="desc">删除选中的缺席/请假记录，该节课不再计入学生的出勤统计（例如课后补交了假条、学生后来才转入本班）。消除后无法恢复。</p>
+        <div><Hint block>删除选中的缺席/请假记录，该节课不再计入学生的出勤统计（例如课后补交了假条、学生后来才转入本班）。消除后无法恢复。</Hint></div>
         <div class="bar">
           <el-select v-model="yearId" placeholder="年级" class="w140" @change="loadClasses">
             <el-option v-for="y in years" :key="y.id" :label="y.label" :value="y.id" />
@@ -48,7 +48,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="学期修复" name="term">
-        <p class="desc">调整学期设置后，可能有课堂记录没有划分学期（报表按学期筛选时查不到）。选中这些记录并指定学期。</p>
+        <div><Hint block>调整学期设置后，可能有课堂记录没有划分学期（报表按学期筛选时查不到）。选中这些记录并指定学期。</Hint></div>
         <div class="bar">
           <el-button @click="loadNoTerm">查询未划分学期的课堂</el-button>
           <el-select v-model="fixTermId" placeholder="选择学期" class="w180">
@@ -66,7 +66,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="强制删除课程" name="course">
-        <p class="desc">删除已经有开课记录的课程，连同它的全部课堂和学习记录（考勤、作品、测验等）。教师自己只能删除没有开课记录的课程。删除后无法恢复，建议先备份数据库。</p>
+        <div><Hint block>删除已经有开课记录的课程，连同它的全部课堂和学习记录（考勤、作品、测验等）。教师自己只能删除没有开课记录的课程。删除后无法恢复，建议先备份数据库。</Hint></div>
         <div class="bar">
           <el-input v-model="keyword" placeholder="课程名或教师名" clearable class="w220" @keyup.enter="loadCourses" />
           <el-button type="primary" @click="loadCourses">查询</el-button>

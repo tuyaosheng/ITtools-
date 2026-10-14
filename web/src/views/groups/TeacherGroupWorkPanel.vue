@@ -78,10 +78,10 @@ onBeforeUnmount(() => window.clearTimeout(timer))
 <style scoped>
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
 .g-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.topic { color: #409eff; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topic { color: var(--el-color-primary); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .avg { margin-left: auto; }
-.crown { color: #e6a23c; margin-right: 2px; }
-.muted { color: #909399; font-size: 12px; }
+.crown { color: var(--el-color-warning); margin-right: 2px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .sec { font-size: 13px; margin-top: 8px; }
 .pre { white-space: pre-wrap; }
 .file { margin-right: 8px; }

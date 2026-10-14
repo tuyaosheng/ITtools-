@@ -2,13 +2,16 @@
   <el-container class="role-layout">
     <el-aside width="210px" class="role-layout__aside">
       <div class="role-layout__brand">
-        <div class="brand-title">{{ brand }}</div>
-        <div class="brand-sub">{{ schoolName }}</div>
+        <span class="brand-logo">IT</span>
+        <div>
+          <div class="brand-title">{{ brand }}</div>
+          <div class="brand-sub">{{ schoolName }}</div>
+        </div>
       </div>
-      <el-menu :default-active="activePath" class="role-layout__menu" background-color="#1e293b"
-        text-color="#cbd5e1" active-text-color="#ffffff" router>
+      <el-menu :default-active="activePath" class="role-layout__menu" router>
         <el-menu-item v-for="item in menu" :key="item.path" :index="item.path">
-          <span>{{ item.label }}</span>
+          <span v-if="item.icon" class="menu-ic">{{ item.icon }}</span>
+          <span class="menu-label">{{ item.label }}</span>
           <el-badge v-if="item.badge" :value="item.badge" class="menu-badge" />
         </el-menu-item>
       </el-menu>
@@ -44,7 +47,7 @@ import ChangePasswordDialog from '../components/ChangePasswordDialog.vue'
 import ProfileDialog from '../components/ProfileDialog.vue'
 import UserAvatar from '../components/UserAvatar.vue'
 
-export interface MenuItem { path: string; label: string; badge?: number | string }
+export interface MenuItem { path: string; label: string; icon?: string; badge?: number | string }
 
 const profileVisible = ref(false)
 const props = defineProps<{ brand: string; menu: MenuItem[]; extraInfo?: string }>()
@@ -75,21 +78,37 @@ onMounted(async () => {
 
 <style scoped>
 .role-layout { min-height: 100vh; }
-.role-layout__aside { background: #1e293b; display: flex; flex-direction: column; }
-.role-layout__brand { padding: 16px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-.brand-title { color: #fff; font-weight: 600; font-size: 16px; }
-.brand-sub { color: #94a3b8; font-size: 12px; margin-top: 4px; }
-.role-layout__menu { border-right: none; flex: 1; }
+.role-layout__aside { background: var(--hb-paper); border-right: 2px dashed var(--hb-line); display: flex; flex-direction: column; }
+.role-layout__brand { padding: 16px 16px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 2px dashed var(--hb-line); }
+.brand-logo {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--el-color-primary); color: #fff; font-weight: 800; transform: rotate(-8deg);
+  border: 2px solid var(--hb-ink); box-shadow: 2px 2px 0 var(--hb-ink);
+}
+.brand-title { font-family: var(--hb-title-font); color: var(--hb-ink); font-weight: 700; font-size: 18px; line-height: 1.2; }
+.brand-sub { color: var(--el-text-color-secondary); font-size: 12px; margin-top: 2px; }
+.role-layout__menu {
+  --el-menu-bg-color: transparent; --el-menu-hover-bg-color: #f6eddb; --el-menu-text-color: var(--hb-ink);
+  --el-menu-active-color: var(--hb-ink-deep); --el-menu-item-height: 44px;
+  border-right: none; flex: 1; padding: 8px 10px; overflow-y: auto;
+}
+.role-layout__menu .el-menu-item { border-radius: 6px; margin-bottom: 2px; font-size: 15px; }
+.role-layout__menu .el-menu-item.is-active { font-weight: 700; background: transparent; }
+.el-menu-item.is-active .menu-label { background: linear-gradient(transparent 55%, var(--hb-marker) 55%); padding: 0 3px; }
+.menu-ic { width: 22px; margin-right: 8px; text-align: center; font-size: 16px; }
 .menu-badge { margin-left: 8px; }
-.role-layout__header { height: 56px; display: flex; align-items: center; background: #fff; border-bottom: 1px solid #ebeef5; gap: 12px; }
+.role-layout__header {
+  height: 58px; display: flex; align-items: center; gap: 12px;
+  background: var(--hb-paper); border-bottom: 2px dashed var(--hb-line);
+}
 .spacer { flex: 1; }
 .user { display: flex; align-items: center; gap: 10px; }
-.name { font-weight: 600; color: #303133; }
-.extra { font-size: 12px; color: #909399; }
-.role-layout__main { background: #f5f7fa; padding: 20px; }
+.name { font-weight: 700; color: var(--hb-ink-deep); }
+.extra { font-size: 12px; color: var(--el-text-color-secondary); background: var(--el-fill-color); padding: 2px 8px; border-radius: 10px; }
+.role-layout__main { background: transparent; padding: 22px; }
 @media (max-width: 768px) {
   .role-layout__aside { width: 64px !important; }
-  .brand-sub { display: none; }
+  .brand-sub, .brand-title { display: none; }
 }
 .avatar { cursor: pointer; margin-right: 6px; }
 </style>

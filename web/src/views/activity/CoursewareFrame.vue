@@ -39,7 +39,7 @@ onMounted(async () => {
 
 <style scoped>
 .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
-.frame-wrap { width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--el-border-color); border-radius: 6px; overflow: hidden; background: #fff; }
+.frame-wrap { width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--el-border-color); border-radius: 6px; overflow: hidden; background: var(--el-bg-color); }
 .frame-wrap:fullscreen { aspect-ratio: auto; border: none; }
 .frame { width: 100%; height: 100%; border: 0; }
 </style>

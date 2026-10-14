@@ -62,13 +62,13 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .posts { max-height: 380px; overflow-y: auto; padding: 4px; }
 .post { margin-bottom: 10px; display: flex; flex-direction: column; align-items: flex-start; }
 .post.mine { align-items: flex-end; }
-.meta { font-size: 12px; color: #909399; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
-.bubble { background: #f4f4f5; padding: 8px 12px; border-radius: 10px; max-width: 80%; white-space: pre-wrap; }
+.meta { font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
+.bubble { background: var(--el-fill-color-light); padding: 8px 12px; border-radius: 10px; max-width: 80%; white-space: pre-wrap; }
 .post.mine .bubble { background: var(--el-color-primary-light-8); }
-.post.teacher .bubble { background: #fdf6ec; }
-.post.conclusion .bubble { border: 1px solid #b3e19d; background: #f0f9eb; }
+.post.teacher .bubble { background: var(--el-color-warning-light-9); }
+.post.conclusion .bubble { border: 1px solid var(--el-color-success-light-5); background: var(--el-color-success-light-9); }
 .send { margin-top: 10px; }
 .send-ops { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-.conc { padding: 6px 0; border-bottom: 1px dashed #ebeef5; }
-.muted { color: #909399; font-size: 12px; }
+.conc { padding: 6px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 </style>

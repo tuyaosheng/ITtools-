@@ -63,12 +63,12 @@ onBeforeUnmount(stop)
 
 <style scoped>
 .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w90 { width: 90px; }
 .stage { display: flex; flex-direction: column; align-items: center; height: calc(100vh - 140px); }
 .media { flex: 1; max-width: 100%; max-height: calc(100vh - 200px); object-fit: contain; border: 0; }
-.frame { width: 100%; background: #fff; }
+.frame { width: 100%; background: var(--el-bg-color); }
 .file { margin: auto; font-size: 22px; text-align: center; }
 .caption { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 16px; }
-.desc { color: #606266; font-size: 14px; }
+.desc { color: var(--el-text-color-regular); font-size: 14px; }
 </style>

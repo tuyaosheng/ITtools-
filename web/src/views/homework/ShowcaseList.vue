@@ -50,11 +50,11 @@ onMounted(async () => {
 <style scoped>
 .ops { margin-bottom: 12px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-.card { display: flex; border: 1px solid #ebeef5; border-radius: 10px; overflow: hidden; background: #fff; }
+.card { display: flex; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; overflow: hidden; background: var(--el-bg-color); }
 .ext { width: 64px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f6d365, #fda085); color: #fff; font-weight: 700; }
 .body { padding: 12px; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meta { font-size: 12px; color: #909399; }
-.desc { font-size: 13px; color: #606266; }
-.comment { font-size: 12px; color: #e6a23c; }
+.meta { font-size: 12px; color: var(--el-text-color-secondary); }
+.desc { font-size: 13px; color: var(--el-text-color-regular); }
+.comment { font-size: 12px; color: var(--el-color-warning); }
 </style>

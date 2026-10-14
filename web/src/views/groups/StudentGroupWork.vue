@@ -75,7 +75,7 @@
     </section>
 
     <section v-if="data.myEvaluations.length">
-      <div class="sec-title">组员互评 <span class="muted">（评价其他组员在本次合作中的表现）</span></div>
+      <div class="sec-title">组员互评 <Hint>评价其他组员在本次合作中的表现</Hint></div>
       <div v-for="e in data.myEvaluations" :key="e.studentId" class="peer">
         <span class="p-name">{{ e.name }}</span>
         <el-rate v-model="peerScore[e.studentId]" />
@@ -222,18 +222,18 @@ onMounted(() => load())
 .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 section { margin-top: 16px; }
 .sec-title { font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
-.muted { color: #909399; font-size: 12px; font-weight: normal; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; font-weight: normal; }
 .row { display: flex; gap: 8px; align-items: center; }
-.topic { padding: 8px 12px; background: #f5f7fa; border-radius: 4px; }
-.crown { color: #e6a23c; margin-right: 2px; }
+.topic { padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 4px; }
+.crown { color: var(--el-color-warning); margin-right: 2px; }
 .mt8 { margin-top: 8px; }
 .ml8 { margin-left: 8px; }
 .w240 { width: 240px; }
-.file { display: flex; justify-content: space-between; gap: 8px; border: 1px solid #ebeef5; border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; }
-.file.result { border-color: #67c23a; background: #f0f9eb; }
-.intro { font-size: 13px; color: #606266; margin-top: 2px; }
+.file { display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; }
+.file.result { border-color: var(--el-color-success); background: var(--el-color-success-light-9); }
+.intro { font-size: 13px; color: var(--el-text-color-regular); margin-top: 2px; }
 .ops { white-space: nowrap; }
-.pre { white-space: pre-wrap; padding: 8px 12px; background: #f5f7fa; border-radius: 4px; }
+.pre { white-space: pre-wrap; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 4px; }
 .peer { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .p-name { width: 80px; }
 .p-comment { max-width: 280px; }

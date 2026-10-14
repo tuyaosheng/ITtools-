@@ -96,12 +96,12 @@ onMounted(() => load())
 
 <style scoped>
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.mine { border-color: #409eff; }
+.mine { border-color: var(--el-color-primary); }
 .g-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .g-head .muted { margin-left: auto; }
-.muted { color: #909399; font-size: 12px; }
-.topic { font-weight: 600; color: #303133; margin-bottom: 4px; }
-.result { white-space: pre-wrap; font-size: 13px; margin: 8px 0; padding: 8px; background: #f5f7fa; border-radius: 4px; min-height: 36px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+.topic { font-weight: 600; color: var(--el-text-color-primary); margin-bottom: 4px; }
+.result { white-space: pre-wrap; font-size: 13px; margin: 8px 0; padding: 8px; background: var(--el-fill-color-light); border-radius: 4px; min-height: 36px; }
 .file { font-size: 13px; }
 .review { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
 .w100 { width: 100px; flex-shrink: 0; }

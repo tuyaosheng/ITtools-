@@ -18,7 +18,7 @@
         <el-checkbox-group v-model="form.classIds">
           <el-checkbox v-for="k in classes" :key="k.id" :value="k.id">{{ k.name }}</el-checkbox>
         </el-checkbox-group>
-        <div class="muted">同时发给多个班级时可以查看年级统计</div>
+        <div><Hint block>同时发给多个班级时可以查看年级统计</Hint></div>
       </el-form-item>
       <el-form-item label="考试方式">
         <el-radio-group v-model="form.mode">
@@ -33,7 +33,7 @@
       <el-form-item label="每人乱序">
         <el-checkbox v-model="form.shuffleQuestions">题目顺序</el-checkbox>
         <el-checkbox v-model="form.shuffleOptions">单选/多选的选项顺序</el-checkbox>
-        <span class="muted ml">每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</span>
+        <Hint>每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</Hint>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -88,6 +88,6 @@ async function publish() {
 
 <style scoped>
 .full { width: 100%; }
-.muted { color: #909399; font-size: 12px; width: 100%; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; width: 100%; }
 .ml { margin-left: 8px; width: auto; }
 </style>

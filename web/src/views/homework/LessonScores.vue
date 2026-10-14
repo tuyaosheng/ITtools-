@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="bar">
-      <span class="muted">本节课各测验页、作品提交页、Python 页的得分加上课堂表现分（原“测验 + 操作组合统分”）</span>
+      <div><Hint block>本节课各测验页、作品提交页、Python 页的得分加上课堂表现分（原“测验 + 操作组合统分”）</Hint></div>
       <el-button size="small" @click="load">刷新</el-button>
       <el-button size="small" type="primary" @click="api.download(`/teacher/lessons/${lesson.id}/scores/export`)">导出 Excel</el-button>
     </div>
@@ -34,6 +34,6 @@ onMounted(load)
 <style scoped>
 .bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .bar .muted { flex: 1; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .col-h { display: flex; flex-direction: column; line-height: 1.3; }
 </style>

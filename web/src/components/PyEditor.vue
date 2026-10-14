@@ -55,5 +55,5 @@ onBeforeUnmount(() => view?.destroy())
 </script>
 
 <style scoped>
-.py-editor { border: 1px solid #dcdfe6; border-radius: 4px; overflow: hidden; }
+.py-editor { border: 1px solid var(--el-border-color); border-radius: 4px; overflow: hidden; }
 </style>

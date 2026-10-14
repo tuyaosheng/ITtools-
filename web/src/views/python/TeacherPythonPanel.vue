@@ -144,13 +144,13 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .ops { display: flex; align-items: center; gap: 8px; }
 .stats { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml8 { margin-left: 8px; }
 .mr4 { margin-right: 4px; }
-.full { color: #67c23a; font-weight: 600; }
+.full { color: var(--el-color-success); font-weight: 600; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; }
-.dot.ok { background: #67c23a; }
-.dot.bad { background: #f56c6c; }
+.dot.ok { background: var(--el-color-success); }
+.dot.bad { background: var(--el-color-danger); }
 .detail { margin-top: 8px; }
-.err { color: #f56c6c; background: #fef0f0; padding: 8px; border-radius: 4px; white-space: pre-wrap; font-size: 12px; }
+.err { color: var(--el-color-danger); background: var(--el-color-danger-light-9); padding: 8px; border-radius: 4px; white-space: pre-wrap; font-size: 12px; }
 </style>

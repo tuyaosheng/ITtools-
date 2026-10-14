@@ -1,20 +1,17 @@
 <template>
   <el-container class="admin-layout">
     <el-aside width="220px" class="admin-layout__aside">
-      <div class="admin-layout__brand">ITtools 管理后台</div>
+      <div class="admin-layout__brand"><span class="brand-logo">IT</span>管理后台</div>
       <el-menu
         :default-active="activePath"
         :default-openeds="menuGroups.map(g => g.title)"
         class="admin-layout__menu"
-        background-color="#1f2937"
-        text-color="#cbd5e1"
-        active-text-color="#ffffff"
         router
       >
         <el-sub-menu v-for="g in menuGroups" :key="g.title" :index="g.title">
           <template #title><span>{{ g.title }}</span></template>
           <el-menu-item v-for="item in g.items" :key="item.path" :index="item.path">
-            <span>{{ item.label }}</span>
+            <span class="menu-label">{{ item.label }}</span>
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -95,60 +92,33 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-.admin-layout {
-  min-height: 100vh;
-}
-
-.admin-layout__aside {
-  background: #1f2937;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-}
-
+.admin-layout { min-height: 100vh; }
+.admin-layout__aside { background: var(--hb-paper); border-right: 2px dashed var(--hb-line); display: flex; flex-direction: column; }
 .admin-layout__brand {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  height: 58px; display: flex; align-items: center; gap: 10px; padding: 0 16px;
+  font-family: var(--hb-title-font); font-size: 19px; font-weight: 700; color: var(--hb-ink);
+  border-bottom: 2px dashed var(--hb-line);
 }
-
+.brand-logo {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: var(--el-font-family);
+  background: var(--el-color-primary); color: #fff; font-size: 13px; font-weight: 800; transform: rotate(-8deg);
+  border: 2px solid var(--hb-ink); box-shadow: 2px 2px 0 var(--hb-ink);
+}
 .admin-layout__menu {
-  border-right: none;
-  background: transparent;
-  flex: 1;
+  --el-menu-bg-color: transparent; --el-menu-hover-bg-color: #f6eddb; --el-menu-text-color: var(--hb-ink);
+  --el-menu-active-color: var(--hb-ink-deep); --el-menu-item-height: 40px; --el-menu-sub-item-height: 40px;
+  border-right: none; flex: 1; padding: 6px 8px; overflow-y: auto;
 }
-
+.admin-layout__menu :deep(.el-sub-menu__title) { color: var(--el-text-color-secondary); font-size: 13px; height: 38px; }
+.admin-layout__menu :deep(.el-menu-item) { border-radius: 6px; }
+.admin-layout__menu :deep(.el-menu-item.is-active) { font-weight: 700; background: transparent; }
+.admin-layout__menu .el-menu-item.is-active .menu-label { background: linear-gradient(transparent 55%, var(--hb-marker) 55%); padding: 0 3px; }
 .admin-layout__header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
+  height: 58px; display: flex; align-items: center; justify-content: flex-end;
+  background: var(--hb-paper); border-bottom: 2px dashed var(--hb-line);
 }
-
-.admin-layout__spacer {
-  flex: 1;
-}
-
-.admin-layout__user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.admin-layout__username {
-  color: #303133;
-  font-weight: 500;
-}
-
-.admin-layout__main {
-  background: #f5f7fa;
-  padding: 20px;
-}
+.admin-layout__spacer { flex: 1; }
+.admin-layout__user { display: flex; align-items: center; gap: 12px; }
+.admin-layout__username { color: var(--hb-ink-deep); font-weight: 700; }
+.admin-layout__main { background: transparent; padding: 22px; }
 </style>

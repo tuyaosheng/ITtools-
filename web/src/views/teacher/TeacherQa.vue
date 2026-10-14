@@ -73,8 +73,8 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
-.q { border: 1px solid #ebeef5; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+.q { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
 .q-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .meta { margin-left: auto; }
 .pre { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }

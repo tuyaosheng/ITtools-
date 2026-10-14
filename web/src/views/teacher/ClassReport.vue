@@ -22,7 +22,7 @@
             {{ w }} <el-input-number v-model="weights[i]" :min="0" :max="100" size="small" controls-position="right" class="w90" />
           </span>
           <el-button size="small" type="primary" :disabled="!classId" @click="loadSummary">重新计算</el-button>
-          <span class="muted">各项按百分制折算后加权平均，缺项（如没布置过测验）不计权重</span>
+          <Hint>各项按百分制折算后加权平均，缺项（如没布置过测验）不计权重</Hint>
         </div>
         <el-table :data="summary" size="small" stripe max-height="560" :default-sort="{ prop: 'studentNo', order: 'ascending' }" empty-text="请选择班级">
           <el-table-column prop="studentNo" label="学号" width="70" sortable fixed />
@@ -180,5 +180,5 @@ onMounted(async () => {
 .w180 { width: 180px; }
 .muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .miss { color: var(--el-color-danger); font-size: 12px; }
-.star { color: #e6a23c; margin-left: 2px; }
+.star { color: var(--el-color-warning); margin-left: 2px; }
 </style>

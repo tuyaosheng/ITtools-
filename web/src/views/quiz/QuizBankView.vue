@@ -166,7 +166,7 @@
             <div v-for="t in stats.byStars || []" :key="t.stars" class="kv"><span class="stars">{{ t.stars ? '★'.repeat(t.stars) : '未评星' }}</span><b>{{ t.count }}</b></div>
           </div>
           <div class="tag-admin">
-            <div class="sub-title">标签维护 <span class="muted">（改名与已有标签同名时自动合并）</span></div>
+            <div class="sub-title">标签维护 <Hint>改名与已有标签同名时自动合并</Hint></div>
             <el-empty v-if="!tags.length" description="还没有标签" :image-size="40" />
             <div v-for="t in tags" :key="t.tag" class="kv">
               <span>{{ t.tag }} <span class="muted">{{ t.count }} 题</span></span>
@@ -201,7 +201,7 @@
                 <input type="file" accept="image/*" hidden @change="pickImage" />
               </label>
               <el-button v-if="qForm.hasImage && qForm.id" size="small" @click="removeImage">移除图片</el-button>
-              <span class="muted">图片可代替题干文字，选项内容可以都在图片里</span>
+              <Hint>图片可代替题干文字，选项内容可以都在图片里</Hint>
             </div>
           </div>
         </el-form-item>
@@ -257,10 +257,8 @@
 
     <!-- 批量传图入库 -->
     <el-dialog v-model="imgImportVisible" title="批量传图入库" width="560px" append-to-body>
-      <el-alert type="info" :closable="false" class="mb">
-        把题目截图（jpg/png 等）直接打成 <b>zip</b> 压缩包上传，不要带文件夹。按文件名顺序入库（2.jpg 排在 10.jpg 之前）；
-        和已有题目（含回收站）完全相同的图片不会重复入库，只合并标签。入库后在「待设置答案」中逐题设置答案。
-      </el-alert>
+      <div><Hint block label="怎么打包？">把题目截图（jpg/png 等）直接打成 zip 压缩包上传，不要带文件夹。按文件名顺序入库（2.jpg 排在 10.jpg 之前）；
+        和已有题目（含回收站）完全相同的图片不会重复入库，只合并标签。入库后在「待设置答案」中逐题设置答案。</Hint></div>
       <el-form label-width="80px">
         <el-form-item label="压缩包" required><input ref="zipInput" type="file" accept=".zip" @change="(e: Event) => (imgZip = pick(e))" /></el-form-item>
         <el-form-item label="题型">
@@ -304,7 +302,7 @@
           </el-radio-group>
         </el-form-item>
       </el-form>
-      <div class="muted">题库包由「打包导出」生成。与你已有的题目重复的（图片相同，或题型+题干相同）不会重复添加。</div>
+      <div><Hint block>题库包由「打包导出」生成。与你已有的题目重复的（图片相同，或题型+题干相同）不会重复添加。</Hint></div>
       <template #footer>
         <el-button @click="packVisible = false">取消</el-button>
         <el-button type="primary" :loading="importing" @click="importPack">导入</el-button>
@@ -738,17 +736,17 @@ onMounted(async () => { await reload(); await loadPapers() })
 .ml { margin-left: 10px; }
 .mb { margin-bottom: 8px; }
 .mr4 { margin-right: 4px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .foot { margin-top: 6px; }
-.batch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: #ecf5ff; border-radius: 6px; font-size: 13px; }
+.batch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: var(--el-color-primary-light-9); border-radius: 6px; font-size: 13px; }
 .batch .el-button + .el-button { margin-left: 0; }
 .stem-cell { display: flex; gap: 8px; align-items: flex-start; }
-.thumb { width: 120px; height: 60px; flex-shrink: 0; border: 1px solid #ebeef5; border-radius: 4px; background: #fafafa; }
+.thumb { width: 120px; height: 60px; flex-shrink: 0; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; background: var(--el-fill-color-lighter); }
 .stem :deep(p) { margin: 0; }
-.stars { color: #e6a23c; letter-spacing: -1px; }
-.stars .off { color: #dcdfe6; }
+.stars { color: var(--el-color-warning); letter-spacing: -1px; }
+.stars .off { color: var(--el-border-color); }
 .img-edit { width: 100%; }
-.big-img { display: block; max-width: 100%; max-height: 260px; border: 1px solid #ebeef5; border-radius: 6px; margin-bottom: 6px; }
+.big-img { display: block; max-width: 100%; max-height: 260px; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; margin-bottom: 6px; }
 .img-ops { display: flex; align-items: center; gap: 8px; }
 .file-btn { cursor: pointer; }
 .opt-row { display: flex; gap: 8px; align-items: center; width: 100%; }
@@ -756,19 +754,19 @@ onMounted(async () => { await reload(); await loadPapers() })
 .col { display: flex; flex-direction: column; align-items: flex-start; }
 .paper-edit { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
 .sub-title { font-weight: 600; margin-bottom: 8px; }
-.p-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px dashed #ebeef5; font-size: 13px; }
+.p-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
 .p-stem { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .no { width: 22px; }
 .random { margin-top: 10px; font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.pick-list { max-height: 360px; overflow-y: auto; border: 1px solid #ebeef5; border-radius: 6px; }
-.pick { display: flex; justify-content: space-between; padding: 6px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+.pick-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; }
+.pick { display: flex; justify-content: space-between; padding: 6px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--el-fill-color-light); }
 .pick:hover { background: var(--el-color-primary-light-9); }
 .stat-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-.stat { display: flex; flex-direction: column; align-items: center; padding: 12px 24px; border: 1px solid #ebeef5; border-radius: 8px; min-width: 110px; }
-.stat b { font-size: 24px; color: #409eff; }
-.stat.warn b { color: #e6a23c; }
-.stat.muted-card b { color: #909399; }
-.stat span { font-size: 12px; color: #606266; }
+.stat { display: flex; flex-direction: column; align-items: center; padding: 12px 24px; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; min-width: 110px; }
+.stat b { font-size: 24px; color: var(--el-color-primary); }
+.stat.warn b { color: var(--el-color-warning); }
+.stat.muted-card b { color: var(--el-text-color-secondary); }
+.stat span { font-size: 12px; color: var(--el-text-color-regular); }
 .stat-row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 24px; }
-.kv { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #ebeef5; font-size: 13px; }
+.kv { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
 </style>

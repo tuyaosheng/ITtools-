@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-head">
         <span>班级机房与固定机位</span>
-        <span class="hint">启用固定机位后，该班学生只能在绑定的机位上登录（原“班级+姓名+固定机位模式”）</span>
+        <div><Hint block>启用固定机位后，该班学生只能在绑定的机位上登录（原“班级+姓名+固定机位模式”）</Hint></div>
       </div>
     </template>
     <el-table v-loading="loading" :data="configs" stripe>
@@ -135,7 +135,7 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.hint { font-size: 12px; color: #909399; }
+.hint { font-size: 12px; color: var(--el-text-color-secondary); }
 .dialog-ops { margin-bottom: 10px; }
 .full { width: 100%; }
 </style>

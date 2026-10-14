@@ -144,6 +144,6 @@ onMounted(async () => { classes.value = await api.get('/teacher/classes') })
 .form { max-width: 760px; }
 .w240 { width: 240px; }
 .full { width: 100%; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .pre { white-space: pre-wrap; }
 </style>

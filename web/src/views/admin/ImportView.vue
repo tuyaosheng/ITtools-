@@ -150,7 +150,7 @@ async function doImport(kind: Kind) {
   font-weight: 600;
 }
 .hint {
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--el-text-color-secondary, var(--el-text-color-secondary));
   font-size: 13px;
   line-height: 1.6;
   margin: 0 0 12px;

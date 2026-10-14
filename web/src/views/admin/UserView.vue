@@ -343,7 +343,7 @@ async function toggleEnabled(row: UserItem, value: boolean) {
 }
 
 .filter-label {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
 }
 

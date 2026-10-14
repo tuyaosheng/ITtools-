@@ -1,0 +1,144 @@
+/*
+ * 手账温暖风格：纸张底色 + 墨色描边 + 错位阴影，标题用楷体。
+ * body.hb-student：学生端，装饰完整（粗描边、贴纸感）；body.hb-staff：教师端/管理后台，更素净、更紧凑。
+ */
+@import './palette.css';
+
+:root {
+  --hb-ink: #5b4636;
+  --hb-ink-deep: #3d2f25;
+  --hb-paper: #fffdf7;
+  --hb-desk: #f8f1e4;
+  --hb-dot: #e8dcc4;
+  --hb-line: #d6c7a8;
+  --hb-marker: #ffd166;
+  --hb-teal: #2a9d8f;
+  --hb-title-font: "KaiTi", "STKaiti", "楷体", "Kaiti SC", serif;
+  --hb-border-w: 1.5px;
+  --hb-shadow-off: 3px;
+  --hb-shadow-color: var(--hb-line);
+
+  --el-font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --el-text-color-primary: #3d2f25;
+  --el-text-color-regular: #5b4636;
+  --el-text-color-secondary: #8a7560;
+  --el-text-color-placeholder: #b3a28a;
+  --el-text-color-disabled: #c4b69f;
+  --el-border-color: #d6c7a8;
+  --el-border-color-light: #e3d7bf;
+  --el-border-color-lighter: #ece3d1;
+  --el-border-color-extra-light: #f3ecdf;
+  --el-border-color-dark: #c9b593;
+  --el-border-color-darker: #b3a07f;
+  --el-fill-color: #f3ead9;
+  --el-fill-color-light: #f8f2e6;
+  --el-fill-color-lighter: #fbf7ee;
+  --el-fill-color-extra-light: #fdfaf3;
+  --el-fill-color-dark: #ece1cc;
+  --el-fill-color-darker: #e3d5bb;
+  --el-fill-color-blank: #fffdf7;
+  --el-bg-color: #fffdf7;
+  --el-bg-color-page: #f8f1e4;
+  --el-bg-color-overlay: #fffdf7;
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+  --el-box-shadow-light: 3px 3px 0 var(--hb-line);
+  --el-box-shadow: 4px 4px 0 var(--hb-line);
+  --el-mask-color: rgba(61, 47, 37, 0.35);
+}
+
+body.hb-student {
+  --hb-border-w: 2px;
+  --hb-shadow-off: 4px;
+  --hb-shadow-color: var(--hb-ink);
+}
+
+html, body {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  background-color: var(--hb-desk);
+  background-image: radial-gradient(var(--hb-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+h1, h2, h3, .el-card__header, .el-dialog__title, .el-drawer__title, .el-message-box__title, .hb-title {
+  font-family: var(--hb-title-font);
+  color: var(--el-text-color-primary);
+}
+.el-card__header, .el-dialog__title, .el-drawer__title { font-size: 19px; }
+h1 { font-size: 26px; }
+
+/* ---------- 卡片 ---------- */
+.el-card {
+  background: var(--hb-paper);
+  border: var(--hb-border-w) solid var(--hb-shadow-color);
+  border-radius: 8px;
+  box-shadow: var(--hb-shadow-off) var(--hb-shadow-off) 0 var(--hb-shadow-color) !important;
+}
+body.hb-staff .el-card { border-color: var(--hb-line); }
+.el-card__header { border-bottom: 1.5px dashed var(--hb-line); padding: 14px 20px; }
+
+/* ---------- 按钮 ---------- */
+.el-button { font-weight: 600; transition: transform .08s, box-shadow .08s; }
+.el-button:not(.is-link):not(.is-text):not(.is-circle) {
+  border-width: var(--hb-border-w);
+}
+body.hb-student .el-button:not(.is-link):not(.is-text):not(.is-circle):not(.is-disabled) {
+  border-color: var(--hb-ink);
+  box-shadow: 2px 2px 0 var(--hb-ink);
+}
+body.hb-student .el-button:not(.is-link):not(.is-text):not(.is-circle):not(.is-disabled):active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+body.hb-staff .el-button--primary:not(.is-link):not(.is-text):not(.is-plain):not(.is-disabled) {
+  box-shadow: 2px 2px 0 var(--el-color-primary-dark-2);
+}
+.el-button--large { font-size: 16px; }
+
+/* ---------- 表单 ---------- */
+.el-input__wrapper, .el-textarea__inner, .el-select__wrapper, .el-input-number__decrease, .el-input-number__increase {
+  background-color: #fffefa;
+}
+.el-input__wrapper, .el-select__wrapper { box-shadow: 0 0 0 1.5px var(--el-border-color) inset; }
+.el-textarea__inner { box-shadow: 0 0 0 1.5px var(--el-border-color) inset; }
+.el-form-item__label { color: var(--el-text-color-regular); font-weight: 600; }
+
+/* ---------- 弹窗 ---------- */
+.el-dialog, .el-message-box, .el-drawer {
+  background: var(--hb-paper);
+  border: 2px solid var(--hb-ink);
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 var(--hb-ink);
+}
+.el-drawer { border-radius: 0; box-shadow: none; }
+.el-dialog__header { border-bottom: 1.5px dashed var(--hb-line); margin-right: 0; padding-bottom: 12px; }
+
+/* ---------- 表格 ---------- */
+.el-table {
+  --el-table-bg-color: var(--hb-paper);
+  --el-table-tr-bg-color: var(--hb-paper);
+  --el-table-header-bg-color: #f6efe1;
+  --el-table-row-hover-bg-color: #fbf3e2;
+  --el-table-current-row-bg-color: var(--el-color-primary-light-9);
+  --el-table-border-color: var(--el-border-color-lighter);
+  --el-table-header-text-color: var(--hb-ink);
+}
+.el-table th.el-table__cell { font-weight: 700; }
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell { background: #fcf8ef; }
+
+/* ---------- 标签页 / 菜单 / 标签 ---------- */
+.el-tabs__item.is-active { font-weight: 700; }
+.el-tabs__active-bar { height: 3px; border-radius: 2px; }
+.el-tag { border-width: 1.5px; font-weight: 600; }
+body.hb-student .el-tag { border-radius: 4px; }
+.el-radio-button__inner { font-weight: 600; }
+.el-alert { border: 1.5px solid currentColor; border-radius: 6px; }
+.el-alert--info.is-light { border-color: var(--el-border-color); }
+.el-empty__description p { font-family: var(--hb-title-font); font-size: 16px; color: var(--el-text-color-secondary); }
+.el-progress-bar__outer { background: var(--el-fill-color); }
+.el-message { border: 1.5px solid var(--hb-ink); box-shadow: 3px 3px 0 var(--hb-ink); }
+
+/* ---------- 提示（ⓘ） ---------- */
+.hb-hint-pop { max-width: 340px; line-height: 1.7; font-size: 13px; }

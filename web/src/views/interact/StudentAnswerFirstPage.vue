@@ -59,5 +59,5 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .mt { margin-top: 12px; }
 .ranks { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
 .rank { display: flex; align-items: center; gap: 8px; }
-.no { width: 24px; height: 24px; border-radius: 50%; background: #f56c6c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.no { width: 24px; height: 24px; border-radius: 50%; background: var(--el-color-danger); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 </style>

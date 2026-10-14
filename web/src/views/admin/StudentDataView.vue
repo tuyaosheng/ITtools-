@@ -3,7 +3,7 @@
     <template #header>学生数据维护</template>
     <el-tabs v-model="tab">
       <el-tab-pane label="表格批量修改" name="edit">
-        <p class="desc">修改学生姓名、学籍号、学号、性别、班级（重新分班）、入学年份或在读/毕业状态：下载某个年级的学生信息表，在表格中修改后上传，先预览改动，确认无误再写入。“编号”列用于对应学生，请勿修改。</p>
+        <div><Hint block>修改学生姓名、学籍号、学号、性别、班级（重新分班）、入学年份或在读/毕业状态：下载某个年级的学生信息表，在表格中修改后上传，先预览改动，确认无误再写入。“编号”列用于对应学生，请勿修改。</Hint></div>
         <div class="bar">
           <el-select v-model="yearId" placeholder="选择年级" class="w160">
             <el-option v-for="y in years" :key="y.id" :label="y.label" :value="y.id" />
@@ -39,7 +39,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="批量导入头像" name="avatar">
-        <p class="desc">把学生照片按“学籍号”命名（教师照片按登录名命名），如 G330100200801010011.jpg，打包成 zip 上传。支持 JPG/PNG/GIF/BMP，系统会自动缩小保存。也可以在“用户管理”或教师的“我的班级”中逐个上传。</p>
+        <div><Hint block>把学生照片按“学籍号”命名（教师照片按登录名命名），如 G330100200801010011.jpg，打包成 zip 上传。支持 JPG/PNG/GIF/BMP，系统会自动缩小保存。也可以在“用户管理”或教师的“我的班级”中逐个上传。</Hint></div>
         <el-upload :show-file-list="false" accept=".zip" :http-request="importAvatars">
           <el-button type="primary" :loading="busy">上传照片压缩包</el-button>
         </el-upload>
@@ -50,7 +50,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="毕业生管理" name="graduate">
-        <p class="desc">整班设为毕业后，学生不能再登录，也不再出现在登录名单、课堂和报表中。“释放资源空间”会删除所选班级毕业生的全部学习记录和文件（作品、网盘、测验、考勤等），只保留账号和精华作品，删除后无法恢复，建议先备份。</p>
+        <div><Hint block>整班设为毕业后，学生不能再登录，也不再出现在登录名单、课堂和报表中。“释放资源空间”会删除所选班级毕业生的全部学习记录和文件（作品、网盘、测验、考勤等），只保留账号和精华作品，删除后无法恢复，建议先备份。</Hint></div>
         <div class="bar">
           <el-button :disabled="!selectedClasses.length" @click="setGraduated(true)">设为毕业</el-button>
           <el-button :disabled="!selectedClasses.length" @click="setGraduated(false)">恢复在读</el-button>

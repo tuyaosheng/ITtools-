@@ -71,11 +71,11 @@ onMounted(load)
 
 <style scoped>
 .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .title { display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden; }
 .title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.title b.read { font-weight: normal; color: #606266; }
+.title b.read { font-weight: normal; color: var(--el-text-color-regular); }
 .meta { margin-left: auto; padding-right: 8px; white-space: nowrap; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #f56c6c; flex-shrink: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--el-color-danger); flex-shrink: 0; }
 .content { white-space: pre-wrap; font-size: 14px; line-height: 1.7; margin-bottom: 4px; }
 </style>

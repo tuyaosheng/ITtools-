@@ -159,19 +159,19 @@ onMounted(load)
 .upload-row { display: flex; align-items: center; gap: 12px; }
 .result { margin-top: 14px; }
 .res-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .scores { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
-.score-box { display: flex; flex-direction: column; align-items: center; padding: 8px 16px; background: #f5f7fa; border-radius: 8px; min-width: 90px; }
-.score-box span { font-size: 12px; color: #909399; }
+.score-box { display: flex; flex-direction: column; align-items: center; padding: 8px 16px; background: var(--el-fill-color-light); border-radius: 8px; min-width: 90px; }
+.score-box span { font-size: 12px; color: var(--el-text-color-secondary); }
 .score-box b { font-size: 20px; color: var(--el-color-primary); }
-.score-box small { font-size: 11px; color: #a8abb2; }
-.comment { background: #fdf6ec; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
+.score-box small { font-size: 11px; color: var(--el-text-color-placeholder); }
+.comment { background: var(--el-color-warning-light-9); padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
 .rubric { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; margin-bottom: 10px; }
-.rubric-row { display: flex; justify-content: space-between; background: #f5f7fa; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.rubric-row { display: flex; justify-content: space-between; background: var(--el-fill-color-light); padding: 6px 10px; border-radius: 6px; font-size: 13px; }
 .mt { margin-top: 10px; }
 .reviews { margin-top: 10px; }
 .sub-title { font-weight: 600; margin-bottom: 6px; }
-.review { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #ebeef5; }
+.review { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .peer { display: flex; gap: 4px; }
 .w90 { width: 90px; flex-shrink: 0; }
 </style>

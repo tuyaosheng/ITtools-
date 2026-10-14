@@ -63,7 +63,7 @@
     </div>
 
     <el-dialog v-model="historyVisible" title="加载历史分组" width="560px" append-to-body>
-      <p class="muted">把本班以往某节课的分组和组长加载到本节课。尚未进课的学生会在进课时自动加入对应小组。</p>
+      <div><Hint block>把本班以往某节课的分组和组长加载到本节课。尚未进课的学生会在进课时自动加入对应小组。</Hint></div>
       <el-table :data="history" size="small" empty-text="本班还没有分组记录" highlight-current-row @current-change="(r: any) => (historyPick = r?.id)">
         <el-table-column prop="courseName" label="课程" />
         <el-table-column label="上课时间" width="150"><template #default="{ row }">{{ fmtTime(row.startedAt) }}</template></el-table-column>
@@ -165,19 +165,19 @@ onBeforeUnmount(() => window.clearInterval(poll))
 <style scoped>
 .bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .bar .el-button + .el-button { margin-left: 0; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w100 { width: 100px; }
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.group { border: 1px solid #e4e7ed; border-radius: 6px; padding: 8px 10px; background: #fafbfc; }
+.group { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 8px 10px; background: var(--el-fill-color-lighter); }
 .g-head { display: flex; gap: 6px; align-items: baseline; margin-bottom: 6px; }
-.topic { font-size: 12px; color: #409eff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topic { font-size: 12px; color: var(--el-color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .member { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 13px; }
 .m-name { cursor: pointer; }
-.m-name:hover { color: #409eff; }
-.m-name.absent { color: #a8abb2; }
-.crown { color: #e6a23c; margin-right: 2px; }
-.tag { font-size: 11px; color: #a8abb2; margin-left: 2px; }
-.votes { font-size: 11px; color: #e6a23c; }
+.m-name:hover { color: var(--el-color-primary); }
+.m-name.absent { color: var(--el-text-color-placeholder); }
+.crown { color: var(--el-color-warning); margin-right: 2px; }
+.tag { font-size: 11px; color: var(--el-text-color-placeholder); margin-left: 2px; }
+.votes { font-size: 11px; color: var(--el-color-warning); }
 .task { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px; }
 .empty { padding: 6px 0; }
 .ungrouped { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
