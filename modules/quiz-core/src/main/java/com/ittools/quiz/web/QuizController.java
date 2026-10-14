@@ -135,7 +135,8 @@ public class QuizController {
         if (classIds.isEmpty() && b.lng("classId") != null) classIds.add(b.lng("classId"));
         Integer tl = b.intv("timeLimit");
         return ApiResponse.ok(tests.publish(CurrentUser.id(), b.reqLng("paperId", "试卷"), classIds, b.str("title"),
-                b.bool("showAnswer", true), tl == null || tl <= 0 ? null : tl, b.str("kind"), b.str("mode")));
+                b.bool("showAnswer", true), tl == null || tl <= 0 ? null : tl, b.str("kind"), b.str("mode"),
+                b.bool("shuffleQuestions", false), b.bool("shuffleOptions", false)));
     }
 
     @GetMapping("/api/teacher/quiz/tests")
@@ -184,7 +185,8 @@ public class QuizController {
         Map<String, Object> page = courses.page(pageId);
         courses.requireOwner(CurrentUser.id(), ((Number) page.get("courseId")).longValue());
         Body b = Body.of(body);
-        return ApiResponse.ok(tests.savePageConfig(pageId, b.reqStr("mode", "考试方式"), b.intv("timeLimit"), b.bool("showAnswer", true)));
+        return ApiResponse.ok(tests.savePageConfig(pageId, b.reqStr("mode", "考试方式"), b.intv("timeLimit"), b.bool("showAnswer", true),
+                b.bool("shuffleQuestions", false), b.bool("shuffleOptions", false)));
     }
 
     @GetMapping("/api/teacher/quiz/tests/{id}")

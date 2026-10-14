@@ -30,6 +30,11 @@
       </el-form-item>
       <el-form-item label="限时(分钟)"><el-input-number v-model="form.timeLimit" :min="0" :max="300" /><span class="muted ml">0 为不限时</span></el-form-item>
       <el-form-item label="公布答案"><el-switch v-model="form.showAnswer" /><span class="muted ml">{{ form.kind === 'HOMEWORK' ? '结分后' : '停止回收后' }}向学生显示答案与解析</span></el-form-item>
+      <el-form-item label="每人乱序">
+        <el-checkbox v-model="form.shuffleQuestions">题目顺序</el-checkbox>
+        <el-checkbox v-model="form.shuffleOptions">单选/多选的选项顺序</el-checkbox>
+        <span class="muted ml">每个学生看到的顺序不同（同一学生每次打开不变），批改与统计自动按原题对应</span>
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">取消</el-button>
@@ -49,7 +54,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'publ
 const router = useRouter()
 const papers = ref<any[]>([])
 const classes = ref<any[]>([])
-const form = reactive<any>({ kind: 'HOMEWORK', mode: 'AUTO', paperId: undefined, classIds: [], title: '', timeLimit: 0, showAnswer: true })
+const form = reactive<any>({ kind: 'HOMEWORK', mode: 'AUTO', paperId: undefined, classIds: [], title: '', timeLimit: 0, showAnswer: true, shuffleQuestions: false, shuffleOptions: false })
 
 const modeHelp = computed(() => ({
   CONTROL: '学生先“等待开考”，由你发送开考、结束指令',
@@ -65,7 +70,7 @@ async function onOpen() {
   const [p, k] = await Promise.all([api.get('/teacher/quiz/papers'), api.get('/teacher/classes')])
   papers.value = p
   classes.value = k
-  Object.assign(form, { kind: props.kind || 'HOMEWORK', mode: 'AUTO', paperId: props.paper?.id, classIds: [], title: '' })
+  Object.assign(form, { kind: props.kind || 'HOMEWORK', mode: 'AUTO', paperId: props.paper?.id, classIds: [], title: '', shuffleQuestions: false, shuffleOptions: false })
 }
 
 async function publish() {
