@@ -8,6 +8,7 @@
         </div>
       </template>
 
+      <div v-if="notice" class="login-notice">{{ notice }}</div>
       <el-alert
         v-if="errorMessage"
         :title="errorMessage"
@@ -91,7 +92,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, onMounted } from 'vue'
 import { http } from '../../api/http'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   ElCard,
   ElAlert,
@@ -110,6 +111,8 @@ import { useAuthStore } from '../../stores/auth'
 import { publicApi, type SchoolYear, type SchoolClass, type StudentLite } from '../../api/auth'
 
 const router = useRouter()
+const route = useRoute()
+const notice = ref('')
 const auth = useAuthStore()
 
 const activeTab = ref('student-name')
@@ -142,10 +145,13 @@ const showNameTab = computed(() => loginMode.value !== 'XJH')
 const showXjhTab = computed(() => loginMode.value === null || loginMode.value === 'XJH')
 
 onMounted(async () => {
+  // 第三方程序登录失败时带回原因
+  if (typeof route.query.sso === 'string') errorMessage.value = `第三方登录失败：${route.query.sso}`
   try {
     const { data } = await http.get('/public/settings')
     if (data?.data?.schoolName) {
       schoolName.value = data.data.schoolName
+      notice.value = data.data.notice || ''
       loginMode.value = data.data.loginMode
       if (loginMode.value === 'XJH') activeTab.value = 'student-xjh'
     }
@@ -306,4 +312,5 @@ async function submitAdmin() {
 .full-width {
   width: 100%;
 }
+.login-notice { white-space: pre-wrap; background: var(--el-color-primary-light-9); border-left: 3px solid var(--el-color-primary); padding: 8px 12px; border-radius: 4px; font-size: 13px; line-height: 1.7; margin-bottom: 12px; }
 </style>

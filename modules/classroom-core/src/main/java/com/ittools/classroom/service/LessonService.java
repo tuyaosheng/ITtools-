@@ -136,7 +136,7 @@ public class LessonService {
         return jdbc.queryForList(
                 "SELECT s.id AS \"studentId\", s.name, s.student_no AS \"studentNo\", a.status, a.pc_name AS \"pcName\", "
                         + "a.ip_address AS \"ipAddress\", a.joined_at AS \"joinedAt\", COALESCE(a.group_no, 0) AS \"groupNo\", "
-                        + "a.score, a.comment, a.leave_reason AS \"leaveReason\", COALESCE(a.attention, FALSE) AS attention "
+                        + "a.score, a.comment, a.leave_reason AS \"leaveReason\", COALESCE(a.attention, FALSE) AS attention, s.avatar_path IS NOT NULL AS \"hasAvatar\" "
                         + "FROM lesson l JOIN users s ON s.class_id = l.class_id AND s.role = 'STUDENT' AND NOT s.graduated "
                         + "LEFT JOIN lesson_attendance a ON a.lesson_id = l.id AND a.student_id = s.id "
                         + "WHERE l.id = :l ORDER BY s.student_no NULLS LAST, s.name", p("l", lessonId));

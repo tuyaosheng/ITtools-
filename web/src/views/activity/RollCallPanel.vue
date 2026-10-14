@@ -1,6 +1,7 @@
 <template>
   <div class="rollcall">
     <div class="stage" :class="{ dark }">
+      <UserAvatar v-if="!rolling && picked" :user-id="picked.studentId" :name="picked.name" :size="96" class="pick-avatar" />
       <div class="name" :class="{ rolling }">{{ display || '准备点名' }}</div>
       <div v-if="!rolling && picked" class="sub">{{ picked.studentNo }} · {{ picked.pcName || '' }}</div>
       <div class="ctrl">
@@ -41,6 +42,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
+import UserAvatar from '../../components/UserAvatar.vue'
 
 const props = defineProps<{ lesson: any }>()
 const reasons = ['身体不适', '被教师留住', '参加社团', '体育生训练', '参加竞赛', '家中有事', '请假外出', '其他原因']
@@ -110,4 +112,5 @@ onBeforeUnmount(() => window.clearInterval(spin))
 .ml { margin-left: 4px; }
 .w150 { width: 150px; }
 @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+.pick-avatar { margin-bottom: 8px; }
 </style>

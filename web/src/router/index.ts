@@ -23,6 +23,7 @@ const router = createRouter({
         { path: 'electives', name: 'admin-electives', component: () => import('../views/admin/ElectiveView.vue') },
         { path: 'settings', name: 'admin-settings', component: () => import('../views/admin/SettingsView.vue') },
         { path: 'tools', name: 'admin-tools', component: () => import('../views/admin/EmergencyToolsView.vue') },
+        { path: 'student-data', name: 'admin-student-data', component: () => import('../views/admin/StudentDataView.vue') },
         { path: 'users', name: 'admin-users', component: () => import('../views/admin/UserView.vue') },
         { path: 'permissions', name: 'admin-permissions', component: () => import('../views/admin/PermissionView.vue') },
         { path: 'import', name: 'admin-import', component: () => import('../views/admin/ImportView.vue') }

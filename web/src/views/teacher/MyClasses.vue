@@ -13,8 +13,12 @@
     </template>
     <el-empty v-if="!classId" description="请选择班级" />
     <el-table v-else v-loading="loading" :data="students" stripe>
+      <el-table-column label="照片" width="70">
+        <template #default="{ row }: { row: any }"><UserAvatar :user-id="row.hasAvatar ? row.id : undefined" :name="row.name" :size="36" /></template>
+      </el-table-column>
       <el-table-column prop="studentNo" label="学号" width="80" />
       <el-table-column prop="name" label="姓名" width="120" />
+      <el-table-column prop="gender" label="性别" width="60" />
       <el-table-column prop="xjh" label="学籍号" width="140" />
       <el-table-column prop="presentCount" label="出席次数" width="100" />
       <el-table-column prop="absentCount" label="缺席次数" width="100" />
@@ -23,6 +27,9 @@
         <template #default="{ row }: { row: any }">
           <el-button link type="primary" @click="showRecords(row)">课堂记录</el-button>
           <el-button link type="primary" @click="resetPwd(row)">重置密码</el-button>
+          <el-upload :show-file-list="false" accept="image/*" :http-request="(o: any) => uploadPhoto(row, o)" class="inline">
+            <el-button link type="primary">{{ row.hasAvatar ? '换照片' : '传照片' }}</el-button>
+          </el-upload>
         </template>
       </el-table-column>
     </el-table>
@@ -60,6 +67,8 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { attendanceLabel, attendanceTag, fmtTime } from '../../utils/format'
+import { refreshAvatars } from '../../utils/avatar'
+import UserAvatar from '../../components/UserAvatar.vue'
 
 const classes = ref<any[]>([])
 const classId = ref<number>()
@@ -70,6 +79,16 @@ const addForm = reactive({ name: '', studentNo: '', password: '' })
 const recordsVisible = ref(false)
 const recordsOf = ref<any>(null)
 const records = ref<any[]>([])
+
+async function uploadPhoto(row: any, o: any) {
+  try {
+    await api.upload(`/teacher/classes/${classId.value}/students/${row.id}/avatar`, o.file)
+    refreshAvatars()
+    await load()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 
 async function load() {
   if (!classId.value) return
@@ -122,4 +141,5 @@ onMounted(async () => {
 .card-head { display: flex; justify-content: space-between; align-items: center; }
 .left { display: flex; align-items: center; gap: 12px; }
 .w200 { width: 220px; }
+.inline { display: inline-block; margin-left: 12px; }
 </style>

@@ -44,6 +44,37 @@
           placeholder="讨论区、论坛中出现的敏感词将被替换为 *，多个用逗号分隔" />
       </el-form-item>
 
+      <el-divider content-position="left">登录页与学生权限</el-divider>
+      <el-form-item label="登录页公告">
+        <el-input v-model="form['site.notice']" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="显示在登录页，如机房使用须知、本周安排（留空不显示）" />
+      </el-form-item>
+      <el-form-item label="学生改密码">
+        <el-switch v-model="studentPassword" />
+        <span class="tip inline">关闭后学生不能自行修改密码，由老师或管理员重置</span>
+      </el-form-item>
+      <el-form-item label="学生传头像">
+        <el-switch v-model="studentAvatar" />
+        <span class="tip inline">默认关闭：学生头像由管理员或老师统一采集导入</span>
+      </el-form-item>
+
+      <el-divider content-position="left">第三方程序登录</el-divider>
+      <el-form-item label="开启">
+        <el-switch v-model="ssoEnabled" />
+        <span class="tip inline">允许学校的其他系统通过签名链接直接登录学生界面（原 weblogin 接口）</span>
+      </el-form-item>
+      <el-form-item label="签名密钥">
+        <el-input :model-value="form['sso.secret'] || '（未生成）'" readonly class="w420">
+          <template #append><el-button @click="newSecret">生成新密钥</el-button></template>
+        </el-input>
+      </el-form-item>
+      <el-form-item label="接入说明">
+        <div class="doc">
+          链接格式：<code>{{ origin }}/api/auth/sso?u=学籍号&amp;t=当前Unix秒&amp;s=签名[&amp;r=/student/页面]</code><br>
+          签名：<code>s = HMAC-SHA256(密钥, 学籍号 + "|" + t)</code> 的小写十六进制。链接 5 分钟内有效，只能使用一次；登录后进入学生首页（或 r 指定的学生页面）。<br>
+          密钥只保存在服务器和第三方系统中，不要放在网页里；生成新密钥后旧密钥立即失效。
+        </div>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" :loading="saving" @click="save">保存设置</el-button>
       </el-form-item>
@@ -70,6 +101,25 @@ const singleLogin = computed({
   get: () => form['login.singleSession'] === 'true',
   set: (v: boolean) => { form['login.singleSession'] = String(v) }
 })
+const bool = (k: string) => computed({
+  get: () => form[k] === 'true',
+  set: (v: boolean) => { form[k] = String(v) }
+})
+const studentPassword = bool('student.allowPasswordChange')
+const studentAvatar = bool('student.allowAvatarChange')
+const ssoEnabled = bool('sso.enabled')
+const origin = window.location.origin
+
+async function newSecret() {
+  try {
+    const r = await api.post('/admin/settings/sso-secret')
+    form['sso.secret'] = r.secret
+    ElMessage.success('已生成新密钥，请同步到第三方系统')
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
 const allowLate = computed({
   get: () => form['homework.allowLate'] === 'true',
   set: (v: boolean) => { form['homework.allowLate'] = String(v) }
@@ -103,4 +153,7 @@ onMounted(load)
 .form { max-width: 820px; }
 .tip { font-size: 12px; color: #909399; line-height: 1.6; margin-top: 4px; }
 .tip.inline { margin: 0 0 0 10px; }
+.w420 { width: 420px; }
+.doc { font-size: 12px; line-height: 1.8; color: var(--el-text-color-regular); }
+.doc code { background: var(--el-fill-color-light); padding: 1px 4px; border-radius: 3px; word-break: break-all; }
 </style>

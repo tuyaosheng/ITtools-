@@ -82,4 +82,20 @@ public class EmergencyToolsService {
                 + "WHERE (CAST(:kw AS TEXT) IS NULL OR c.name ILIKE '%' || CAST(:kw AS TEXT) || '%' OR u.name ILIKE '%' || CAST(:kw AS TEXT) || '%') ORDER BY c.created_at DESC LIMIT 200",
                 p("kw", keyword == null || keyword.trim().isEmpty() ? null : keyword.trim()));
     }
+
+    /** 学期修复（原 repairterm）：列出未划分学期的课堂。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> lessonsWithoutTerm() {
+        return jdbc.queryForList("SELECT l.id, c.name AS \"courseName\", k.name AS \"className\", t.name AS \"teacherName\", l.started_at AS \"startedAt\" "
+                + "FROM lesson l JOIN course c ON c.id = l.course_id JOIN klass k ON k.id = l.class_id JOIN users t ON t.id = l.teacher_id "
+                + "WHERE l.term_id IS NULL ORDER BY l.started_at DESC LIMIT 1000", p());
+    }
+
+    @Transactional
+    public int assignTerm(List<Long> lessonIds, Long termId) {
+        if (lessonIds == null || lessonIds.isEmpty()) throw new IllegalArgumentException("请选择课堂记录");
+        Long n = jdbc.queryForObject("SELECT COUNT(*) FROM teaching_term WHERE id = :t", p("t", termId), Long.class);
+        if (termId == null || n == null || n == 0) throw new IllegalArgumentException("请选择学期");
+        return jdbc.update("UPDATE lesson SET term_id = :t WHERE id IN (:ids) AND term_id IS NULL", p("t", termId, "ids", lessonIds));
+    }
 }

@@ -23,26 +23,36 @@
       <el-header class="admin-layout__header">
         <div class="admin-layout__spacer" />
         <div class="admin-layout__user">
-          <span class="admin-layout__username">{{ auth.user?.name }}</span>
+          <UserAvatar :user-id="auth.user?.userId" :name="auth.user?.displayName || auth.user?.name" :size="28" />
+          <span class="admin-layout__username">{{ auth.user?.displayName || auth.user?.name }}</span>
+          <el-button link @click="profileVisible = true">个人资料</el-button>
+          <el-button link @click="pwdVisible = true">修改密码</el-button>
           <el-button link @click="handleLogout">退出登录</el-button>
         </div>
       </el-header>
       <el-main class="admin-layout__main">
         <router-view />
       </el-main>
+      <ProfileDialog v-model="profileVisible" />
+      <ChangePasswordDialog v-model="pwdVisible" />
     </el-container>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElContainer, ElAside, ElHeader, ElMain, ElMenu, ElMenuItem, ElSubMenu, ElButton } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
+import ProfileDialog from '../components/ProfileDialog.vue'
+import ChangePasswordDialog from '../components/ChangePasswordDialog.vue'
+import UserAvatar from '../components/UserAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const profileVisible = ref(false)
+const pwdVisible = ref(false)
 
 const menuGroups = [
   {
@@ -51,7 +61,8 @@ const menuGroups = [
       { path: '/admin/school-years', label: '年级管理' },
       { path: '/admin/classes', label: '班级管理' },
       { path: '/admin/users', label: '用户管理' },
-      { path: '/admin/import', label: '批量导入' }
+      { path: '/admin/import', label: '批量导入' },
+      { path: '/admin/student-data', label: '学生数据维护' }
     ]
   },
   {

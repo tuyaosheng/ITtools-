@@ -18,8 +18,10 @@
         <slot name="header-left" />
         <div class="spacer" />
         <div class="user">
+          <UserAvatar :user-id="auth.user?.userId" :name="auth.user?.displayName || auth.user?.name" :size="28" class="avatar" @click="profileVisible = true" />
           <span class="name">{{ auth.user?.displayName || auth.user?.name }}</span>
           <span v-if="extraInfo" class="extra">{{ extraInfo }}</span>
+          <el-button link @click="profileVisible = true">个人资料</el-button>
           <el-button link @click="pwdVisible = true">修改密码</el-button>
           <el-button link @click="logout">退出</el-button>
         </div>
@@ -29,6 +31,7 @@
       </el-main>
     </el-container>
     <ChangePasswordDialog v-model="pwdVisible" />
+    <ProfileDialog v-model="profileVisible" />
   </el-container>
 </template>
 
@@ -38,9 +41,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../api/client'
 import ChangePasswordDialog from '../components/ChangePasswordDialog.vue'
+import ProfileDialog from '../components/ProfileDialog.vue'
+import UserAvatar from '../components/UserAvatar.vue'
 
 export interface MenuItem { path: string; label: string; badge?: number | string }
 
+const profileVisible = ref(false)
 const props = defineProps<{ brand: string; menu: MenuItem[]; extraInfo?: string }>()
 const route = useRoute()
 const router = useRouter()
@@ -85,4 +91,5 @@ onMounted(async () => {
   .role-layout__aside { width: 64px !important; }
   .brand-sub { display: none; }
 }
+.avatar { cursor: pointer; margin-right: 6px; }
 </style>

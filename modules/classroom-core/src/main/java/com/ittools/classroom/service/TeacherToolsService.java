@@ -34,7 +34,7 @@ public class TeacherToolsService {
     public List<Map<String, Object>> students(Long teacherId, Long classId) {
         requireClass(teacherId, classId);
         return jdbc.queryForList(
-                "SELECT s.id, s.name, s.student_no AS \"studentNo\", s.xjh, s.enabled, "
+                "SELECT s.id, s.name, s.student_no AS \"studentNo\", s.xjh, s.enabled, s.gender, s.avatar_path IS NOT NULL AS \"hasAvatar\", "
                         + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.student_id = s.id AND a.status = 'PRESENT') AS \"presentCount\", "
                         + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.student_id = s.id AND a.status = 'ABSENT') AS \"absentCount\", "
                         + "(SELECT ROUND(AVG(a.score), 1) FROM lesson_attendance a WHERE a.student_id = s.id AND a.score IS NOT NULL) AS \"avgScore\" "

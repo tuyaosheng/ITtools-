@@ -33,6 +33,7 @@ public class SettingsController {
         Map<String, String> m = new HashMap<>();
         m.put("schoolName", svc.get(SystemSettingService.SCHOOL_NAME));
         m.put("loginMode", svc.get(SystemSettingService.LOGIN_MODE));
+        m.put("notice", svc.get(SystemSettingService.SITE_NOTICE));
         return ApiResponse.ok(m);
     }
 }

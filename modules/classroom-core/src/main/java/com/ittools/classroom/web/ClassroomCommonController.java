@@ -32,11 +32,14 @@ public class ClassroomCommonController {
     private final ClassBindingService bindings;
     private final FileStorageService storage;
     private final com.ittools.classroom.service.EmergencyToolsService tools;
+    private final com.ittools.classroom.service.GraduationService graduation;
 
     public ClassroomCommonController(CourseService courses, LessonService lessons, TermService terms,
                                      ClassBindingService bindings, FileStorageService storage,
-                                     com.ittools.classroom.service.EmergencyToolsService tools) {
+                                     com.ittools.classroom.service.EmergencyToolsService tools,
+                                     com.ittools.classroom.service.GraduationService graduation) {
         this.tools = tools;
+        this.graduation = graduation;
         this.courses = courses;
         this.lessons = lessons;
         this.terms = terms;
@@ -100,6 +103,33 @@ public class ClassroomCommonController {
     @GetMapping("/api/admin/lessons/active")
     public ApiResponse<List<Map<String, Object>>> activeLessons() {
         return ApiResponse.ok(lessons.activeLessons());
+    }
+
+    // ---- 管理员：毕业生管理 ----
+    @GetMapping("/api/admin/graduation")
+    public ApiResponse<List<Map<String, Object>>> graduationSummary() {
+        return ApiResponse.ok(graduation.summary());
+    }
+
+    @PostMapping("/api/admin/graduation/classes")
+    public ApiResponse<Integer> graduate(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(graduation.setGraduated(Body.of(body).longs("classIds"), !Boolean.FALSE.equals(body.get("graduated"))));
+    }
+
+    @PostMapping("/api/admin/graduation/release")
+    public ApiResponse<Map<String, Object>> release(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(graduation.release(Body.of(body).longs("classIds")));
+    }
+
+    // ---- 管理员：学期修复（原 repairterm：未划分学期的课堂记录） ----
+    @GetMapping("/api/admin/tools/lessons-without-term")
+    public ApiResponse<List<Map<String, Object>>> lessonsWithoutTerm() {
+        return ApiResponse.ok(tools.lessonsWithoutTerm());
+    }
+
+    @PostMapping("/api/admin/tools/lessons-without-term")
+    public ApiResponse<Integer> assignTerm(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(tools.assignTerm(Body.of(body).longs("lessonIds"), Body.of(body).lng("termId")));
     }
 
     // ---- 管理员：应急工具 ----

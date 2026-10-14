@@ -54,6 +54,17 @@ public class MultiLoginAuthenticationProvider {
                 u.getName(), classId);
     }
 
+    /** 第三方程序登录：签名已校验，按学籍号取学生（不校验密码，其余限制相同）。 */
+    @Transactional(readOnly = true)
+    public AppUserDetails studentByXjh(String xjh) throws AuthenticationException {
+        User u = users.findByXjh(xjh).filter(x -> x.getRole() == Role.STUDENT)
+                .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
+        if (!u.isEnabled()) throw new DisabledException("账号已禁用");
+        if (u.isGraduated()) throw new DisabledException("学生已毕业");
+        Long classId = u.getKlass() == null ? null : u.getKlass().getId();
+        return new AppUserDetails(u.getId(), u.getXjh(), u.getPasswordHash(), u.getRole(), u.isEnabled(), u.getName(), classId);
+    }
+
     private Optional<User> resolve(LoginRequest req) {
         String loginType = req.loginType();
         if (loginType == null) {

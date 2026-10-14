@@ -34,11 +34,14 @@ public class TeacherClassroomController {
     private final TeacherToolsService tools;
     private final com.ittools.platform.service.LoginLogService loginLogService;
     private final com.ittools.classroom.service.EmergencyToolsService emergency;
+    private final com.ittools.platform.service.ProfileService profiles;
 
     public TeacherClassroomController(CourseService courses, LessonService lessons, TermService terms,
                                       ClassBindingService bindings, TeacherToolsService tools,
                                       com.ittools.platform.service.LoginLogService loginLogService,
-                                      com.ittools.classroom.service.EmergencyToolsService emergency) {
+                                      com.ittools.classroom.service.EmergencyToolsService emergency,
+                                      com.ittools.platform.service.ProfileService profiles) {
+        this.profiles = profiles;
         this.loginLogService = loginLogService;
         this.emergency = emergency;
         this.courses = courses;
@@ -202,6 +205,27 @@ public class TeacherClassroomController {
     }
 
     // ---- 我的班级 ----
+    /** 教师为本班学生上传/删除头像（原 teacher/stuphoto）。 */
+    @PostMapping("/classes/{classId}/students/{studentId}/avatar")
+    public ApiResponse<Void> studentAvatar(@PathVariable Long classId, @PathVariable Long studentId,
+                                           @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        requireStudentOfClass(classId, studentId);
+        profiles.setAvatar(studentId, file.getBytes());
+        return ApiResponse.ok(null);
+    }
+
+    @DeleteMapping("/classes/{classId}/students/{studentId}/avatar")
+    public ApiResponse<Void> removeStudentAvatar(@PathVariable Long classId, @PathVariable Long studentId) {
+        requireStudentOfClass(classId, studentId);
+        profiles.removeAvatar(studentId);
+        return ApiResponse.ok(null);
+    }
+
+    private void requireStudentOfClass(Long classId, Long studentId) {
+        boolean found = tools.students(CurrentUser.id(), classId).stream().anyMatch(s -> ((Number) s.get("id")).longValue() == studentId);
+        if (!found) throw new IllegalArgumentException("该学生不在本班");
+    }
+
     @GetMapping("/classes/{classId}/students")
     public ApiResponse<List<Map<String, Object>>> students(@PathVariable Long classId) {
         return ApiResponse.ok(tools.students(CurrentUser.id(), classId));

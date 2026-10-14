@@ -27,6 +27,14 @@ public class SystemSettingService {
     public static final String SENSITIVE_WORDS = "interact.sensitiveWords";
     /** 学生账号只允许一处登录（再次登录时旧电脑下线） */
     public static final String SINGLE_LOGIN = "login.singleSession";
+    /** 登录页公告 */
+    public static final String SITE_NOTICE = "site.notice";
+    /** 学生可自行修改密码 / 上传头像 */
+    public static final String STUDENT_PASSWORD = "student.allowPasswordChange";
+    public static final String STUDENT_AVATAR = "student.allowAvatarChange";
+    /** 第三方程序登录（原 weblogin.aspx）：开关与签名密钥 */
+    public static final String SSO_ENABLED = "sso.enabled";
+    public static final String SSO_SECRET = "sso.secret";
 
     public static final List<String> LOGIN_MODES = Arrays.asList("NORMAL", "OPEN_CLASS", "XJH", "FIXED_SEAT");
 
@@ -40,6 +48,11 @@ public class SystemSettingService {
         DEFAULTS.put(UPLOAD_MAX_MB, "50");
         DEFAULTS.put(SENSITIVE_WORDS, "");
         DEFAULTS.put(SINGLE_LOGIN, "true");
+        DEFAULTS.put(SITE_NOTICE, "");
+        DEFAULTS.put(STUDENT_PASSWORD, "true");
+        DEFAULTS.put(STUDENT_AVATAR, "false");
+        DEFAULTS.put(SSO_ENABLED, "false");
+        DEFAULTS.put(SSO_SECRET, "");
     }
 
     private final SystemSettingRepository repo;
@@ -84,6 +97,8 @@ public class SystemSettingService {
             if (LOGIN_MODE.equals(e.getKey()) && !LOGIN_MODES.contains(v)) {
                 throw new IllegalArgumentException("无效的工作模式：" + v);
             }
+            if (SITE_NOTICE.equals(e.getKey()) && v.length() > 1000) throw new IllegalArgumentException("公告不超过 1000 字");
+            if (SSO_SECRET.equals(e.getKey()) && !v.isEmpty() && v.length() < 16) throw new IllegalArgumentException("密钥至少 16 位");
             if ((DISK_QUOTA_MB.equals(e.getKey()) || UPLOAD_MAX_MB.equals(e.getKey())) && !v.matches("\\d{1,6}")) {
                 throw new IllegalArgumentException("容量必须是正整数");
             }

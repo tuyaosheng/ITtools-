@@ -47,6 +47,24 @@
         </el-table>
       </el-tab-pane>
 
+      <el-tab-pane label="学期修复" name="term">
+        <p class="desc">调整学期设置后，可能有课堂记录没有划分学期（报表按学期筛选时查不到）。选中这些记录并指定学期。</p>
+        <div class="bar">
+          <el-button @click="loadNoTerm">查询未划分学期的课堂</el-button>
+          <el-select v-model="fixTermId" placeholder="选择学期" class="w180">
+            <el-option v-for="t in terms" :key="t.id" :label="t.label" :value="t.id" />
+          </el-select>
+          <el-button type="primary" :disabled="!termSel.length || !fixTermId" @click="assignTerm">划分到该学期（{{ termSel.length }}）</el-button>
+        </div>
+        <el-table :data="noTerm" size="small" stripe max-height="480" empty-text="点击查询" @selection-change="(v: any[]) => (termSel = v)">
+          <el-table-column type="selection" width="36" />
+          <el-table-column prop="courseName" label="课程" min-width="160" />
+          <el-table-column prop="className" label="班级" width="120" />
+          <el-table-column prop="teacherName" label="教师" width="100" />
+          <el-table-column label="上课时间" width="160"><template #default="{ row }: { row: any }">{{ fmtTime(row.startedAt) }}</template></el-table-column>
+        </el-table>
+      </el-tab-pane>
+
       <el-tab-pane label="强制删除课程" name="course">
         <p class="desc">删除已经有开课记录的课程，连同它的全部课堂和学习记录（考勤、作品、测验等）。教师自己只能删除没有开课记录的课程。删除后无法恢复，建议先备份数据库。</p>
         <div class="bar">
@@ -97,6 +115,17 @@ async function run<T>(fn: () => Promise<T>, ok?: (r: T) => string) {
   } catch (err) {
     ElMessage.error(errMsg(err))
   }
+}
+
+const noTerm = ref<any[]>([])
+const termSel = ref<any[]>([])
+const fixTermId = ref<number>()
+
+async function loadNoTerm() { noTerm.value = (await run(() => api.get('/admin/tools/lessons-without-term'))) || [] }
+
+async function assignTerm() {
+  await run(() => api.post<number>('/admin/tools/lessons-without-term', { lessonIds: termSel.value.map(r => r.id), termId: fixTermId.value }), n => `已划分 ${n} 条课堂记录`)
+  await loadNoTerm()
 }
 
 const endAll = () => run(() => api.post<number>('/admin/tools/end-all'), n => `已让 ${n} 个课堂下课`)

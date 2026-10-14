@@ -76,6 +76,8 @@
                 <div v-for="c in seatMap.room.cols" :key="`${r}-${c}`" class="seat" :class="seatClass(r, c)">
                   <template v-if="seatAt(r, c)">
                     <div class="pc">{{ seatAt(r, c).pcName }}</div>
+                    <UserAvatar v-if="studentAt(seatAt(r, c).pcName)" :user-id="studentAt(seatAt(r, c).pcName).hasAvatar ? studentAt(seatAt(r, c).pcName).studentId : undefined"
+                      :name="studentAt(seatAt(r, c).pcName).name" :size="30" />
                     <div class="who">{{ studentAt(seatAt(r, c).pcName)?.name || '空闲' }}</div>
                     <div v-if="studentAt(seatAt(r, c).pcName)?.groupNo" class="grp">第 {{ studentAt(seatAt(r, c).pcName).groupNo }} 组</div>
                     <div v-if="studentAt(seatAt(r, c).pcName)" class="flags">
@@ -140,6 +142,7 @@
 </template>
 
 <script setup lang="ts">
+import UserAvatar from '../../components/UserAvatar.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

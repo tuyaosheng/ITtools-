@@ -16,10 +16,12 @@ import java.util.Map;
 public class AccountController {
     private final UserRepository users;
     private final PasswordEncoder encoder;
+    private final com.ittools.platform.settings.SystemSettingService settings;
 
-    public AccountController(UserRepository users, PasswordEncoder encoder) {
+    public AccountController(UserRepository users, PasswordEncoder encoder, com.ittools.platform.settings.SystemSettingService settings) {
         this.users = users;
         this.encoder = encoder;
+        this.settings = settings;
     }
 
     @PostMapping("/api/account/password")
@@ -31,6 +33,10 @@ public class AccountController {
             throw new IllegalArgumentException("新密码至少 4 位");
         }
         User u = users.findById(CurrentUser.id()).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        if (u.getRole() == com.ittools.platform.domain.Role.STUDENT
+                && !settings.getBool(com.ittools.platform.settings.SystemSettingService.STUDENT_PASSWORD)) {
+            throw new IllegalArgumentException("系统未开放学生自行修改密码，请联系老师");
+        }
         if (oldPw == null || !encoder.matches(oldPw, u.getPasswordHash())) {
             throw new IllegalArgumentException("原密码不正确");
         }

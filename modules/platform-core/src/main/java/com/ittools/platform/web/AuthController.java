@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,11 +45,14 @@ public class AuthController {
     private static final String LOG_ATTR = "ittools.loginLogId";
     private final com.ittools.platform.security.SessionTracker sessions;
     private final com.ittools.platform.settings.SystemSettingService settings;
+    private final com.ittools.platform.security.SsoService sso;
     private final SecurityContextRepository repo = new HttpSessionSecurityContextRepository();
 
     public AuthController(MultiLoginAuthenticationProvider provider, LookupService lookups,
                           java.util.Optional<List<LoginPolicy>> policies, com.ittools.platform.service.LoginLogService loginLogs,
-                          com.ittools.platform.security.SessionTracker sessions, com.ittools.platform.settings.SystemSettingService settings) {
+                          com.ittools.platform.security.SessionTracker sessions, com.ittools.platform.settings.SystemSettingService settings,
+                          com.ittools.platform.security.SsoService sso) {
+        this.sso = sso;
         this.loginLogs = loginLogs;
         this.sessions = sessions;
         this.settings = settings;
@@ -61,6 +65,36 @@ public class AuthController {
     public ApiResponse<Map<String, Object>> login(@RequestBody LoginRequest req,
                                                     HttpServletRequest request, HttpServletResponse response) {
         AppUserDetails ud = provider.authenticate(req);
+        establish(ud, request, response);
+        return ApiResponse.ok(principalPayload(ud));
+    }
+
+    /**
+     * 第三方程序登录学生界面（原 weblogin.aspx?id=&checknum=）。第三方程序与平台共享密钥，生成一次性签名链接：
+     * /api/auth/sso?u=学籍号&t=Unix秒&s=HMAC-SHA256(密钥, "学籍号|t") 的十六进制，5 分钟内有效且只能使用一次。
+     */
+    @GetMapping("/sso")
+    public void sso(@RequestParam("u") String u, @RequestParam("t") long t, @RequestParam("s") String sig,
+                    @RequestParam(value = "r", required = false) String target,
+                    HttpServletRequest request, HttpServletResponse response) throws java.io.IOException {
+        String error = sso.verify(u, t, sig);
+        if (error == null) {
+            try {
+                AppUserDetails ud = provider.studentByXjh(u);
+                establish(ud, request, response);
+            } catch (RuntimeException e) {
+                error = e.getMessage();
+            }
+        }
+        if (error != null) {
+            response.sendRedirect("/login?sso=" + java.net.URLEncoder.encode(error, "UTF-8"));
+            return;
+        }
+        String go = target != null && target.startsWith("/student/") && !target.contains("//") && !target.contains("\\") ? target : "/student/home";
+        response.sendRedirect(go);
+    }
+
+    private void establish(AppUserDetails ud, HttpServletRequest request, HttpServletResponse response) {
         String ip = ClientIp.of(request);
         for (LoginPolicy p : policies) {
             p.check(ud, ip);
@@ -89,7 +123,6 @@ public class AuthController {
             }
         }
         sessions.register(ud.userId(), request.getSession());
-        return ApiResponse.ok(principalPayload(ud));
     }
 
     @PostMapping("/logout")
