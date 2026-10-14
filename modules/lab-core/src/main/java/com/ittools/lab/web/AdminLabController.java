@@ -131,6 +131,21 @@ public class AdminLabController {
         return ApiResponse.ok(network.test());
     }
 
+    /** 座位图上的网络状态（未启用网络控制器时 enabled=false）。 */
+    @GetMapping("/network/status")
+    public ApiResponse<Map<String, Object>> networkStatus() {
+        return ApiResponse.ok(network.overview());
+    }
+
+    /** 座位图批量操作：action = open（恢复网络）| cut（暂停网络）。 */
+    @PostMapping("/network/batch")
+    public ApiResponse<Map<String, Object>> networkBatch(@RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        String action = b.str("action");
+        if (!"open".equals(action) && !"cut".equals(action)) throw new IllegalArgumentException("操作无效");
+        return ApiResponse.ok(network.setIps(b.strs("ips"), "open".equals(action)));
+    }
+
     @GetMapping("/group-models")
     public ApiResponse<List<Map<String, Object>>> groupModels() {
         return ApiResponse.ok(groups.list());

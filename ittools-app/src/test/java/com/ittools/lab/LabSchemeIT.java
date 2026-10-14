@@ -177,6 +177,21 @@ class LabSchemeIT extends AbstractPostgresIT {
             assertThat(network.lastCommands()).containsEntry("10.72.0.12", true);
             assertThat(network.statusByIp().get("10.72.0.12").get("netState")).isEqualTo("disconnect");
 
+            // 座位图：状态总览 + 批量断网（坏 IP 单独记失败，不影响其它）
+            JsonNode st = call(a, HttpMethod.GET, "/api/admin/lab/network/status", null);
+            assertThat(st.get("enabled").asBoolean()).isTrue();
+            assertThat(st.get("reachable").asBoolean()).isTrue();
+            assertThat(st.get("status").get("10.72.0.11").get("online").asBoolean()).isTrue();
+            assertThat(st.get("last").get("10.72.0.12").asBoolean()).isTrue();
+            JsonNode batch = call(a, HttpMethod.POST, "/api/admin/lab/network/batch",
+                    map("action", "cut", "ips", new String[]{"10.72.0.11", "10.72.0.12", "not-an-ip"}));
+            assertThat(batch.get("count").asInt()).isEqualTo(2);
+            assertThat(batch.get("failed").toString()).isEqualTo("[\"not-an-ip\"]");
+            assertThat(hits).contains("POST /api/network/disable_ip?ip=10.72.0.11");
+            assertThat(network.lastCommands()).containsEntry("10.72.0.11", false).containsEntry("10.72.0.12", false);
+            assertThat(raw(a, HttpMethod.POST, "/api/admin/lab/network/batch", map("action", "boom", "ips", new String[]{"10.72.0.11"}))
+                    .getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
             call(a, HttpMethod.PUT, "/api/admin/settings", map("net.ctrToken", "wrong"));
             assertThat(call(a, HttpMethod.GET, "/api/admin/lab/network/test", null).get("error").asText()).contains("令牌不正确");
             assertThatThrownBy(() -> network.setIp("10.72.0.12", false)).hasMessageContaining("令牌不正确");

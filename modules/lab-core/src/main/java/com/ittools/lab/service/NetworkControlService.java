@@ -98,6 +98,39 @@ public class NetworkControlService {
         return m;
     }
 
+    /** 座位图用：是否启用、能否连上、各被控端状态、本平台最后下发的指令。 */
+    public Map<String, Object> overview() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        boolean on = enabled();
+        out.put("enabled", on);
+        Map<String, Map<String, Object>> st = on ? statusByIp() : null;
+        out.put("reachable", st != null);
+        out.put("status", st == null ? new HashMap<>() : st);
+        out.put("last", lastCommands());
+        return out;
+    }
+
+    /** 批量开网 / 断网：逐台下发，返回成功台数和失败的 IP（一台失败不影响其它）。 */
+    public Map<String, Object> setIps(List<String> ips, boolean on) {
+        requireEnabled();
+        if (ips == null || ips.isEmpty()) throw new IllegalArgumentException("请先选择电脑");
+        int ok = 0;
+        List<String> failed = new ArrayList<>();
+        for (String ip : ips) {
+            try {
+                setIp(ip, on);
+                ok++;
+            } catch (RuntimeException e) {
+                failed.add(ip);
+                log.debug("{} {} 失败：{}", on ? "开网" : "断网", ip, e.getMessage());
+            }
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("count", ok);
+        out.put("failed", failed);
+        return out;
+    }
+
     /** 测试连接：健康检查 + 被控端数量。 */
     public Map<String, Object> test() {
         Map<String, Object> out = new LinkedHashMap<>();

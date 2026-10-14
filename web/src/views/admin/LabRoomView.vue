@@ -33,44 +33,85 @@
     <el-card shadow="never" class="main">
       <template #header>
         <div class="card-head">
-          <span>{{ current ? `座位布局 · ${current.name}` : '座位布局' }}</span>
-          <div v-if="current">
-            <el-button size="small" :type="swapMode ? 'warning' : 'default'" @click="toggleSwap">{{ swapMode ? '退出交换IP' : '交换两台的IP' }}</el-button>
-            <el-button size="small" @click="autoFill">按计算机名自动排布</el-button>
-            <el-button size="small" type="primary" :loading="saving" @click="saveLayout">保存布局</el-button>
+          <span>{{ current ? `座位图 · ${current.name}` : '座位图' }}</span>
+          <div v-if="current" class="head-chips">
+            <span class="chip">{{ placed.length }} 台机位</span>
+            <span v-if="net.enabled" class="chip" :class="net.reachable ? 'ok' : 'bad'">
+              {{ net.reachable ? `网络控制器已连接 · ${onlineCount} 台开机` : '连不上网络控制器' }}
+            </span>
           </div>
         </div>
       </template>
       <el-empty v-if="!current" description="选择左侧的机房" />
       <template v-else>
-        <el-alert v-if="swapMode" type="warning" :closable="false" class="mb"
-          :title="swapPick ? `已选 ${wsName(swapPick)}，再点另一台电脑完成交换` : '依次点两台电脑，交换它们的 IP'" />
-        <div class="podium">讲 台</div>
-        <div class="grid" :style="{ gridTemplateColumns: `repeat(${current.cols}, minmax(96px, 1fr))` }">
-          <template v-for="r in current.rows" :key="'r' + r">
-            <div v-for="c in current.cols" :key="`${r}-${c}`" class="cell"
-              :class="{ filled: !!cells[key(r, c)], picked: swapMode && !!swapPick && swapPick === cells[key(r, c)], swappable: swapMode && !!cells[key(r, c)] }"
-              @click="swapMode && pickSwap(cells[key(r, c)])">
-              <div class="pos">{{ r }}-{{ c }}<span v-if="cells[key(r, c)]" class="ip">{{ wsIp(cells[key(r, c)]) }}</span></div>
-              <el-select
-                v-model="cells[key(r, c)]"
-                size="small"
-                clearable
-                filterable
-                placeholder="空"
-                class="cell-select"
-                :disabled="swapMode"
-              >
-                <el-option
-                  v-for="w in workstations"
-                  :key="w.id"
-                  :label="`${w.pcName}（${w.ipAddress}）`"
-                  :value="w.id"
-                  :disabled="isUsedElsewhere(w.id, r, c)"
-                />
-              </el-select>
-            </div>
+        <!-- 平时只看；“管理”才能点选座位做批量操作，“调整机位”才能改哪台电脑放在哪个格子 -->
+        <div class="seatbar">
+          <template v-if="mode === 'view'">
+            <el-button size="small" type="primary" @click="setMode('manage')">管理</el-button>
+            <el-button size="small" @click="setMode('edit')">调整机位</el-button>
+            <el-button size="small" @click="openScheme(current)">方案设置</el-button>
           </template>
+          <template v-else-if="mode === 'manage'">
+            <el-button size="small" @click="selectWhere(() => true)">全选</el-button>
+            <el-button v-if="net.reachable" size="small" @click="selectWhere(w => isOnline(w))">已开机</el-button>
+            <el-button v-if="net.enabled" size="small" @click="selectWhere(w => netOf(w) === 'off')">已断网</el-button>
+            <el-button size="small" @click="selected = new Set()">清空</el-button>
+            <span class="muted">点座位选中，可多选</span>
+          </template>
+          <template v-else>
+            <el-button size="small" @click="autoFill">按计算机名自动排布</el-button>
+            <el-button size="small" type="primary" :loading="saving" @click="saveLayout">保存布局</el-button>
+            <el-button size="small" @click="cancelEdit">完成</el-button>
+            <span class="muted">在格子里选这台电脑；空格就是过道</span>
+          </template>
+          <span class="grow" />
+          <el-button v-if="net.enabled" link type="primary" size="small" @click="loadNet">刷新网络状态</el-button>
+        </div>
+
+        <div class="podium">讲 台</div>
+        <div class="seatgrid" :class="{ managing: mode === 'manage' }"
+          :style="{ gridTemplateColumns: `repeat(${current.cols}, minmax(${mode === 'edit' ? 104 : 78}px, 1fr))` }">
+          <template v-for="r in current.rows" :key="'r' + r">
+            <template v-for="c in current.cols" :key="`${r}-${c}`">
+              <div v-if="mode === 'edit'" class="cell" :class="{ filled: !!cells[key(r, c)] }">
+                <div class="pos">{{ r }}-{{ c }}<span v-if="cells[key(r, c)]" class="ip">{{ ipTail(ws(cells[key(r, c)])) }}</span></div>
+                <el-select v-model="cells[key(r, c)]" size="small" clearable filterable placeholder="空" class="cell-select">
+                  <el-option v-for="w in workstations" :key="w.id" :label="`${w.pcName}（${w.ipAddress}）`" :value="w.id"
+                    :disabled="isUsedElsewhere(w.id, r, c)" />
+                </el-select>
+              </div>
+              <div v-else-if="ws(cells[key(r, c)])" class="seat" :class="seatClass(ws(cells[key(r, c)]))"
+                :title="`${ws(cells[key(r, c)]).pcName}  IP ${ws(cells[key(r, c)]).ipAddress}  第${r}排第${c}列`"
+                @click="toggleSel(cells[key(r, c)])">
+                <div class="no"><span>{{ r }}-{{ c }}</span><span>{{ ipTail(ws(cells[key(r, c)])) }}</span></div>
+                <div class="nm">{{ ws(cells[key(r, c)]).pcName }}</div>
+                <div class="sub">{{ hostOf(ws(cells[key(r, c)])) }}</div>
+                <div class="state">
+                  <span v-if="net.reachable" class="pw" :class="isOnline(ws(cells[key(r, c)])) ? 'on' : 'off'">
+                    {{ isOnline(ws(cells[key(r, c)])) ? '● 开机' : '○ 关机' }}
+                  </span>
+                  <span v-if="net.enabled" class="net" :class="netOf(ws(cells[key(r, c)]))">{{ netText(ws(cells[key(r, c)])) }}</span>
+                </div>
+              </div>
+              <div v-else class="seat gap" />
+            </template>
+          </template>
+        </div>
+        <div class="legend">
+          每个座位：排-列、IP 末段、计算机名<template v-if="net.enabled">、开机状态、网络（🌐已开 ⛔已断 —没下发过）</template>。
+          <Hint>网络状态是本平台最后一次给这台电脑下发的指令，不是实时探测；开机状态来自网络控制器。<template v-if="!net.enabled">在“系统设置 → 网络控制器”启用后，这里可以批量开网 / 断网。</template></Hint>
+        </div>
+        <div v-if="unplaced.length && mode !== 'edit'" class="legend warn">
+          还有 {{ unplaced.length }} 台同前缀的机位没放进座位图：{{ unplaced.slice(0, 12).map(w => w.pcName).join('、') }}{{ unplaced.length > 12 ? '…' : '' }}（点“调整机位”放进去）
+        </div>
+
+        <div v-if="mode === 'manage' && selected.size" class="batchbar">
+          <b>已选 {{ selected.size }} 台</b>
+          <el-button size="small" :disabled="!net.enabled" @click="batchNet('cut')">暂停网络</el-button>
+          <el-button size="small" type="primary" :disabled="!net.enabled" @click="batchNet('open')">恢复网络</el-button>
+          <el-button v-if="selected.size === 2" size="small" @click="swapSelected">交换这两台的 IP</el-button>
+          <span class="grow" />
+          <el-button size="small" @click="setMode('view')">完成</el-button>
         </div>
       </template>
     </el-card>
@@ -152,6 +193,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
+import Hint from '../../components/Hint.vue'
 
 interface Room { id: number; name: string; rows: number; cols: number; assigned: number }
 
@@ -178,6 +220,7 @@ async function loadRooms() {
 
 async function select(id: number) {
   currentId.value = id
+  selected.value = new Set()
   Object.keys(cells).forEach(k => delete cells[k])
   const layout: any[] = await api.get(`/admin/lab/rooms/${id}/layout`)
   layout.forEach(s => { cells[key(s.row, s.col)] = s.workstationId })
@@ -373,37 +416,95 @@ async function saveScheme() {
   }
 }
 
-// ---- 交换两台的 IP ----
-const swapMode = ref(false)
-const swapPick = ref<number | null>(null)
+// ---- 座位图：查看 / 管理（多选、批量开断网、交换 IP）/ 调整机位 ----
+const mode = ref<'view' | 'manage' | 'edit'>('view')
+const selected = ref<Set<number>>(new Set())
+const net = reactive<{ enabled: boolean; reachable: boolean; status: Record<string, any>; last: Record<string, boolean> }>(
+  { enabled: false, reachable: false, status: {}, last: {} })
 
-function toggleSwap() {
-  swapMode.value = !swapMode.value
-  swapPick.value = null
+const ws = (id: number | null | undefined) => (id ? workstations.value.find(w => w.id === id) : undefined)
+const ipTail = (w: any) => (w?.ipAddress ? '.' + w.ipAddress.split('.').pop() : '')
+const placed = computed(() => Object.values(cells).filter((v): v is number => !!v).map(id => ws(id)).filter(Boolean) as any[])
+const unplaced = computed(() => {
+  const ids = new Set(placed.value.map(w => w.id))
+  // 只提示和本机房同前缀的机位，别的机房的不算
+  const prefix = placed.value[0]?.pcName.replace(/\d+$/, '')
+  return prefix ? workstations.value.filter(w => !ids.has(w.id) && w.pcName.replace(/\d+$/, '') === prefix) : []
+})
+const isOnline = (w: any) => !!net.status[w?.ipAddress]?.online
+const onlineCount = computed(() => placed.value.filter(isOnline).length)
+function netOf(w: any): 'on' | 'off' | 'unk' {
+  const v = net.last[w?.ipAddress]
+  return v === true ? 'on' : v === false ? 'off' : 'unk'
+}
+const netText = (w: any) => ({ on: '🌐已开', off: '⛔已断', unk: '—' }[netOf(w)])
+const hostOf = (w: any) => net.status[w?.ipAddress]?.hostname || w?.ipAddress || ''
+const seatClass = (w: any) => ({
+  sel: selected.value.has(w.id),
+  on: net.reachable && isOnline(w),
+  cut: netOf(w) === 'off',
+})
+
+function setMode(m: 'view' | 'manage' | 'edit') {
+  mode.value = m
+  selected.value = new Set()
 }
 
-const wsName = (id: number | null | undefined) => workstations.value.find(w => w.id === id)?.pcName || ''
-function wsIp(id: number | null | undefined) {
-  const ip: string = workstations.value.find(w => w.id === id)?.ipAddress || ''
-  return ip ? '.' + ip.split('.').pop() : ''
+async function cancelEdit() {
+  if (current.value) await select(current.value.id)   // 没保存的改动丢掉，回到已保存的布局
+  setMode('view')
 }
 
-async function pickSwap(id: number | null | undefined) {
-  if (!id) return
-  if (!swapPick.value || swapPick.value === id) {
-    swapPick.value = swapPick.value === id ? null : id
-    return
-  }
-  const a = swapPick.value
+function toggleSel(id: number | null) {
+  if (mode.value !== 'manage' || !id) return
+  const s = new Set(selected.value)
+  if (s.has(id)) s.delete(id)
+  else s.add(id)
+  selected.value = s
+}
+
+function selectWhere(fn: (w: any) => boolean) {
+  selected.value = new Set(placed.value.filter(fn).map(w => w.id))
+}
+
+async function loadNet() {
   try {
-    await ElMessageBox.confirm(`交换 ${wsName(a)} 与 ${wsName(id)} 的 IP？`, '交换IP', { type: 'warning' })
+    Object.assign(net, await api.get('/admin/lab/network/status'))
+  } catch {
+    net.enabled = false
+  }
+}
+
+async function batchNet(action: 'open' | 'cut') {
+  const list = placed.value.filter(w => selected.value.has(w.id))
+  const label = action === 'open' ? '恢复网络' : '暂停网络'
+  try {
+    await ElMessageBox.confirm(`对选中的 ${list.length} 台执行「${label}」？` + (list.length <= 8 ? `\n${list.map(w => w.pcName).join('、')}` : ''), label, { type: 'warning' })
   } catch {
     return
   }
   try {
-    await api.post('/admin/lab/workstations/swap-ip', { a, b: id })
+    const r: any = await api.post('/admin/lab/network/batch', { action, ips: list.map(w => w.ipAddress) })
+    if (r.failed?.length) ElMessage.warning(`已完成 ${r.count} 台，失败 ${r.failed.length} 台：${r.failed.join('、')}`)
+    else ElMessage.success(`已完成 ${r.count} 台`)
+    await loadNet()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
+async function swapSelected() {
+  const [a, b] = [...selected.value]
+  const wa = ws(a), wb = ws(b)
+  try {
+    await ElMessageBox.confirm(`把 ${wa?.pcName}（${wa?.ipAddress}）和 ${wb?.pcName}（${wb?.ipAddress}）的 IP 互换？\n两台电脑实际位置和 IP 对不上时用。`, '交换IP', { type: 'warning' })
+  } catch {
+    return
+  }
+  try {
+    await api.post('/admin/lab/workstations/swap-ip', { a, b })
     workstations.value = await api.get('/admin/lab-workstations')
-    swapPick.value = null
+    selected.value = new Set()
     ElMessage.success('已交换')
   } catch (err) {
     ElMessage.error(errMsg(err))
@@ -414,12 +515,14 @@ onMounted(async () => {
   await loadRooms()
   workstations.value = await api.get('/admin/lab-workstations')
   if (rooms.value.length) await select(rooms.value[0].id)
+  await loadNet()
 })
 </script>
 
 <style scoped>
 .page-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; align-items: start; }
-.card-head { display: flex; justify-content: space-between; align-items: center; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-head > span { white-space: nowrap; }
 .room-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 6px; }
 .room-item:hover { background: var(--el-fill-color-light); }
 .room-item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
@@ -427,14 +530,44 @@ onMounted(async () => {
 .room-meta { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 2px; }
 .room-ops { margin-top: 4px; }
 .podium { text-align: center; background: var(--el-fill-color); border-radius: 6px; padding: 6px; margin-bottom: 12px; color: var(--el-text-color-regular); letter-spacing: 8px; }
-.grid { display: grid; gap: 8px; overflow-x: auto; }
+.head-chips { display: flex; gap: 6px; }
+.chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--el-fill-color); color: var(--el-text-color-regular); }
+.chip.ok { background: var(--el-color-success-light-9); color: var(--el-color-success-dark-2); }
+.chip.bad { background: var(--el-color-danger-light-9); color: var(--el-color-danger); }
+.seatbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.seatbar .el-button + .el-button { margin-left: 0; }
+.grow { flex: 1; }
+.seatgrid { display: grid; gap: 8px; padding: 14px; overflow-x: auto; background: var(--el-fill-color-lighter);
+  border: 1.5px dashed var(--hb-line); border-radius: 10px; }
+.seat { position: relative; min-height: 78px; padding: 5px 7px; border: 2px solid var(--el-border-color); border-radius: 10px;
+  background: var(--hb-paper); font-size: 12px; user-select: none; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+.seat.gap { visibility: hidden; }
+.seatgrid.managing .seat:not(.gap) { cursor: pointer; }
+.seatgrid.managing .seat:not(.gap):hover { border-color: var(--el-border-color-darker); }
+.seat .no { display: flex; justify-content: space-between; font-family: Consolas, monospace; font-size: 11px; color: var(--el-text-color-secondary); }
+.seat .nm { margin: 2px 0 1px; font-size: 15px; font-weight: 800; color: var(--hb-ink-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat .sub { font-size: 11px; color: var(--el-text-color-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat .state { display: flex; justify-content: space-between; gap: 4px; margin-top: 3px; font-size: 11px; }
+.seat .pw.on { color: var(--el-color-success-dark-2); }
+.seat .pw.off { color: var(--el-text-color-placeholder); }
+.seat .net { font-weight: 700; }
+.seat .net.on { color: var(--el-color-success-dark-2); }
+.seat .net.off { color: var(--el-color-danger); }
+.seat .net.unk { color: var(--el-text-color-placeholder); }
+.seat.on { border-color: var(--el-color-success-light-5); background: var(--el-color-success-light-9); }
+.seat.cut { background: var(--el-color-danger-light-9); }
+.seat.sel { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); box-shadow: 0 0 0 3px var(--el-color-primary-light-5); }
+.seat.sel .nm::before { content: "✓ "; color: var(--el-color-primary); }
+.legend { margin-top: 8px; font-size: 12px; line-height: 1.8; color: var(--el-text-color-secondary); }
+.legend.warn { color: var(--el-color-warning-dark-2); }
+.batchbar { position: sticky; bottom: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px;
+  padding: 10px 16px; border-radius: 12px; background: var(--hb-ink-deep); color: var(--hb-paper); box-shadow: 4px 4px 0 var(--hb-line); }
+.batchbar .el-button + .el-button { margin-left: 0; }
 .cell { border: 1px dashed var(--el-border-color); border-radius: 6px; padding: 6px; background: var(--el-bg-color); }
 .cell.filled { border-style: solid; border-color: var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); }
 .pos { font-size: 11px; color: var(--el-text-color-placeholder); margin-bottom: 4px; }
 .cell-select { width: 100%; }
 .ip { float: right; color: var(--el-color-primary); }
-.cell.swappable { cursor: pointer; }
-.cell.picked { border-color: var(--el-color-warning); background: var(--el-color-warning-light-9); }
 .mb { margin-bottom: 10px; }
 .mt { margin-top: 10px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
