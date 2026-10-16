@@ -96,7 +96,7 @@ async function handleLogout() {
 .admin-layout__aside { background: var(--hb-paper); border-right: 2px dashed var(--hb-line); display: flex; flex-direction: column; }
 .admin-layout__brand {
   height: 58px; display: flex; align-items: center; gap: 10px; padding: 0 16px;
-  font-family: var(--hb-title-font); font-size: 19px; font-weight: 700; color: var(--hb-ink);
+  font-family: var(--hb-title-font); font-size: 20px; font-weight: normal; color: var(--hb-ink);
   border-bottom: 2px dashed var(--hb-line);
 }
 .brand-logo {

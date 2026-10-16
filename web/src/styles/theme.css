@@ -18,7 +18,8 @@
   --hb-shadow-off: 3px;
   --hb-shadow-color: var(--hb-line);
 
-  --el-font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  /* Windows 上微软雅黑最清晰，放第一位；苹果用苹方 */
+  --el-font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
   --el-text-color-primary: #3d2f25;
   --el-text-color-regular: #5b4636;
   --el-text-color-secondary: #8a7560;
@@ -56,14 +57,21 @@ body.hb-student {
 
 html, body {
   margin: 0;
+  /* 不设的话，非 Element 组件的文字会落到浏览器默认字体（中文 Windows 上常是宋体，小字发虚） */
+  font-family: var(--el-font-family);
   color: var(--el-text-color-primary);
   background-color: var(--hb-desk);
   background-image: radial-gradient(var(--hb-dot) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
+/* 浏览器给按钮、输入框的默认字体不跟随页面（按钮会落到 Arial，中文再找回退字体），统一继承 */
+button, input, select, textarea { font-family: inherit; }
+
 h1, h2, h3, .el-card__header, .el-dialog__title, .el-drawer__title, .el-message-box__title, .hb-title {
   font-family: var(--hb-title-font);
+  /* 楷体没有粗体，浏览器“伪加粗”后笔画糊成一团，标题一律用常规字重 */
+  font-weight: normal;
   color: var(--el-text-color-primary);
 }
 .el-card__header, .el-dialog__title, .el-drawer__title { font-size: 19px; }

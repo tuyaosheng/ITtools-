@@ -85,7 +85,7 @@ onMounted(async () => {
   background: var(--el-color-primary); color: #fff; font-weight: 800; transform: rotate(-8deg);
   border: 2px solid var(--hb-ink); box-shadow: 2px 2px 0 var(--hb-ink);
 }
-.brand-title { font-family: var(--hb-title-font); color: var(--hb-ink); font-weight: 700; font-size: 18px; line-height: 1.2; }
+.brand-title { font-family: var(--hb-title-font); color: var(--hb-ink); font-weight: normal; font-size: 19px; line-height: 1.2; }
 .brand-sub { color: var(--el-text-color-secondary); font-size: 12px; margin-top: 2px; }
 .role-layout__menu {
   --el-menu-bg-color: transparent; --el-menu-hover-bg-color: #f6eddb; --el-menu-text-color: var(--hb-ink);
