@@ -50,10 +50,10 @@
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane v-if="showXjhTab" label="学生 · 学籍号" name="student-xjh">
+        <el-tab-pane v-if="showXjhTab" label="学生 · 学号" name="student-xjh">
           <el-form ref="studentXjhFormRef" :model="studentXjhForm" :rules="studentXjhRules" label-width="70px" @submit.prevent>
-            <el-form-item label="学籍号" prop="xjh">
-              <el-input v-model="studentXjhForm.xjh" placeholder="请输入学籍号" />
+            <el-form-item label="学号" prop="xjh">
+              <el-input v-model="studentXjhForm.xjh" placeholder="请输入学号" />
             </el-form-item>
             <el-form-item label="密码" prop="password">
               <el-input v-model="studentXjhForm.password" type="password" show-password placeholder="请输入密码" />
@@ -139,7 +139,7 @@ const studentNameRules: FormRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-// 工作模式（系统设置）：学籍模式只显示学籍号入口，其余模式显示班级+姓名入口；未取得设置时全部显示
+// 工作模式（系统设置）：学号模式只显示学号入口，其余模式显示班级+姓名入口；未取得设置时全部显示
 const schoolName = ref('ITtools 平台登录')
 const loginMode = ref<string | null>(null)
 const showNameTab = computed(() => loginMode.value !== 'XJH')
@@ -178,11 +178,11 @@ async function onClassChange(classId: number) {
   students.value = await publicApi.students(classId)
 }
 
-// --- 学生 · 学籍号 ---
+// --- 学生 · 学号 ---
 const studentXjhFormRef = ref<FormInstance>()
 const studentXjhForm = reactive({ xjh: '', password: '' })
 const studentXjhRules: FormRules = {
-  xjh: [{ required: true, message: '请输入学籍号', trigger: 'blur' }],
+  xjh: [{ required: true, message: '请输入学号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 

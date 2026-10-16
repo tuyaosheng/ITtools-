@@ -11,7 +11,7 @@ import java.security.SecureRandom;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** 第三方程序登录签名校验：HMAC-SHA256(密钥, "学籍号|Unix秒")，5 分钟有效，一次性。 */
+/** 第三方程序登录签名校验：HMAC-SHA256(密钥, "学号|Unix秒")，5 分钟有效，一次性。 */
 @Service
 public class SsoService {
     static final long WINDOW_SECONDS = 300;

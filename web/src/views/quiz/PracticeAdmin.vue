@@ -33,7 +33,7 @@
         </el-select>
       </div>
       <el-table :data="report" size="small" stripe empty-text="请选择班级">
-        <el-table-column prop="studentNo" label="学号" width="70" />
+        <el-table-column prop="studentNo" label="班内学号" width="84" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="answered" label="刷题数" width="80" sortable />
         <el-table-column label="正确率" width="90" sortable :sort-method="(a: any, b: any) => acc(a) - acc(b)">

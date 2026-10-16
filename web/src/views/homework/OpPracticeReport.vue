@@ -13,7 +13,7 @@
       <el-row :gutter="16">
         <el-col :md="14" :span="24">
           <el-table :data="report.students" size="small" stripe max-height="520">
-            <el-table-column prop="studentNo" label="学号" width="70" />
+            <el-table-column prop="studentNo" label="班内学号" width="84" />
             <el-table-column prop="name" label="姓名" width="90" />
             <el-table-column label="练习次数" width="90"><template #default="{ row }: { row: any }">{{ row.attempts || 0 }}</template></el-table-column>
             <el-table-column label="最近" width="90"><template #default="{ row }: { row: any }">{{ row.score ?? '' }}</template></el-table-column>

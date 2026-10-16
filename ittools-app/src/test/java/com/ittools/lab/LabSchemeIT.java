@@ -287,8 +287,8 @@ class LabSchemeIT extends AbstractPostgresIT {
     void everyTemplateImportsAfterFillingIn() throws Exception {
         HttpHeaders a = admin();
         Map<Integer, Map<String, String>> st = new LinkedHashMap<>();
-        st.put(1, row("姓名", "模板生甲", "学籍号", "TPL72001", "年级码", "2072", "班级", "模板班"));
-        st.put(2, row("姓名", "模板生乙", "学籍号", "TPL72002", "年级码", "2072", "班级", "模板班"));
+        st.put(1, row("姓名", "模板生甲", "学号", "TPL72001", "班内学号", "1", "年级码", "2072", "班级", "模板班"));
+        st.put(2, row("姓名", "模板生乙", "学号", "TPL72002", "班内学号", "2", "年级码", "2072", "班级", "模板班"));
         JsonNode r = upload(a, "/api/admin/import/students", fill(download(a, "/api/admin/import/students/template"), st));
         assertThat(r.get("imported").asInt()).as(r.toString()).isEqualTo(2);
 

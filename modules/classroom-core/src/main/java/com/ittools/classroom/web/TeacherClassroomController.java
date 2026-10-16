@@ -252,7 +252,7 @@ public class TeacherClassroomController {
     @PostMapping("/classes/{classId}/students")
     public ApiResponse<Long> addStudent(@PathVariable Long classId, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
-        return ApiResponse.ok(tools.addStudent(CurrentUser.id(), classId, b.reqStr("name", "姓名"), b.str("studentNo"), b.str("password")));
+        return ApiResponse.ok(tools.addStudent(CurrentUser.id(), classId, b.reqStr("name", "姓名"), b.str("xjh"), b.str("studentNo"), b.str("password")));
     }
 
     @PostMapping("/students/{studentId}/reset-password")

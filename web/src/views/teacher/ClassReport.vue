@@ -25,7 +25,7 @@
           <Hint>各项按百分制折算后加权平均，缺项（如没布置过测验）不计权重</Hint>
         </div>
         <el-table :data="summary" size="small" stripe max-height="560" :default-sort="{ prop: 'studentNo', order: 'ascending' }" empty-text="请选择班级">
-          <el-table-column prop="studentNo" label="学号" width="70" sortable fixed />
+          <el-table-column prop="studentNo" label="班内学号" width="84" sortable fixed />
           <el-table-column label="姓名" width="90" fixed>
             <template #default="{ row }: { row: any }"><el-link type="primary" @click="openStudent(row)">{{ row.name }}</el-link></template>
           </el-table-column>
@@ -58,7 +58,7 @@
       </el-tab-pane>
       <el-tab-pane v-for="k in kinds" :key="k.kind" :label="k.label" :name="k.kind">
         <el-table :data="detail?.rows || []" size="small" stripe border max-height="560" empty-text="暂无数据">
-          <el-table-column prop="studentNo" label="学号" width="70" fixed />
+          <el-table-column prop="studentNo" label="班内学号" width="84" fixed />
           <el-table-column prop="name" label="姓名" width="90" fixed />
           <el-table-column v-for="c in detail?.columns || []" :key="c.key" :label="c.title" min-width="110" align="center">
             <template #default="{ row }: { row: any }">

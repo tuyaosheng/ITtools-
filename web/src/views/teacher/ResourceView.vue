@@ -91,7 +91,7 @@
         <span class="muted">已读 {{ readRows.filter(r => r.views).length }}/{{ readRows.length }} 人</span>
       </div>
       <el-table :data="readRows" size="small" stripe max-height="420">
-        <el-table-column prop="studentNo" label="学号" width="70" />
+        <el-table-column prop="studentNo" label="班内学号" width="84" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column label="阅读时间" width="120" sortable :sort-method="(a: any, b: any) => a.seconds - b.seconds">
           <template #default="{ row }: { row: any }"><span :class="{ muted: !row.views }">{{ row.views ? mins(row.seconds) : '未读' }}</span></template>

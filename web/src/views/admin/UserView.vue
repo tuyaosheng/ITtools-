@@ -42,8 +42,8 @@
         <template #default="{ row }: { row: any }">{{ roleLabel(row.role) }}</template>
       </el-table-column>
       <el-table-column prop="loginName" label="登录名" width="140" />
-      <el-table-column prop="studentNo" label="学号" width="120" />
-      <el-table-column prop="xjh" label="学籍号" width="140" />
+      <el-table-column prop="studentNo" label="班内学号" width="120" />
+      <el-table-column prop="xjh" label="学号" width="140" />
       <el-table-column prop="className" label="班级" width="140" />
       <el-table-column label="毕业" width="90">
         <template #default="{ row }: { row: any }">
@@ -82,11 +82,11 @@
           <el-input v-model="form.loginName" />
         </el-form-item>
         <template v-if="form.role === 'STUDENT'">
-          <el-form-item label="学号" prop="studentNo">
-            <el-input v-model="form.studentNo" />
+          <el-form-item label="学号" prop="xjh">
+            <el-input v-model="form.xjh" placeholder="全校唯一，学生可用学号登录" />
           </el-form-item>
-          <el-form-item label="学籍号" prop="xjh">
-            <el-input v-model="form.xjh" />
+          <el-form-item label="班内学号" prop="studentNo">
+            <el-input v-model="form.studentNo" placeholder="1~50，可不填" />
           </el-form-item>
           <el-form-item label="学年" prop="enrollYearId">
             <el-select v-model="form.enrollYearId" class="full-width" @change="onFormYearChange">
@@ -190,7 +190,14 @@ const form = reactive({
 const rules: FormRules = {
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  xjh: [{ validator: (_r: unknown, v: string, cb: (e?: Error) => void) => (form.role === 'STUDENT' && !String(v || '').trim() ? cb(new Error('请输入学号')) : cb()), trigger: 'blur' }],
+  studentNo: [{ validator: (_r: unknown, v: string, cb: (e?: Error) => void) => (classNoOk(v) ? cb() : cb(new Error('班内学号应为 1~50 的整数'))), trigger: 'blur' }]
+}
+
+function classNoOk(v: string) {
+  const s = String(v || '').trim()
+  return !s || (/^\d{1,2}$/.test(s) && +s >= 1 && +s <= 50)
 }
 
 function resetForm() {

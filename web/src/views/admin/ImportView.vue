@@ -64,7 +64,7 @@ async function doImport(kind: Kind) {
         </div>
       </template>
       <p class="hint">
-        支持 .xlsx / .xls / .csv。列：<b>姓名*</b>、学号、学籍号、<b>年级码*</b>(如 2024)、<b>班级*</b>(如 1班)、初始密码(默认 123456)。
+        支持 .xlsx / .xls / .csv。列：<b>姓名*</b>、<b>学号*</b>、班内学号（1~50）、<b>年级码*</b>(如 2024)、<b>班级*</b>(如 1班)、初始密码(默认 123456)。
         年级/班级不存在时自动创建；带 * 为必填。
       </p>
       <el-upload

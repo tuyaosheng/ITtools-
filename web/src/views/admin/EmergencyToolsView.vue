@@ -33,7 +33,7 @@
         </div>
         <el-table :data="absences" size="small" stripe max-height="480" empty-text="请选择班级后查询" @selection-change="(v: any[]) => (selected = v)">
           <el-table-column type="selection" width="36" />
-          <el-table-column prop="studentNo" label="学号" width="70" />
+          <el-table-column prop="studentNo" label="班内学号" width="84" />
           <el-table-column prop="name" label="姓名" width="90" />
           <el-table-column prop="courseName" label="课程" min-width="160" />
           <el-table-column prop="teacherName" label="教师" width="90" />

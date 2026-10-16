@@ -7,7 +7,7 @@
       </div>
     </div>
     <el-table :data="data.rows" size="small" stripe border max-height="520" :default-sort="{ prop: 'studentNo', order: 'ascending' }" empty-text="还没有学生进入课堂">
-      <el-table-column prop="studentNo" label="学号" width="70" sortable fixed />
+      <el-table-column prop="studentNo" label="班内学号" width="84" sortable fixed />
       <el-table-column prop="name" label="姓名" width="90" fixed />
       <el-table-column v-for="p in data.pages" :key="p.id" :label="`${p.seq}. ${p.title}`" min-width="110" align="center">
         <template #default="{ row }: { row: any }">

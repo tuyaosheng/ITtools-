@@ -51,7 +51,7 @@
     <el-tabs v-model="tab" @tab-change="onTab">
       <el-tab-pane label="成绩" name="results">
         <el-table :data="test.results" size="small" stripe>
-          <el-table-column prop="studentNo" label="学号" width="70" />
+          <el-table-column prop="studentNo" label="班内学号" width="84" />
           <el-table-column prop="name" label="姓名" width="100" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }: { row: any }">

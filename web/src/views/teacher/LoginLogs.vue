@@ -15,7 +15,7 @@
     <el-tabs v-model="tab">
       <el-tab-pane :label="`按学生汇总（${summary.length}）`" name="sum">
         <el-table :data="summary" size="small" stripe empty-text="请选择班级和日期后查询">
-          <el-table-column prop="studentNo" label="学号" width="80" />
+          <el-table-column prop="studentNo" label="班内学号" width="84" />
           <el-table-column prop="name" label="姓名" width="100" />
           <el-table-column prop="count" label="登入次数" width="90" sortable />
           <el-table-column prop="minutes" label="在线分钟" width="100" sortable />
@@ -24,7 +24,7 @@
       </el-tab-pane>
       <el-tab-pane :label="`明细（${logs.length}）`" name="detail">
         <el-table :data="logs" size="small" stripe max-height="520">
-          <el-table-column prop="studentNo" label="学号" width="80" />
+          <el-table-column prop="studentNo" label="班内学号" width="84" />
           <el-table-column prop="name" label="姓名" width="100" />
           <el-table-column label="登入" width="150"><template #default="{ row }: { row: any }">{{ fmtTime(row.loginAt) }}</template></el-table-column>
           <el-table-column label="退出" width="150"><template #default="{ row }: { row: any }">{{ row.logoutAt ? fmtTime(row.logoutAt) : '未正常退出' }}</template></el-table-column>

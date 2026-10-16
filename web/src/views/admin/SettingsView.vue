@@ -10,10 +10,10 @@
         <el-radio-group v-model="form['login.mode']">
           <el-radio value="NORMAL">正常教学模式</el-radio>
           <el-radio value="OPEN_CLASS">公开课模式</el-radio>
-          <el-radio value="XJH">学籍+密码模式</el-radio>
+          <el-radio value="XJH">学号+密码模式</el-radio>
           <el-radio value="FIXED_SEAT">班级+姓名+固定机位模式</el-radio>
         </el-radio-group>
-        <Hint>正常：班级+姓名+密码登录；公开课：学生登录后直接进入当前课堂；学籍模式：仅显示学籍号登录；
+        <Hint>正常：班级+姓名+密码登录；公开课：学生登录后直接进入当前课堂；学号模式：仅显示学号登录；
           固定机位：班级+姓名登录，已启用固定机位的班级须在绑定机位登录（在“固定机位”中配置）。</Hint>
       </el-form-item>
 
@@ -62,8 +62,8 @@
       </el-form-item>
       <el-form-item label="接入说明">
         <Hint>
-          链接格式：<code>{{ origin }}/api/auth/sso?u=学籍号&amp;t=当前Unix秒&amp;s=签名[&amp;r=/student/页面]</code><br>
-          签名：<code>s = HMAC-SHA256(密钥, 学籍号 + "|" + t)</code> 的小写十六进制。链接 5 分钟内有效，只能使用一次；登录后进入学生首页（或 r 指定的学生页面）。<br>
+          链接格式：<code>{{ origin }}/api/auth/sso?u=学号&amp;t=当前Unix秒&amp;s=签名[&amp;r=/student/页面]</code><br>
+          签名：<code>s = HMAC-SHA256(密钥, 学号 + "|" + t)</code> 的小写十六进制。链接 5 分钟内有效，只能使用一次；登录后进入学生首页（或 r 指定的学生页面）。<br>
           密钥只保存在服务器和第三方系统中，不要放在网页里；生成新密钥后旧密钥立即失效。
         </Hint>
       </el-form-item>

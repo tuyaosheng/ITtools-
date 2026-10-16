@@ -26,7 +26,7 @@
     </div>
     <el-table :data="rows" size="small" stripe @selection-change="(v: any[]) => (selected = v)">
       <el-table-column type="selection" width="34" :selectable="(r: any) => !!r.id" />
-      <el-table-column prop="studentNo" label="学号" width="60" />
+      <el-table-column prop="studentNo" label="班内学号" width="84" />
       <el-table-column prop="studentName" label="姓名" width="80" />
       <el-table-column label="作品" min-width="170">
         <template #default="{ row }: { row: any }">

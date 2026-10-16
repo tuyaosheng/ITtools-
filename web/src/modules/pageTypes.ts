@@ -77,7 +77,7 @@ export const pageTypes: Record<string, PageTypeDef> = {
   },
   TAKE_QUESTION: {
     label: '随机抽题',
-    desc: '学生随机抽取一道问题（按学号分配，相邻同学题目不同）',
+    desc: '学生随机抽取一道问题（按班内学号分配，相邻同学题目不同）',
     student: defineAsyncComponent(() => import('../views/activity/StudentTakeQuestionPage.vue')),
     teacher: defineAsyncComponent(() => import('../views/activity/TeacherTakeQuestionPanel.vue')),
     settings: defineAsyncComponent(() => import('../views/activity/TakeQuestionSettings.vue'))

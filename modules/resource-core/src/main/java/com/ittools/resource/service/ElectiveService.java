@@ -93,11 +93,11 @@ public class ElectiveService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> roster(Long activityId) {
-        return jdbc.queryForList("SELECT s.name AS \"subjectName\", u.name AS \"studentName\", u.student_no AS \"studentNo\", "
+        return jdbc.queryForList("SELECT s.name AS \"subjectName\", u.name AS \"studentName\", u.xjh, u.student_no AS \"studentNo\", "
                 + "sy.label || k.name AS \"className\", c.created_at AS \"chosenAt\" FROM elective_choice c "
                 + "JOIN elective_subject s ON s.id = c.subject_id JOIN users u ON u.id = c.student_id "
                 + "LEFT JOIN klass k ON k.id = u.class_id LEFT JOIN school_year sy ON sy.id = k.school_year_id "
-                + "WHERE c.activity_id = :a ORDER BY s.id, 4, u.student_no", p("a", activityId));
+                + "WHERE c.activity_id = :a ORDER BY s.id, 5, u.student_no", p("a", activityId));
     }
 
     @Transactional(readOnly = true)
@@ -107,7 +107,7 @@ public class ElectiveService {
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             org.apache.poi.ss.usermodel.Sheet s = wb.createSheet("选课名单");
             s.createRow(0).createCell(0).setCellValue(String.valueOf(a.get("name")));
-            String[] head = {"科目", "班级", "学号", "姓名", "选课时间"};
+            String[] head = {"科目", "班级", "学号", "班内学号", "姓名", "选课时间"};
             org.apache.poi.ss.usermodel.Row h = s.createRow(1);
             for (int i = 0; i < head.length; i++) h.createCell(i).setCellValue(head[i]);
             int r = 2;
@@ -115,9 +115,10 @@ public class ElectiveService {
                 org.apache.poi.ss.usermodel.Row row = s.createRow(r++);
                 row.createCell(0).setCellValue(String.valueOf(x.get("subjectName")));
                 row.createCell(1).setCellValue(x.get("className") == null ? "" : String.valueOf(x.get("className")));
-                row.createCell(2).setCellValue(x.get("studentNo") == null ? "" : String.valueOf(x.get("studentNo")));
-                row.createCell(3).setCellValue(String.valueOf(x.get("studentName")));
-                row.createCell(4).setCellValue(String.valueOf(x.get("chosenAt")));
+                row.createCell(2).setCellValue(x.get("xjh") == null ? "" : String.valueOf(x.get("xjh")));
+                row.createCell(3).setCellValue(x.get("studentNo") == null ? "" : String.valueOf(x.get("studentNo")));
+                row.createCell(4).setCellValue(String.valueOf(x.get("studentName")));
+                row.createCell(5).setCellValue(String.valueOf(x.get("chosenAt")));
             }
             wb.write(out);
             return out.toByteArray();

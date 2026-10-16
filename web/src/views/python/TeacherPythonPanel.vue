@@ -23,7 +23,7 @@
       <el-tag v-if="staleCount" type="warning">{{ staleCount }} 人成绩基于旧版题目，需重新评测</el-tag>
     </div>
     <el-table :data="data.rows" size="small" stripe max-height="520">
-      <el-table-column prop="studentNo" label="学号" width="80" />
+      <el-table-column prop="studentNo" label="班内学号" width="84" />
       <el-table-column prop="name" label="姓名" width="100" />
       <el-table-column label="得分" width="100" sortable :sort-method="(a: any, b: any) => Number(a.score ?? -1) - Number(b.score ?? -1)">
         <template #default="{ row }">

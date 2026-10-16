@@ -81,7 +81,8 @@
       <el-table :data="rosterOf?.roster || []" size="small" max-height="460" empty-text="还没有学生选课">
         <el-table-column prop="subjectName" label="科目" width="140" />
         <el-table-column prop="className" label="班级" width="120" />
-        <el-table-column prop="studentNo" label="学籍号" width="140" />
+        <el-table-column prop="xjh" label="学号" width="140" />
+        <el-table-column prop="studentNo" label="班内学号" width="84" />
         <el-table-column prop="studentName" label="姓名" width="100" />
         <el-table-column label="选课时间">
           <template #default="{ row }">{{ fmtTime(row.chosenAt) }}</template>

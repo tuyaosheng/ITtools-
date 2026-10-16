@@ -48,7 +48,8 @@ public class ImportService {
     public ImportResult importStudents(InputStream in, String filename) {
         List<List<String>> rows = readRows(in, filename);
         Map<String, Integer> col = headerIndex(rows.get(0));
-        requireColumns(col, "姓名", "年级码", "班级");
+        StudentNumbers.normalizeHeaders(col);
+        requireColumns(col, "姓名", "学号", "年级码", "班级");
 
         ImportResult result = new ImportResult();
         Map<String, SchoolYear> yearCache = new HashMap<String, SchoolYear>();
@@ -59,8 +60,8 @@ public class ImportService {
         for (int r = 1; r < rows.size(); r++) {
             List<String> cells = rows.get(r);
             String name = get(cells, col, "姓名");
-            String studentNo = get(cells, col, "学号");
-            String xjh = get(cells, col, "学籍号");
+            String studentNo = get(cells, col, "班内学号");
+            String xjh = get(cells, col, "学号");
             String yearCode = get(cells, col, "年级码");
             String className = get(cells, col, "班级");
             String password = get(cells, col, "初始密码");
@@ -74,12 +75,17 @@ public class ImportService {
             if (name.isEmpty()) { result.addError(dataRow, "缺少姓名"); continue; }
             if (yearCode.isEmpty()) { result.addError(dataRow, "缺少年级码"); continue; }
             if (className.isEmpty()) { result.addError(dataRow, "缺少班级"); continue; }
-
-            if (!xjh.isEmpty()) {
-                if (seenXjh.contains(xjh) || users.findByXjh(xjh).isPresent()) {
-                    result.addError(dataRow, "学籍号重复：" + xjh);
-                    continue;
-                }
+            if (xjh.isEmpty()) { result.addError(dataRow, "缺少学号"); continue; }
+            if (xjh.length() > 32) { result.addError(dataRow, "学号过长：" + xjh); continue; }
+            if (seenXjh.contains(xjh) || users.findByXjh(xjh).isPresent()) {
+                result.addError(dataRow, "学号重复：" + xjh);
+                continue;
+            }
+            try {
+                studentNo = StudentNumbers.classNo(studentNo);
+            } catch (IllegalArgumentException e) {
+                result.addError(dataRow, e.getMessage());
+                continue;
             }
 
             String nameKey = yearCode + "|" + className + "|" + name;
@@ -99,15 +105,15 @@ public class ImportService {
             User u = new User();
             u.setRole(Role.STUDENT);
             u.setName(name);
-            u.setStudentNo(emptyToNull(studentNo));
-            u.setXjh(emptyToNull(xjh));
+            u.setStudentNo(studentNo);
+            u.setXjh(xjh);
             u.setKlass(klass);
             u.setEnrollYear(year);
             u.setPasswordHash(encoder.encode(password.isEmpty() ? DEFAULT_PASSWORD : password));
             u.setEnabled(true);
             users.save(u);
 
-            if (!xjh.isEmpty()) seenXjh.add(xjh);
+            seenXjh.add(xjh);
             seenClassName.add(nameKey);
             result.incrementImported();
         }
@@ -200,10 +206,6 @@ public class ImportService {
             if (v != null && !v.isEmpty()) return false;
         }
         return true;
-    }
-
-    private String emptyToNull(String v) {
-        return (v == null || v.isEmpty()) ? null : v;
     }
 
     private SchoolYear resolveYear(Map<String, SchoolYear> cache, String yearCode) {

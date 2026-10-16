@@ -421,7 +421,7 @@ public class TestService {
             org.apache.poi.ss.usermodel.Sheet s = wb.createSheet("成绩");
             org.apache.poi.ss.usermodel.Row title = s.createRow(0);
             title.createCell(0).setCellValue(t.get("title") + " · " + t.get("className") + " · 满分 " + t.get("totalScore"));
-            String[] head = {"学号", "姓名", "状态", "得分", "答对题数", "答错题数", "交卷时间"};
+            String[] head = {"班内学号", "姓名", "状态", "得分", "答对题数", "答错题数", "交卷时间"};
             org.apache.poi.ss.usermodel.Row h = s.createRow(1);
             for (int i = 0; i < head.length; i++) h.createCell(i).setCellValue(head[i]);
             int r = 2;

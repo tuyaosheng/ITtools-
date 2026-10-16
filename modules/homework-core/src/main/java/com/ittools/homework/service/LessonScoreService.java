@@ -147,7 +147,7 @@ public class LessonScoreService {
             org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet("课堂成绩");
             org.apache.poi.ss.usermodel.Row h = sh.createRow(0);
             int c = 0;
-            h.createCell(c++).setCellValue("学号");
+            h.createCell(c++).setCellValue("班内学号");
             h.createCell(c++).setCellValue("姓名");
             for (Map<String, Object> col : cols) h.createCell(c++).setCellValue(col.get("title") + "（" + col.get("full") + "）");
             h.createCell(c++).setCellValue("课堂表现");

@@ -31,7 +31,7 @@
             
           </div>
           <el-table :data="attendance" size="small" stripe>
-            <el-table-column prop="studentNo" label="学号" width="70" />
+            <el-table-column prop="studentNo" label="班内学号" width="84" />
             <el-table-column prop="name" label="姓名" width="90" />
             <el-table-column label="考勤" width="130">
               <template #default="{ row }: { row: any }">

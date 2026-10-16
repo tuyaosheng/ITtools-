@@ -64,8 +64,7 @@ public class UserService {
         u.setRole(Role.valueOf(c.role()));
         u.setName(c.name());
         u.setLoginName(c.loginName());
-        u.setStudentNo(c.studentNo());
-        u.setXjh(c.xjh());
+        setNumbers(u, c.studentNo(), c.xjh());
         if (c.classId() != null) {
             u.setKlass(classes.findById(c.classId()).orElseThrow(() -> new IllegalArgumentException("班级不存在")));
         }
@@ -81,11 +80,25 @@ public class UserService {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
         u.setName(c.name());
         u.setLoginName(c.loginName());
-        u.setStudentNo(c.studentNo());
-        u.setXjh(c.xjh());
+        setNumbers(u, c.studentNo(), c.xjh());
         u.setKlass(c.classId() == null ? null : classes.findById(c.classId()).orElseThrow(() -> new IllegalArgumentException("班级不存在")));
         u.setEnrollYear(c.enrollYearId() == null ? null : years.findById(c.enrollYearId()).orElseThrow(() -> new IllegalArgumentException("年级不存在")));
         return view(u);
+    }
+
+    /** 学生：学号必填、班内学号 1~50；教师和管理员不用这两个编号。 */
+    private void setNumbers(User u, String studentNo, String xjh) {
+        if (u.getRole() == Role.STUDENT) {
+            String x = StudentNumbers.requireXjh(xjh);
+            users.findByXjh(x).filter(o -> !o.getId().equals(u.getId())).ifPresent(o -> {
+                throw new IllegalArgumentException("学号 " + x + " 已被其他学生使用");
+            });
+            u.setXjh(x);
+            u.setStudentNo(StudentNumbers.classNo(studentNo));
+        } else {
+            u.setXjh(xjh == null || xjh.trim().isEmpty() ? null : xjh.trim());
+            u.setStudentNo(studentNo == null || studentNo.trim().isEmpty() ? null : studentNo.trim());
+        }
     }
 
     @Transactional

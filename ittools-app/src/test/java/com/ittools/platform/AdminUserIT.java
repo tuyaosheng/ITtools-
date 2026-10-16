@@ -158,10 +158,25 @@ class AdminUserIT extends AbstractPostgresIT {
         assertThat(klass.getStatusCode()).isEqualTo(HttpStatus.OK);
         long classId = Long.parseLong(klass.getBody().replaceAll(".*\"id\":(\\d+).*", "$1"));
 
+        // 学生必须有学号；班内学号只能是 1~50
+        ResponseEntity<String> noXjh = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"无学号\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(noXjh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(noXjh.getBody()).contains("请填写学号");
+        ResponseEntity<String> badNo = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"班号超\",\"xjh\":\"AU61X\",\"studentNo\":\"51\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(badNo.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(badNo.getBody()).contains("班内学号应为 1~50 的整数");
+
         ResponseEntity<String> create = rest.exchange("/api/admin/users", HttpMethod.POST,
-                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"张同学\",\"loginName\":\"zhang\",\"classId\":" + classId + "}", sess),
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"张同学\",\"loginName\":\"zhang\",\"xjh\":\"AU61001\",\"studentNo\":\"5\",\"classId\":" + classId + "}", sess),
                 String.class);
         assertThat(create.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(create.getBody()).as("班内学号存成两位").contains("\"studentNo\":\"05\"");
+        ResponseEntity<String> dupXjh = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"同学号\",\"xjh\":\"AU61001\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(dupXjh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(dupXjh.getBody()).contains("已被其他学生使用");
 
         ResponseEntity<String> list = rest.exchange("/api/admin/users?classId=" + classId, HttpMethod.GET,
                 new HttpEntity<>(sess), String.class);

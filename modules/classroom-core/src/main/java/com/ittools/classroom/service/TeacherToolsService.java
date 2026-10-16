@@ -1,5 +1,6 @@
 package com.ittools.classroom.service;
 
+import com.ittools.platform.service.StudentNumbers;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,17 +51,21 @@ public class TeacherToolsService {
     }
 
     @Transactional
-    public Long addStudent(Long teacherId, Long classId, String name, String studentNo, String password) {
+    public Long addStudent(Long teacherId, Long classId, String name, String xjh, String studentNo, String password) {
         requireClass(teacherId, classId);
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("姓名不能为空");
+        String x = StudentNumbers.requireXjh(xjh);
+        String no = StudentNumbers.classNo(studentNo);
+        Long used = jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE xjh = :x", p("x", x), Long.class);
+        if (used != null && used > 0) throw new IllegalArgumentException("学号 " + x + " 已被其他学生使用");
         Long dup = jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE class_id = :k AND name = :n AND role = 'STUDENT'",
                 p("k", classId, "n", name.trim()), Long.class);
         if (dup != null && dup > 0) throw new IllegalArgumentException("本班已有同名学生");
         String pw = password == null || password.isEmpty() ? "123456" : password;
         return jdbc.queryForObject(
-                "INSERT INTO users(role, name, student_no, password_hash, class_id, enroll_year_id) "
-                        + "SELECT 'STUDENT', :n, :no, :h, k.id, k.school_year_id FROM klass k WHERE k.id = :k RETURNING id",
-                p("n", name.trim(), "no", studentNo, "h", encoder.encode(pw), "k", classId), Long.class);
+                "INSERT INTO users(role, name, xjh, student_no, password_hash, class_id, enroll_year_id) "
+                        + "SELECT 'STUDENT', :n, :x, :no, :h, k.id, k.school_year_id FROM klass k WHERE k.id = :k RETURNING id",
+                p("n", name.trim(), "x", x, "no", no, "h", encoder.encode(pw), "k", classId), Long.class);
     }
 
     /** 学生的全部课堂记录（教师查询）。 */
