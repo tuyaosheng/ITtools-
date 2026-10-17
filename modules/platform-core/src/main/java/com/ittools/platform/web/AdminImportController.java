@@ -1,5 +1,6 @@
 package com.ittools.platform.web;
 
+import com.ittools.platform.service.ImportJobService;
 import com.ittools.platform.service.ImportService;
 import com.ittools.platform.service.dto.ImportResult;
 import org.springframework.core.io.ByteArrayResource;
@@ -22,9 +23,11 @@ public class AdminImportController {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private final ImportService importService;
+    private final ImportJobService jobs;
 
-    public AdminImportController(ImportService importService) {
+    public AdminImportController(ImportService importService, ImportJobService jobs) {
         this.importService = importService;
+        this.jobs = jobs;
     }
 
     @PostMapping("/students")
@@ -37,6 +40,22 @@ public class AdminImportController {
         return ApiResponse.ok(importService.importTeachers(openStream(file), file.getOriginalFilename()));
     }
 
+    /** Background variant: returns a job right away; poll GET /jobs/{id} for progress and the result. */
+    @PostMapping("/students/jobs")
+    public ApiResponse<ImportJobService.Job> startStudentJob(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.ok(jobs.start(ImportJobService.Kind.STUDENTS, readBytes(file), file.getOriginalFilename()));
+    }
+
+    @PostMapping("/teachers/jobs")
+    public ApiResponse<ImportJobService.Job> startTeacherJob(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.ok(jobs.start(ImportJobService.Kind.TEACHERS, readBytes(file), file.getOriginalFilename()));
+    }
+
+    @GetMapping("/jobs/{id}")
+    public ApiResponse<ImportJobService.Job> job(@PathVariable String id) {
+        return ApiResponse.ok(jobs.get(id));
+    }
+
     @GetMapping("/students/template")
     public ResponseEntity<ByteArrayResource> studentTemplate() {
         byte[] xlsx = com.ittools.platform.service.ImportTemplates.build("学生",
@@ -44,7 +63,7 @@ public class AdminImportController {
                 new String[][]{{"张三", "2024001", "1", "2024", "1班", ""}, {"李四", "2024002", "2", "2024", "1班", ""}},
                 new int[]{12, 16, 10, 10, 10, 12},
                 "必填：姓名、学号、年级码、班级。年级码是入学年份（如 2024），班级写班名（如 1班、高一(1)班）；年级和班级不存在会自动创建。",
-                "学号全校唯一，学生可以用学号登录；班内学号是班里的座号，填 1~50 的整数，可空，名单按它排序。",
+                "学号全校唯一，学生可以用学号登录；班内学号是班里的座号，填正整数，可空，名单按它排序。",
                 "初始密码可空，空着默认 123456。同一个班里不能有同名学生。");
         return download(xlsx, "students_template.xlsx");
     }
@@ -65,6 +84,14 @@ public class AdminImportController {
     private java.io.InputStream openStream(MultipartFile file) {
         try {
             return file.getInputStream();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("无法读取上传文件：" + e.getMessage());
+        }
+    }
+
+    private byte[] readBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
         } catch (Exception e) {
             throw new IllegalArgumentException("无法读取上传文件：" + e.getMessage());
         }

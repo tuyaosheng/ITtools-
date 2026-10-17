@@ -9,14 +9,18 @@ import com.ittools.platform.repository.UserRepository;
 import com.ittools.platform.service.dto.UserDtos.CreateUserCommand;
 import com.ittools.platform.service.dto.UserDtos.ResetPasswordCommand;
 import com.ittools.platform.service.dto.UserDtos.UpdateUserCommand;
+import com.ittools.platform.service.dto.UserDtos.UserPage;
 import com.ittools.platform.service.dto.UserDtos.UserView;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Java 8 note: the brief uses .stream()...toList() (Java 16+), which is
@@ -31,12 +35,45 @@ public class UserService {
     private final KlassRepository classes;
     private final SchoolYearRepository years;
     private final PasswordEncoder encoder;
+    private final NamedParameterJdbcTemplate jdbc;
 
-    public UserService(UserRepository u, KlassRepository c, SchoolYearRepository y, PasswordEncoder e) {
+    public UserService(UserRepository u, KlassRepository c, SchoolYearRepository y, PasswordEncoder e,
+                       NamedParameterJdbcTemplate jdbc) {
         this.users = u;
         this.classes = c;
         this.years = y;
         this.encoder = e;
+        this.jdbc = jdbc;
+    }
+
+    // The list used to load every User entity and touch its lazy class one by one
+    // (N+1 queries); with thousands of imported students the page froze. Plain SQL
+    // with a join and DB-side filtering/paging instead.
+    private static final String LIST_FROM = " FROM users u LEFT JOIN klass k ON k.id = u.class_id "
+            + "LEFT JOIN school_year sy ON sy.id = k.school_year_id";
+    private static final String LIST_COLS = "SELECT u.id, u.role, u.name, u.login_name, u.student_no, u.xjh, "
+            + "u.class_id, k.name AS class_name, u.graduated, u.enabled, u.enroll_year_id";
+    /** 管理员、教师在前；学生按年级（新的在前）、班级排序、班内学号（按数值）排。 */
+    private static final String LIST_ORDER = " ORDER BY CASE u.role WHEN 'ADMIN' THEN 0 WHEN 'TEACHER' THEN 1 ELSE 2 END, "
+            + "sy.year_code DESC NULLS LAST, k.display_order NULLS LAST, k.name NULLS LAST, "
+            + "LENGTH(u.student_no) NULLS LAST, u.student_no, u.name, u.id";
+
+    private static final RowMapper<UserView> VIEW_ROW = (rs, i) -> new UserView(rs.getLong("id"), rs.getString("role"),
+            rs.getString("name"), rs.getString("login_name"), rs.getString("student_no"), rs.getString("xjh"),
+            rs.getObject("class_id", Long.class), rs.getString("class_name"), rs.getBoolean("graduated"),
+            rs.getBoolean("enabled"), rs.getObject("enroll_year_id", Long.class));
+
+    private static String where(String role, Long classId, Long yearId, String keyword, MapSqlParameterSource ps) {
+        List<String> c = new ArrayList<String>();
+        if (role != null && !role.isEmpty()) { c.add("u.role = :role"); ps.addValue("role", role); }
+        if (classId != null) { c.add("u.class_id = :classId"); ps.addValue("classId", classId); }
+        if (yearId != null) { c.add("k.school_year_id = :yearId"); ps.addValue("yearId", yearId); }
+        String kw = keyword == null ? "" : keyword.trim();
+        if (!kw.isEmpty()) {
+            c.add("(u.name ILIKE :kw OR u.xjh ILIKE :kw OR u.login_name ILIKE :kw)");
+            ps.addValue("kw", "%" + kw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
+        }
+        return c.isEmpty() ? "" : " WHERE " + String.join(" AND ", c);
     }
 
     /**
@@ -51,11 +88,22 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<UserView> list(String roleFilter, Long classId) {
-        return users.findAll().stream()
-                .filter(u -> roleFilter == null || u.getRole().name().equals(roleFilter))
-                .filter(u -> classId == null || (u.getKlass() != null && u.getKlass().getId().equals(classId)))
-                .map(this::view)
-                .collect(Collectors.toList());
+        MapSqlParameterSource ps = new MapSqlParameterSource();
+        String w = where(roleFilter, classId, null, null, ps);
+        return jdbc.query(LIST_COLS + LIST_FROM + w + LIST_ORDER, ps, VIEW_ROW);
+    }
+
+    /** Admin user list, one page at a time (page is 1-based). */
+    @Transactional(readOnly = true)
+    public UserPage page(String role, Long classId, Long yearId, String keyword, int page, int size) {
+        int sz = Math.max(1, Math.min(size, 200));
+        int pg = Math.max(1, page);
+        MapSqlParameterSource ps = new MapSqlParameterSource();
+        String w = where(role, classId, yearId, keyword, ps);
+        Long total = jdbc.queryForObject("SELECT COUNT(*)" + LIST_FROM + w, ps, Long.class);
+        ps.addValue("limit", sz).addValue("offset", (long) (pg - 1) * sz);
+        List<UserView> items = jdbc.query(LIST_COLS + LIST_FROM + w + LIST_ORDER + " LIMIT :limit OFFSET :offset", ps, VIEW_ROW);
+        return new UserPage(items, total == null ? 0 : total);
     }
 
     @Transactional
@@ -86,7 +134,7 @@ public class UserService {
         return view(u);
     }
 
-    /** 学生：学号必填、班内学号 1~50；教师和管理员不用这两个编号。 */
+    /** 学生：学号必填、班内学号为正整数；教师和管理员不用这两个编号。 */
     private void setNumbers(User u, String studentNo, String xjh) {
         if (u.getRole() == Role.STUDENT) {
             String x = StudentNumbers.requireXjh(xjh);

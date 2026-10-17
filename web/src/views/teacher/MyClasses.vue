@@ -38,7 +38,7 @@
       <el-form :model="addForm" label-width="84px">
         <el-form-item label="姓名"><el-input v-model="addForm.name" /></el-form-item>
         <el-form-item label="学号" required><el-input v-model="addForm.xjh" placeholder="全校唯一" /></el-form-item>
-        <el-form-item label="班内学号"><el-input v-model="addForm.studentNo" placeholder="1~50，可不填" /></el-form-item>
+        <el-form-item label="班内学号"><el-input v-model="addForm.studentNo" placeholder="可不填" /></el-form-item>
         <el-form-item label="密码"><el-input v-model="addForm.password" placeholder="默认 123456" /></el-form-item>
       </el-form>
       <template #footer>

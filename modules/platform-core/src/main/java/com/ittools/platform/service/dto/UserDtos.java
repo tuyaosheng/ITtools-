@@ -68,6 +68,20 @@ public class UserDtos {
         public Long getEnrollYearId() { return enrollYearId; }
     }
 
+    /** One page of the admin user list, plus the total matching rows. */
+    public static class UserPage {
+        private final java.util.List<UserView> items;
+        private final long total;
+
+        public UserPage(java.util.List<UserView> items, long total) {
+            this.items = items;
+            this.total = total;
+        }
+
+        public java.util.List<UserView> getItems() { return items; }
+        public long getTotal() { return total; }
+    }
+
     public static class CreateUserCommand {
         private final String role;
         private final String name;
