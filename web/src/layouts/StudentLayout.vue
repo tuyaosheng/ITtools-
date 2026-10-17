@@ -1,5 +1,5 @@
 <template>
-  <RoleLayout brand="ITtools 学生空间" :menu="menu" :extra-info="extra" />
+  <RoleLayout brand="信息课堂" :menu="menu" :extra-info="extra" />
 </template>
 
 <script setup lang="ts">
@@ -13,23 +13,23 @@ let timer: number | undefined
 
 const extra = ref('')
 const menu = computed(() => [
-  { path: '/student/home', label: '我的课堂' },
-  { path: '/student/works', label: '我的作品' },
-  { path: '/student/showcase', label: '精华作品' },
-  { path: '/student/tests', label: '作业与测验' },
-  { path: '/student/practice', label: '刷题练习' },
-  { path: '/student/python', label: 'Python 练习' },
-  { path: '/student/op-practice', label: '课后操作题' },
-  { path: '/student/resources', label: '学习资源' },
-  { path: '/student/disk', label: '我的网盘' },
-  { path: '/student/site', label: '个人网站' },
-  { path: '/student/typing', label: '指法练习' },
-  { path: '/student/notes', label: '学习笔记' },
-  { path: '/student/electives', label: '走班选课' },
-  { path: '/student/messages', label: '系统消息', badge: notices.unreadMessages || undefined },
-  { path: '/student/qa', label: '师生答疑' },
-  { path: '/student/records', label: '学习记录' },
-  { path: '/student/report', label: '我的学情' }
+  { path: '/student/home', icon: '🏫', label: '我的课堂' },
+  { path: '/student/works', icon: '🎨', label: '我的作品' },
+  { path: '/student/showcase', icon: '🏆', label: '精华作品' },
+  { path: '/student/tests', icon: '📝', label: '作业与测验' },
+  { path: '/student/practice', icon: '✏️', label: '刷题练习' },
+  { path: '/student/python', icon: '🐍', label: 'Python 练习' },
+  { path: '/student/op-practice', icon: '🖱️', label: '课后操作题' },
+  { path: '/student/resources', icon: '📚', label: '学习资源' },
+  { path: '/student/disk', icon: '💾', label: '我的网盘' },
+  { path: '/student/site', icon: '🌐', label: '个人网站' },
+  { path: '/student/typing', icon: '⌨️', label: '指法练习' },
+  { path: '/student/notes', icon: '📒', label: '学习笔记' },
+  { path: '/student/electives', icon: '🧭', label: '走班选课' },
+  { path: '/student/messages', icon: '🔔', label: '系统消息', badge: notices.unreadMessages || undefined },
+  { path: '/student/qa', icon: '💬', label: '师生答疑' },
+  { path: '/student/records', icon: '🗂️', label: '学习记录' },
+  { path: '/student/report', icon: '📈', label: '我的学情' }
 ])
 
 onBeforeUnmount(() => window.clearInterval(timer))

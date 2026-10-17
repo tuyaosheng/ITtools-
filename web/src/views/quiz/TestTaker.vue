@@ -14,18 +14,17 @@
     <div v-if="waiting" class="waiting">
       <div class="big">⏳</div>
       <div>等待老师发出开考指令…</div>
-      <div class="muted">开考后试题会自动出现，不用刷新页面</div>
     </div>
     <template v-else>
       <el-alert v-if="!data.attempt && data.test.status === 'CLOSED'" type="warning" :closable="false" title="已停止回收，你没有参加" />
       <el-alert v-if="data.attempt?.status === 'RETURNED'" type="error" :closable="false" show-icon class="mb"
         :title="`老师发还了你的答卷，请修改后重新提交${data.attempt.returnedNote ? '：' + data.attempt.returnedNote : ''}`" />
       <el-alert v-if="data.test.status === 'STANDBY' && data.attempt?.status === 'IN_PROGRESS'" type="warning" :closable="false" class="mb"
-        title="老师暂停了作答，请等待继续指令（已填写的答案不会丢失）" />
+        title="老师暂停了作答" />
       <el-alert v-if="submitted && !data.scoreVisible" type="success" :closable="false" class="mb"
-        title="已提交。老师批改并结分后可以看到成绩和答案。" />
+        title="已提交" />
       <el-alert v-else-if="submitted && !data.answerRevealed" type="success" :closable="false" class="mb"
-        :title="data.test.showAnswer ? '已交卷。老师结束后将公布答案与解析。' : '已交卷。'" />
+        title="已交卷" />
 
       <QuestionItem v-for="(q, i) in data.questions" :key="q.id" v-model="answers[q.id]" :q="q" :index="i"
         :readonly="!data.canEdit" :show-key="data.answerRevealed" />
@@ -123,11 +122,11 @@ onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(poll) 
 
 <style scoped>
 .bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 14px; gap: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; margin: 0 8px; }
-.timer { font-weight: 600; color: #e6a23c; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; margin: 0 8px; }
+.timer { font-weight: 600; color: var(--el-color-warning); }
 .result b { font-size: 22px; color: var(--el-color-primary); }
 .ops { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 10px; }
 .mb { margin-bottom: 12px; }
-.waiting { text-align: center; padding: 48px 0; color: #606266; }
+.waiting { text-align: center; padding: 48px 0; color: var(--el-text-color-regular); }
 .waiting .big { font-size: 40px; margin-bottom: 8px; }
 </style>

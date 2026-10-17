@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -218,27 +217,18 @@ public class QuestionService {
     }
 
     public byte[] template() {
-        try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.apache.poi.ss.usermodel.Sheet s = wb.createSheet("题目");
-            String[] head = {"题型", "题干", "选项A", "选项B", "选项C", "选项D", "答案", "解析", "分值", "分类"};
-            String[][] ex = {
-                    {"单选题", "IP 地址由多少位二进制数组成？", "16", "32", "64", "128", "B", "IPv4 地址为 32 位", "5", "网络基础"},
-                    {"多选题", "以下属于输入设备的是？", "键盘", "鼠标", "显示器", "扫描仪", "ABD", "", "5", "硬件"},
-                    {"判断题", "CPU 是计算机的核心部件。", "", "", "", "", "对", "", "2", "硬件"},
-                    {"填空题", "二进制数 1010 转换为十进制是____。", "", "", "", "", "10", "", "4", "数制"}};
-            org.apache.poi.ss.usermodel.Row r0 = s.createRow(0);
-            for (int i = 0; i < head.length; i++) r0.createCell(i).setCellValue(head[i]);
-            for (int j = 0; j < ex.length; j++) {
-                org.apache.poi.ss.usermodel.Row r = s.createRow(j + 1);
-                for (int i = 0; i < ex[j].length; i++) r.createCell(i).setCellValue(ex[j][i]);
-            }
-            s.setColumnWidth(1, 40 * 256);
-            wb.write(out);
-            return out.toByteArray();
-        } catch (java.io.IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return com.ittools.platform.service.ImportTemplates.build("题目",
+                new String[]{"题型", "题干", "选项A", "选项B", "选项C", "选项D", "答案", "解析", "分值", "分类"},
+                new String[][]{
+                        {"单选题", "IP 地址由多少位二进制数组成？", "16", "32", "64", "128", "B", "IPv4 地址为 32 位", "5", "网络基础"},
+                        {"多选题", "以下属于输入设备的是？", "键盘", "鼠标", "显示器", "扫描仪", "ABD", "", "5", "硬件"},
+                        {"判断题", "CPU 是计算机的核心部件。", "", "", "", "", "对", "", "2", "硬件"},
+                        {"填空题", "二进制数 1010 转换为十进制是____。", "", "", "", "", "10", "", "4", "数制"}},
+                new int[]{8, 40, 12, 12, 12, 12, 8, 24, 6, 12},
+                "题型写：单选题、多选题、判断题、填空题。必填：题型、题干、答案。",
+                "单选/多选题的选项依次写在 选项A~选项D（最多可以加列到 选项F），答案写字母：单选如 B，多选如 ABD。",
+                "判断题答案写 对 / 错（也认 √ ×、T F）。填空题有多个空时，各空答案用 ## 隔开，如 10##十。",
+                "分值可空，默认 5 分；解析、分类可空，分类用于题库筛选和组卷。");
     }
 
     // ---- 判分 ----

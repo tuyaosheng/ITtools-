@@ -15,7 +15,7 @@
       </div>
     </template>
 
-    <el-empty v-if="!shown.length" description="老师还没有给你们班分发资源" />
+    <el-empty v-if="!shown.length" description="暂无资源" />
     <div class="grid">
       <el-card v-for="r in shown" :key="r.id" shadow="hover">
         <div class="r-head">
@@ -122,13 +122,13 @@ onMounted(async () => {
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .filters { display: flex; gap: 8px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w140 { width: 140px; }
 .w160 { width: 160px; }
 .w180 { width: 180px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .r-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.desc { font-size: 13px; color: #606266; margin: 8px 0; white-space: pre-wrap; }
+.desc { font-size: 13px; color: var(--el-text-color-regular); margin: 8px 0; white-space: pre-wrap; }
 .ops { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
 .read { color: var(--el-color-success); font-size: 12px; margin-top: 2px; }
 .reader-bar { display: flex; justify-content: space-between; margin-bottom: 8px; }

@@ -7,7 +7,7 @@
         <el-button size="small" class="mt" @click="cancel">放下手</el-button>
       </template>
       <template v-else>
-        <el-input v-model="message" size="small" placeholder="遇到什么问题？（可选）" maxlength="100" />
+        <el-input v-model="message" size="small" placeholder="遇到什么问题？" maxlength="100" />
         <el-button type="warning" size="small" class="mt full" :disabled="!active" @click="raise">✋ 举手</el-button>
       </template>
       <div v-if="active && classmates.length" class="thanks">
@@ -69,7 +69,7 @@ async function thanks() {
     await api.post(`/student/interact/lessons/${props.lesson.id}/help/thanks`, { helperId: helperId.value })
     myHelp.value = null
     helperId.value = undefined
-    ElMessage.success('已记录，TA 的互助次数 +1')
+    ElMessage.success('已记录')
   } catch (err) {
     ElMessage.error(errMsg(err))
   }
@@ -79,7 +79,7 @@ async function raise() {
   try {
     myHelp.value = await api.post(`/student/interact/lessons/${props.lesson.id}/help`, { message: message.value })
     message.value = ''
-    ElMessage.success('已举手，老师会尽快过来')
+    ElMessage.success('已举手')
   } catch (err) {
     ElMessage.error(errMsg(err))
   }
@@ -117,10 +117,10 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .mt { margin-top: 8px; }
 .full { width: 100%; }
 .members { display: flex; flex-wrap: wrap; gap: 6px; }
-.pc { margin-left: 4px; color: #a8abb2; font-size: 11px; }
-.msg { padding: 8px 10px; background: #ecf5ff; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
-.time { font-size: 11px; color: #909399; margin-top: 2px; }
-.muted { color: #909399; font-size: 12px; }
+.pc { margin-left: 4px; color: var(--el-text-color-placeholder); font-size: 11px; }
+.msg { padding: 8px 10px; background: var(--el-color-primary-light-9); border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+.time { font-size: 11px; color: var(--el-text-color-secondary); margin-top: 2px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .thanks { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .helper { width: 120px; }
 </style>

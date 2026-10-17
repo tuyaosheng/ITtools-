@@ -75,6 +75,7 @@ class ImportServiceIT extends AbstractPostgresIT {
         Optional<Klass> k = classes.findBySchoolYear_IdOrderByDisplayOrderAscNameAsc(y.get().getId())
                 .stream().filter(cl -> cl.getName().equals("1班")).findFirst();
         assertThat(k).isPresent();
+        assertThat(k.get().getDisplayOrder()).as("班名里的数字作排序").isEqualTo(1);
 
         // 张三 imported as STUDENT in 1班 with default password 123456 (BCrypt-hashed)
         User zhang = users.findByKlass_IdAndNameAndRole(k.get().getId(), "张三", Role.STUDENT)

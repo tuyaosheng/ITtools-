@@ -73,10 +73,10 @@ async function toggleSource() {
 </script>
 
 <style scoped>
-.rich-editor { border: 1px solid #dcdfe6; border-radius: 6px; width: 100%; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid #ebeef5; background: #fafafa; border-radius: 6px 6px 0 0; }
-.toolbar button { border: 1px solid transparent; background: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; color: #606266; }
-.toolbar button:hover, .toolbar button.on { border-color: #dcdfe6; background: #fff; }
+.rich-editor { border: 1px solid var(--el-border-color); border-radius: 6px; width: 100%; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-lighter); border-radius: 6px 6px 0 0; }
+.toolbar button { border: 1px solid transparent; background: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--el-text-color-regular); }
+.toolbar button:hover, .toolbar button.on { border-color: var(--el-border-color); background: var(--el-bg-color); }
 .spacer { flex: 1; }
 .area { min-height: 180px; padding: 10px 12px; outline: none; line-height: 1.8; }
 .area :deep(img) { max-width: 100%; }

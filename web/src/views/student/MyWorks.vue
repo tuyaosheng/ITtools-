@@ -55,9 +55,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.late { margin-bottom: 14px; padding: 10px 12px; background: #fdf6ec; border-radius: 6px; }
+.late { margin-bottom: 14px; padding: 10px 12px; background: var(--el-color-warning-light-9); border-radius: 6px; }
 .late-title { font-weight: 600; margin-bottom: 6px; }
 .late-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
-.muted { color: #909399; font-size: 12px; }
-.rating { margin-left: 6px; font-size: 12px; color: #e6a23c; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+.rating { margin-left: 6px; font-size: 12px; color: var(--el-color-warning); }
 </style>

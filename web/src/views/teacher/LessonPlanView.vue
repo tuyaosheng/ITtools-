@@ -66,7 +66,6 @@
         </el-form-item>
         <el-form-item label="教学设计">
           <RichEditor v-model="form.content" />
-          <div class="muted">可写教学目标、重难点、教学过程，以及课后的教学反思。</div>
         </el-form-item>
         <el-form-item label="教学资料">
           <input ref="docInput" type="file" @change="e => (doc = pick(e))" />
@@ -218,10 +217,10 @@ onMounted(async () => {
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .filters { display: flex; gap: 8px; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w160 { width: 160px; }
 .w240 { width: 240px; }
 .ml8 { margin-left: 8px; }
-.plan-body { margin: 12px 0; padding: 12px; border: 1px solid #ebeef5; border-radius: 4px; min-height: 120px; max-height: 60vh; overflow: auto; }
+.plan-body { margin: 12px 0; padding: 12px; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; min-height: 120px; max-height: 60vh; overflow: auto; }
 .atts { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>

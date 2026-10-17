@@ -17,7 +17,7 @@
           <span v-else>{{ p.name }}</span>
         </el-form-item>
         <el-form-item v-if="p.className" label="班级"><span>{{ p.yearLabel }} {{ p.className }}<template v-if="p.studentNo"> · {{ p.studentNo }} 号</template></span></el-form-item>
-        <el-form-item v-if="p.xjh" label="学籍号"><span>{{ p.xjh }}</span></el-form-item>
+        <el-form-item v-if="p.xjh" label="学号"><span>{{ p.xjh }}</span></el-form-item>
         <el-form-item v-if="p.loginName" label="登录名"><span>{{ p.loginName }}</span></el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.gender"><el-radio value="男">男</el-radio><el-radio value="女">女</el-radio><el-radio value="">不填</el-radio></el-radio-group>

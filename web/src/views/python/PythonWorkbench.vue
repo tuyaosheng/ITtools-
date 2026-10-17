@@ -38,12 +38,12 @@
       </div>
       <PyEditor v-model="code" height="360px" />
       <div class="stdin">
-        <span class="muted">标准输入（每行对应一次 input()；注意 input('提示') 里的提示文字也算作输出，评分时可能导致不一致）</span>
-        <el-input v-model="stdin" type="textarea" :rows="2" placeholder="运行时提供给程序的输入" />
+        <span class="muted">标准输入</span>
+        <el-input v-model="stdin" type="textarea" :rows="2" placeholder="每行对应一次 input()" />
       </div>
       <div class="console">
         <div class="console-head">
-          <span>运行结果 <span class="muted">（浏览器内运行，仅供调试，以提交评分为准）</span></span>
+          <span>运行结果</span>
           <el-button link size="small" @click="output = []">清空</el-button>
         </div>
         <pre class="console-body"><span v-for="(o, i) in output" :key="i" :class="o.kind">{{ o.text }}</span><span v-if="!output.length" class="muted">点击「运行」查看输出</span></pre>
@@ -202,23 +202,23 @@ onBeforeUnmount(() => {
 .title { margin: 0 0 8px; }
 .desc { font-size: 14px; line-height: 1.7; }
 .sub-title { font-weight: 600; font-size: 13px; margin: 8px 0; }
-.case { border: 1px solid #ebeef5; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 13px; }
+.case { border: 1px solid var(--el-border-color-lighter); border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 13px; }
 .case-head { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.io pre, .pad pre { margin: 2px 0 6px; padding: 6px 8px; background: #f5f7fa; border-radius: 4px; white-space: pre-wrap; font-family: Consolas, monospace; }
+.io pre, .pad pre { margin: 2px 0 6px; padding: 6px 8px; background: var(--el-fill-color-light); border-radius: 4px; white-space: pre-wrap; font-family: Consolas, monospace; }
 .ref { margin-top: 8px; }
 .toolbar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
 .toolbar .el-button + .el-button { margin-left: 0; }
 .spacer { flex: 1; }
 .stdin { margin-top: 8px; }
-.console { margin-top: 8px; border: 1px solid #dcdfe6; border-radius: 4px; }
-.console-head { display: flex; justify-content: space-between; padding: 4px 8px; background: #f5f7fa; font-size: 13px; }
+.console { margin-top: 8px; border: 1px solid var(--el-border-color); border-radius: 4px; }
+.console-head { display: flex; justify-content: space-between; padding: 4px 8px; background: var(--el-fill-color-light); font-size: 13px; }
 .console-body { margin: 0; padding: 8px; min-height: 80px; max-height: 240px; overflow: auto; background: #1e1e1e; color: #d4d4d4; font-family: Consolas, monospace; font-size: 13px; white-space: pre-wrap; }
 .console-body .err { color: #f48771; }
 .result { margin-top: 12px; }
 .score-line { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
-.score { font-size: 18px; color: #409eff; }
-.muted { color: #909399; font-size: 12px; }
+.score { font-size: 18px; color: var(--el-color-primary); }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .pad { padding: 4px 12px; }
-.err { color: #f56c6c; }
+.err { color: var(--el-color-danger); }
 .mr4 { margin-right: 4px; }
 </style>

@@ -158,10 +158,25 @@ class AdminUserIT extends AbstractPostgresIT {
         assertThat(klass.getStatusCode()).isEqualTo(HttpStatus.OK);
         long classId = Long.parseLong(klass.getBody().replaceAll(".*\"id\":(\\d+).*", "$1"));
 
+        // 学生必须有学号；班内学号只能是正整数
+        ResponseEntity<String> noXjh = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"无学号\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(noXjh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(noXjh.getBody()).contains("请填写学号");
+        ResponseEntity<String> badNo = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"班号超\",\"xjh\":\"AU61X\",\"studentNo\":\"0\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(badNo.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(badNo.getBody()).contains("班内学号应为正整数");
+
         ResponseEntity<String> create = rest.exchange("/api/admin/users", HttpMethod.POST,
-                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"张同学\",\"loginName\":\"zhang\",\"classId\":" + classId + "}", sess),
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"张同学\",\"loginName\":\"zhang\",\"xjh\":\"AU61001\",\"studentNo\":\"5\",\"classId\":" + classId + "}", sess),
                 String.class);
         assertThat(create.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(create.getBody()).as("班内学号存成两位").contains("\"studentNo\":\"05\"");
+        ResponseEntity<String> dupXjh = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"同学号\",\"xjh\":\"AU61001\",\"classId\":" + classId + "}", sess), String.class);
+        assertThat(dupXjh.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(dupXjh.getBody()).contains("已被其他学生使用");
 
         ResponseEntity<String> list = rest.exchange("/api/admin/users?classId=" + classId, HttpMethod.GET,
                 new HttpEntity<>(sess), String.class);
@@ -169,6 +184,17 @@ class AdminUserIT extends AbstractPostgresIT {
         assertThat(list.getBody()).contains("张同学");
         assertThat(list.getBody()).contains("8班");
         assertThat(list.getBody()).doesNotContain("\"className\":null");
+
+        // 分页查询：按学号关键字搜到这个学生，班内学号可以超过 50
+        ResponseEntity<String> big = rest.exchange("/api/admin/users", HttpMethod.POST,
+                new HttpEntity<>("{\"role\":\"STUDENT\",\"name\":\"大号同学\",\"xjh\":\"AU61002\",\"studentNo\":\"120\",\"classId\":" + classId + "}", sess),
+                String.class);
+        assertThat(big.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(big.getBody()).contains("\"studentNo\":\"120\"");
+        ResponseEntity<String> page = rest.exchange("/api/admin/users/page?keyword=AU6100&page=1&size=1", HttpMethod.GET,
+                new HttpEntity<>(sess), String.class);
+        assertThat(page.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(page.getBody()).contains("\"total\":2").contains("张同学").doesNotContain("大号同学");
     }
 
     @Test

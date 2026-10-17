@@ -2,7 +2,6 @@
   <el-tabs v-model="sub" tab-position="left" class="pa" @tab-change="load">
     <el-tab-pane label="指定刷题题库" name="sets">
       <div class="bar">
-        <span class="muted">把一份试卷开放给班级，学生在「刷题练习 → 指定题库」中抽题练习。也可以在测验详情的「更多」里一键生成。</span>
         <el-button type="primary" size="small" @click="openSet()">新建</el-button>
       </div>
       <el-table :data="sets" size="small" stripe empty-text="还没有刷题题库">
@@ -34,7 +33,7 @@
         </el-select>
       </div>
       <el-table :data="report" size="small" stripe empty-text="请选择班级">
-        <el-table-column prop="studentNo" label="学号" width="70" />
+        <el-table-column prop="studentNo" label="班内学号" width="84" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="answered" label="刷题数" width="80" sortable />
         <el-table-column label="正确率" width="90" sortable :sort-method="(a: any, b: any) => acc(a) - acc(b)">
@@ -69,7 +68,7 @@
     </el-tab-pane>
 
     <el-tab-pane label="题库查重" name="dups">
-      <div class="bar"><span class="muted">题型相同、去掉空格标点后题干相同的文字题。可以把多余的移入回收站（图片题在批量传图时已自动去重）。</span></div>
+      <div class="bar"></div>
       <el-empty v-if="!dups.length" description="没有发现重复题目" />
       <div v-for="(g, gi) in dups" :key="gi" class="dup">
         <div class="muted">第 {{ gi + 1 }} 组 · {{ typeLabel[g.qtype] }} · {{ g.questions.length }} 题</div>
@@ -174,12 +173,12 @@ onMounted(async () => {
 .pa { min-height: 360px; }
 .bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .bar .muted { flex: 1; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .w200 { width: 200px; }
 .full { width: 100%; }
 .mr4 { margin-right: 4px; }
 .stem :deep(p) { display: inline; margin: 0; }
-.dup { border: 1px solid #ebeef5; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
-.dup-q { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-top: 1px dashed #ebeef5; font-size: 13px; }
+.dup { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.dup-q { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-top: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
 .dup-q .stem { flex: 1; }
 </style>

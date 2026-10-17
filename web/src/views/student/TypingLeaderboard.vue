@@ -7,7 +7,6 @@
       <el-select v-if="classes" v-model="classId" clearable placeholder="全校" size="small" class="w160" @change="load">
         <el-option v-for="k in classes" :key="k.id" :label="k.name" :value="k.id" />
       </el-select>
-      <span class="muted">每人取该级别最好成绩（正确率 ≥ 90%），速度为每分钟正确字符数</span>
     </div>
     <el-table :data="rows" size="small" stripe max-height="460" empty-text="还没有人上榜">
       <el-table-column label="名次" width="70">

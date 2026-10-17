@@ -18,7 +18,6 @@
         <el-checkbox-group v-model="form.classIds">
           <el-checkbox v-for="k in classes" :key="k.id" :value="k.id">{{ k.name }}</el-checkbox>
         </el-checkbox-group>
-        <div class="muted">同时发给多个班级时可以查看年级统计</div>
       </el-form-item>
       <el-form-item label="考试方式">
         <el-radio-group v-model="form.mode">
@@ -30,6 +29,10 @@
       </el-form-item>
       <el-form-item label="限时(分钟)"><el-input-number v-model="form.timeLimit" :min="0" :max="300" /><span class="muted ml">0 为不限时</span></el-form-item>
       <el-form-item label="公布答案"><el-switch v-model="form.showAnswer" /><span class="muted ml">{{ form.kind === 'HOMEWORK' ? '结分后' : '停止回收后' }}向学生显示答案与解析</span></el-form-item>
+      <el-form-item label="每人乱序">
+        <el-checkbox v-model="form.shuffleQuestions">题目顺序</el-checkbox>
+        <el-checkbox v-model="form.shuffleOptions">单选/多选的选项顺序</el-checkbox>
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">取消</el-button>
@@ -49,7 +52,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void; (e: 'publ
 const router = useRouter()
 const papers = ref<any[]>([])
 const classes = ref<any[]>([])
-const form = reactive<any>({ kind: 'HOMEWORK', mode: 'AUTO', paperId: undefined, classIds: [], title: '', timeLimit: 0, showAnswer: true })
+const form = reactive<any>({ kind: 'HOMEWORK', mode: 'AUTO', paperId: undefined, classIds: [], title: '', timeLimit: 0, showAnswer: true, shuffleQuestions: false, shuffleOptions: false })
 
 const modeHelp = computed(() => ({
   CONTROL: '学生先“等待开考”，由你发送开考、结束指令',
@@ -65,7 +68,7 @@ async function onOpen() {
   const [p, k] = await Promise.all([api.get('/teacher/quiz/papers'), api.get('/teacher/classes')])
   papers.value = p
   classes.value = k
-  Object.assign(form, { kind: props.kind || 'HOMEWORK', mode: 'AUTO', paperId: props.paper?.id, classIds: [], title: '' })
+  Object.assign(form, { kind: props.kind || 'HOMEWORK', mode: 'AUTO', paperId: props.paper?.id, classIds: [], title: '', shuffleQuestions: false, shuffleOptions: false })
 }
 
 async function publish() {
@@ -83,6 +86,6 @@ async function publish() {
 
 <style scoped>
 .full { width: 100%; }
-.muted { color: #909399; font-size: 12px; width: 100%; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; width: 100%; }
 .ml { margin-left: 8px; width: auto; }
 </style>

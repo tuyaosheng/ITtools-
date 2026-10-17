@@ -3,7 +3,6 @@
     <template #header>
       <div class="card-head">
         <span>班级机房与固定机位</span>
-        <span class="hint">启用固定机位后，该班学生只能在绑定的机位上登录（原“班级+姓名+固定机位模式”）</span>
       </div>
     </template>
     <el-table v-loading="loading" :data="configs" stripe>
@@ -32,11 +31,11 @@
 
     <el-dialog v-model="seatDialog" :title="`分配座位 · ${editing?.className ?? ''}`" width="820px" append-to-body>
       <div class="dialog-ops">
-        <el-button size="small" @click="autoAssign">按学号自动分配</el-button>
+        <el-button size="small" @click="autoAssign">按班内学号自动分配</el-button>
         <el-button size="small" @click="students.forEach(s => (s.seatId = null))">全部清空</el-button>
       </div>
       <el-table :data="students" max-height="480" size="small">
-        <el-table-column prop="studentNo" label="学号" width="100" />
+        <el-table-column prop="studentNo" label="班内学号" width="100" />
         <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column label="座位（行-列 机位）">
           <template #default="{ row }: { row: any }">
@@ -107,7 +106,7 @@ async function openSeats(row: any) {
 async function autoAssign() {
   try {
     students.value = await api.post(`/admin/lab/class-configs/${editing.value.classId}/auto-assign`)
-    ElMessage.success('已按学号顺序分配')
+    ElMessage.success('已按班内学号顺序分配')
     await load()
   } catch (err) {
     ElMessage.error(errMsg(err))
@@ -135,7 +134,7 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.hint { font-size: 12px; color: #909399; }
+.hint { font-size: 12px; color: var(--el-text-color-secondary); }
 .dialog-ops { margin-bottom: 10px; }
 .full { width: 100%; }
 </style>

@@ -16,10 +16,10 @@
       <el-table-column label="照片" width="70">
         <template #default="{ row }: { row: any }"><UserAvatar :user-id="row.hasAvatar ? row.id : undefined" :name="row.name" :size="36" /></template>
       </el-table-column>
-      <el-table-column prop="studentNo" label="学号" width="80" />
+      <el-table-column prop="studentNo" label="班内学号" width="84" />
       <el-table-column prop="name" label="姓名" width="120" />
       <el-table-column prop="gender" label="性别" width="60" />
-      <el-table-column prop="xjh" label="学籍号" width="140" />
+      <el-table-column prop="xjh" label="学号" width="140" />
       <el-table-column prop="presentCount" label="出席次数" width="100" />
       <el-table-column prop="absentCount" label="缺席次数" width="100" />
       <el-table-column prop="avgScore" label="平均课堂分" width="110" />
@@ -35,9 +35,10 @@
     </el-table>
 
     <el-dialog v-model="addVisible" title="添加学生" width="400px" append-to-body>
-      <el-form :model="addForm" label-width="70px">
+      <el-form :model="addForm" label-width="84px">
         <el-form-item label="姓名"><el-input v-model="addForm.name" /></el-form-item>
-        <el-form-item label="学号"><el-input v-model="addForm.studentNo" /></el-form-item>
+        <el-form-item label="学号" required><el-input v-model="addForm.xjh" placeholder="全校唯一" /></el-form-item>
+        <el-form-item label="班内学号"><el-input v-model="addForm.studentNo" placeholder="可不填" /></el-form-item>
         <el-form-item label="密码"><el-input v-model="addForm.password" placeholder="默认 123456" /></el-form-item>
       </el-form>
       <template #footer>
@@ -75,7 +76,7 @@ const classId = ref<number>()
 const students = ref<any[]>([])
 const loading = ref(false)
 const addVisible = ref(false)
-const addForm = reactive({ name: '', studentNo: '', password: '' })
+const addForm = reactive({ name: '', xjh: '', studentNo: '', password: '' })
 const recordsVisible = ref(false)
 const recordsOf = ref<any>(null)
 const records = ref<any[]>([])
@@ -105,7 +106,7 @@ async function addStudent() {
     await api.post(`/teacher/classes/${classId.value}/students`, addForm)
     ElMessage.success('已添加')
     addVisible.value = false
-    Object.assign(addForm, { name: '', studentNo: '', password: '' })
+    Object.assign(addForm, { name: '', xjh: '', studentNo: '', password: '' })
     await load()
   } catch (err) {
     ElMessage.error(errMsg(err))

@@ -99,22 +99,12 @@ public class LabWorkstationService {
 
     /** 导入模板（.xlsx）。 */
     public byte[] template() {
-        try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
-             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-            org.apache.poi.ss.usermodel.Sheet s = wb.createSheet("机位");
-            org.apache.poi.ss.usermodel.Row h = s.createRow(0);
-            h.createCell(0).setCellValue("计算机名");
-            h.createCell(1).setCellValue("IP地址");
-            org.apache.poi.ss.usermodel.Row ex = s.createRow(1);
-            ex.createCell(0).setCellValue("PC-01");
-            ex.createCell(1).setCellValue("192.168.1.101");
-            s.setColumnWidth(0, 16 * 256);
-            s.setColumnWidth(1, 18 * 256);
-            wb.write(out);
-            return out.toByteArray();
-        } catch (java.io.IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return com.ittools.platform.service.ImportTemplates.build("机位",
+                new String[]{"计算机名", "IP地址"},
+                new String[][]{{"PC-01", "192.168.1.101"}, {"PC-02", "192.168.1.102"}},
+                new int[]{16, 18},
+                "计算机名和 IP 地址都必填，且各自不能重复（与已有机位重复的行会被跳过并提示）。",
+                "如果机房座位号与 IP 有规律（如 1 号座位 .101、往后递增），更省事的做法是在“机房模型 → 方案设置”里按规则一次生成全部机位。");
     }
 
     private static final java.util.regex.Pattern IPV4 = java.util.regex.Pattern.compile(

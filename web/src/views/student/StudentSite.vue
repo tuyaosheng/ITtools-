@@ -24,7 +24,7 @@
               <el-button type="primary" :loading="uploading">选择网站压缩包（zip）</el-button>
             </el-upload>
           </div>
-          <p class="muted">把网站整个文件夹压缩成 zip 上传（不超过 {{ data.maxMb }}MB），首页文件名要用 index.html，系统会自动解压。</p>
+          <div><Hint block>把网站整个文件夹压缩成 zip 上传（不超过 {{ data.maxMb }}MB），首页文件名要用 index.html，系统会自动解压。</Hint></div>
         </template>
       </el-tab-pane>
       <el-tab-pane label="本班同学的网站" name="class" lazy>
@@ -89,5 +89,5 @@ onMounted(async () => fill(await api.get('/student/site')))
 .site-head, .upload { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 .w260 { width: 260px; }
 .muted { color: var(--el-text-color-secondary); font-size: 12px; }
-.preview { width: 100%; height: 420px; border: 1px solid var(--el-border-color); border-radius: 6px; margin-top: 8px; background: #fff; }
+.preview { width: 100%; height: 420px; border: 1px solid var(--el-border-color); border-radius: 6px; margin-top: 8px; background: var(--el-bg-color); }
 </style>

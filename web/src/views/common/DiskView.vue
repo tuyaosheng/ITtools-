@@ -130,7 +130,7 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .usage { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 13px; }
 .bar { width: 260px; }
 .warn { color: var(--el-color-warning-dark-2); font-size: 12px; margin-left: 8px; }

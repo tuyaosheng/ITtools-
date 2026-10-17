@@ -9,7 +9,7 @@
           </el-upload>
           <span v-if="info.fileName" class="muted">当前：{{ info.fileName }}</span>
         </div>
-        <span class="muted">Storyline 发布（HTML5）后的文件夹打包成 zip 上传；也可以上传自己制作的网站。系统自动识别 story.html / index.html 作为主页。</span>
+        <div><Hint block>Storyline 发布（HTML5）后的文件夹打包成 zip 上传；也可以上传自己制作的网站。系统自动识别 story.html / index.html 作为主页。</Hint></div>
       </div>
     </el-form-item>
     <el-form-item v-if="info.htmlFiles?.length" label="主页文件">
@@ -19,7 +19,7 @@
     </el-form-item>
     <el-form-item v-if="info.url" label="兼容模式">
       <el-switch :model-value="info.compat" @change="setCompat" />
-      <span class="muted ml">默认课件在隔离沙箱中运行；个别课件（需要本地存储进度等）无法正常播放时再开启。开启后课件脚本可以以登录用户身份访问平台，请只对可信来源的课件开启。</span>
+      <Hint>默认课件在隔离沙箱中运行；个别课件（需要本地存储进度等）无法正常播放时再开启。开启后课件脚本可以以登录用户身份访问平台，请只对可信来源的课件开启。</Hint>
     </el-form-item>
     <el-form-item v-if="info.url" label="预览">
       <el-button size="small" @click="preview = !preview">{{ preview ? '收起预览' : '预览课件' }}</el-button>

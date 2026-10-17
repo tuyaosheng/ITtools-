@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>评价量规 <span class="muted">（用于作品批阅，按评价项逐项打分）</span></span>
+        <span>评价量规</span>
         <el-button type="primary" @click="open()">新建量规</el-button>
       </div>
     </template>
@@ -89,10 +89,10 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .r-head { display: flex; justify-content: space-between; align-items: center; }
-.item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #ebeef5; }
+.item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .r-ops { margin-top: 8px; }
 .items { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .item-edit { display: flex; gap: 6px; align-items: center; }

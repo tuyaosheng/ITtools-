@@ -54,7 +54,7 @@ async function load() {
 async function answer(q: any) {
   try {
     await api.put(`/teacher/qa/${q.id}/answer`, { answer: drafts[q.id], isPublic: publics[q.id] })
-    ElMessage.success('已答复，学生会收到系统消息')
+    ElMessage.success('已答复')
     await load()
     notices.refresh()
   } catch (err) {
@@ -73,8 +73,8 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
-.q { border: 1px solid #ebeef5; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+.q { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
 .q-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .meta { margin-left: auto; }
 .pre { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }

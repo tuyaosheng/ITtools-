@@ -26,7 +26,7 @@
     </div>
     <el-table :data="rows" size="small" stripe @selection-change="(v: any[]) => (selected = v)">
       <el-table-column type="selection" width="34" :selectable="(r: any) => !!r.id" />
-      <el-table-column prop="studentNo" label="学号" width="60" />
+      <el-table-column prop="studentNo" label="班内学号" width="84" />
       <el-table-column prop="studentName" label="姓名" width="80" />
       <el-table-column label="作品" min-width="170">
         <template #default="{ row }: { row: any }">
@@ -92,7 +92,6 @@
       </template>
     </el-dialog>
     <el-dialog v-model="statsDlg" title="评分点通过率" width="620px" append-to-body>
-      <p class="muted">按本堂课已提交作品的自动评分统计，通过率低的操作就是学生普遍没掌握的地方。</p>
       <el-table :data="stats" size="small" border empty-text="没有自动评分记录">
         <el-table-column prop="seq" label="#" width="40" />
         <el-table-column label="评分点" min-width="200">
@@ -202,7 +201,7 @@ async function returnRedo(row: any) {
   try {
     const { value } = await ElMessageBox.prompt(`发回 ${row.studentName} 的作品重做，可写一句说明（可选）`, '发回重做', { inputPlaceholder: '如：画面再丰富一些' })
     await api.post(`/teacher/homework/submissions/${row.id}/return`, { note: value || null })
-    ElMessage.success('已发回，学生下课后也可以重新提交')
+    ElMessage.success('已发回')
     await load()
   } catch (err) {
     if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
@@ -210,7 +209,7 @@ async function returnRedo(row: any) {
 }
 
 async function batchGrade() {
-  if (batchScore.value == null && !batchRating.value && !batchComment.value) { ElMessage.warning('请至少填写分数、评价或评语中的一项'); return }
+  if (batchScore.value == null && !batchRating.value && !batchComment.value) { ElMessage.warning('请填写分数或评语'); return }
   try {
     const n = await api.post('/teacher/homework/submissions/batch-grade', {
       ids: selected.value.map(r => r.id), score: batchScore.value ?? null, rating: batchRating.value, comment: batchComment.value, skipGraded: skipGraded.value
@@ -233,10 +232,10 @@ onMounted(load)
 
 <style scoped>
 .ops { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; margin-left: 6px; }
-.batch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: #ecf5ff; border-radius: 6px; font-size: 13px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; margin-left: 6px; }
+.batch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: var(--el-color-primary-light-9); border-radius: 6px; font-size: 13px; }
 .w90 { width: 90px; } .w110 { width: 110px; } .w200 { width: 200px; }
 .ml { margin-left: 6px; }
 .w-title { font-weight: 600; font-size: 13px; }
-.rating { margin-left: 6px; font-size: 12px; color: #e6a23c; }
+.rating { margin-left: 6px; font-size: 12px; color: var(--el-color-warning); }
 </style>

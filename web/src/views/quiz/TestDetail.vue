@@ -46,12 +46,12 @@
       </div>
     </div>
     <el-alert v-if="test.mode === 'CONTROL' && test.status === 'STANDBY'" type="warning" :closable="false" show-icon class="mb"
-      title="待机中：学生看到“等待开考”。点击「开考」后学生才能看到试题并作答。" />
+      title="待机中，点「开考」后学生才能作答" />
 
     <el-tabs v-model="tab" @tab-change="onTab">
       <el-tab-pane label="成绩" name="results">
         <el-table :data="test.results" size="small" stripe>
-          <el-table-column prop="studentNo" label="学号" width="70" />
+          <el-table-column prop="studentNo" label="班内学号" width="84" />
           <el-table-column prop="name" label="姓名" width="100" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }: { row: any }">
@@ -73,8 +73,6 @@
       </el-tab-pane>
 
       <el-tab-pane v-if="hasFill" label="填空批改" name="fill">
-        <el-alert type="info" :closable="false" class="mb"
-          title="同一道填空题答案相同的学生归为一组，给一组打分即作用于组内所有人（原“答案归类批改”）。系统已按标准答案自动判分，这里用来处理同义、写法不同的答案。" />
         <el-empty v-if="!fillGroups.length" description="还没有学生提交" />
         <div v-for="q in fillGroups" :key="q.id" class="fq">
           <div class="fq-head">
@@ -126,7 +124,7 @@
           <el-table-column label="及格率" width="90"><template #default="{ row }: { row: any }">{{ row.passRate == null ? '—' : row.passRate + '%' }}</template></el-table-column>
           <el-table-column label="优秀率" width="90"><template #default="{ row }: { row: any }">{{ row.goodRate == null ? '—' : row.goodRate + '%' }}</template></el-table-column>
         </el-table>
-        <div class="muted mt">及格 = 得分 ≥ 60%，优秀 = 得分 ≥ 85%（满分 {{ grade?.totalScore }}）</div>
+        <div><Hint block>及格 = 得分 ≥ 60%，优秀 = 得分 ≥ 85%（满分 {{ grade?.totalScore }}）</Hint></div>
       </el-tab-pane>
     </el-tabs>
 
@@ -200,7 +198,7 @@ async function setShowAnswer(v: boolean) {
 async function finalize() {
   try {
     await api.post(`/teacher/quiz/tests/${test.value.id}/finalize`)
-    ElMessage.success('已结分，学生现在可以看到成绩')
+    ElMessage.success('已结分')
     await reload()
   } catch (err) {
     ElMessage.error(errMsg(err))
@@ -235,7 +233,7 @@ async function onMore(cmd: string) {
   if (cmd === 'practice') {
     try {
       await api.post(`/teacher/quiz/tests/${test.value.id}/practice-set`)
-      ElMessage.success('已设为本班的指定刷题题库，可在「题库与试卷 → 刷题与分析」中管理')
+      ElMessage.success('已设为本班刷题题库')
     } catch (err) {
       ElMessage.error(errMsg(err))
     }
@@ -279,7 +277,7 @@ defineExpose({ reload })
 <style scoped>
 .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .title { font-size: 16px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml { margin-left: 6px; }
 .mt { margin-top: 8px; }
 .mb { margin-bottom: 10px; }
@@ -288,13 +286,13 @@ defineExpose({ reload })
 .fq { margin-bottom: 16px; }
 .fq-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
 .fq-stem :deep(p) { margin: 0; }
-.aq { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.aq { padding: 10px 0; border-bottom: 1px solid var(--el-border-color-lighter); }
 .aq-head { display: flex; gap: 6px; }
 .aq-stem :deep(p) { margin: 0; }
 .aq-stat { display: flex; align-items: center; gap: 12px; margin: 6px 0; flex-wrap: wrap; }
 .prog { width: 260px; }
 .dist { display: flex; flex-wrap: wrap; gap: 8px; }
-.dist-item { font-size: 12px; background: #f4f4f5; padding: 2px 8px; border-radius: 10px; }
+.dist-item { font-size: 12px; background: var(--el-fill-color-light); padding: 2px 8px; border-radius: 10px; }
 .att-q { margin-bottom: 6px; }
 .adjust { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: -4px 0 12px; }
 </style>

@@ -35,13 +35,16 @@ public class TeacherClassroomController {
     private final com.ittools.platform.service.LoginLogService loginLogService;
     private final com.ittools.classroom.service.EmergencyToolsService emergency;
     private final com.ittools.platform.service.ProfileService profiles;
+    private final com.ittools.classroom.service.LessonNetworkService lessonNet;
 
     public TeacherClassroomController(CourseService courses, LessonService lessons, TermService terms,
                                       ClassBindingService bindings, TeacherToolsService tools,
                                       com.ittools.platform.service.LoginLogService loginLogService,
                                       com.ittools.classroom.service.EmergencyToolsService emergency,
-                                      com.ittools.platform.service.ProfileService profiles) {
+                                      com.ittools.platform.service.ProfileService profiles,
+                                      com.ittools.classroom.service.LessonNetworkService lessonNet) {
         this.profiles = profiles;
+        this.lessonNet = lessonNet;
         this.loginLogService = loginLogService;
         this.emergency = emergency;
         this.courses = courses;
@@ -204,6 +207,21 @@ public class TeacherClassroomController {
         return ApiResponse.ok(lessons.seatMap(id));
     }
 
+    /** 座位图上本课堂机房各电脑的网络状态（未启用网络控制器时 enabled=false）。 */
+    @GetMapping("/lessons/{id}/network/status")
+    public ApiResponse<Map<String, Object>> lessonNetworkStatus(@PathVariable Long id) {
+        return ApiResponse.ok(lessonNet.status(CurrentUser.id(), id));
+    }
+
+    /** 座位图批量操作：action = open（恢复网络）| cut（暂停网络），只能操作本课堂机房的电脑。 */
+    @PostMapping("/lessons/{id}/network/batch")
+    public ApiResponse<Map<String, Object>> lessonNetworkBatch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        String action = b.str("action");
+        if (!"open".equals(action) && !"cut".equals(action)) throw new IllegalArgumentException("操作无效");
+        return ApiResponse.ok(lessonNet.batch(CurrentUser.id(), id, b.strs("ips"), "open".equals(action)));
+    }
+
     // ---- 我的班级 ----
     /** 教师为本班学生上传/删除头像（原 teacher/stuphoto）。 */
     @PostMapping("/classes/{classId}/students/{studentId}/avatar")
@@ -234,7 +252,7 @@ public class TeacherClassroomController {
     @PostMapping("/classes/{classId}/students")
     public ApiResponse<Long> addStudent(@PathVariable Long classId, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
-        return ApiResponse.ok(tools.addStudent(CurrentUser.id(), classId, b.reqStr("name", "姓名"), b.str("studentNo"), b.str("password")));
+        return ApiResponse.ok(tools.addStudent(CurrentUser.id(), classId, b.reqStr("name", "姓名"), b.str("xjh"), b.str("studentNo"), b.str("password")));
     }
 
     @PostMapping("/students/{studentId}/reset-password")

@@ -62,9 +62,9 @@ onMounted(load)
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
 .tt { width: 100%; border-collapse: collapse; }
-.tt th, .tt td { border: 1px solid #ebeef5; padding: 4px; text-align: center; }
-.tt th { background: #fafafa; font-weight: 500; color: #606266; }
+.tt th, .tt td { border: 1px solid var(--el-border-color-lighter); padding: 4px; text-align: center; }
+.tt th { background: var(--el-fill-color-lighter); font-weight: 500; color: var(--el-text-color-regular); }
 .tt .today { background: var(--el-color-primary-light-9); }
 .cell { width: 100%; border: none; background: transparent; text-align: center; padding: 8px 2px; outline: none; font-size: 13px; }
-.cell:focus { background: #fff; box-shadow: inset 0 0 0 1px var(--el-color-primary); border-radius: 4px; }
+.cell:focus { background: var(--el-bg-color); box-shadow: inset 0 0 0 1px var(--el-color-primary); border-radius: 4px; }
 </style>

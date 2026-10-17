@@ -51,6 +51,7 @@ public class TestService {
                     + "t.class_id AS \"classId\", sy.label || k.name AS \"className\", k.school_year_id AS \"yearId\", t.lesson_id AS \"lessonId\", t.page_id AS \"pageId\", "
                     + "t.teacher_id AS \"teacherId\", u.name AS \"teacherName\", t.created_at AS \"createdAt\", t.closed_at AS \"closedAt\", "
                     + "t.finalized_at AS \"finalizedAt\", t.batch_key AS \"batchKey\", "
+                    + "t.shuffle_questions AS \"shuffleQuestions\", t.shuffle_options AS \"shuffleOptions\", "
                     + "(SELECT COALESCE(SUM(score), 0) FROM paper_question pq WHERE pq.paper_id = t.paper_id) AS \"totalScore\", "
                     + "(SELECT COUNT(*) FROM quiz_attempt a WHERE a.test_id = t.id AND a.status = 'SUBMITTED') AS \"submittedCount\", "
                     + "(SELECT COUNT(*) FROM quiz_attempt a WHERE a.test_id = t.id AND a.status = 'RETURNED') AS \"returnedCount\", "
@@ -80,6 +81,12 @@ public class TestService {
     @Transactional
     public List<Map<String, Object>> publish(Long teacherId, Long paperId, List<Long> classIds, String title, boolean showAnswer,
                                              Integer timeLimit, String kind, String mode) {
+        return publish(teacherId, paperId, classIds, title, showAnswer, timeLimit, kind, mode, false, false);
+    }
+
+    @Transactional
+    public List<Map<String, Object>> publish(Long teacherId, Long paperId, List<Long> classIds, String title, boolean showAnswer,
+                                             Integer timeLimit, String kind, String mode, boolean shuffleQuestions, boolean shuffleOptions) {
         papers.requireReadable(teacherId, paperId);
         if (classIds.isEmpty()) throw new IllegalArgumentException("请选择班级");
         String k = kind == null ? "TEST" : kind;
@@ -95,10 +102,11 @@ public class TestService {
         String batch = classIds.size() > 1 ? UUID.randomUUID().toString() : null;
         List<Map<String, Object>> out = new ArrayList<>();
         for (Long classId : classIds) {
-            Long id = jdbc.queryForObject("INSERT INTO quiz_test(paper_id, teacher_id, class_id, title, show_answer, time_limit, kind, mode, status, batch_key) "
-                            + "VALUES (:p, :t, :k, :ti, :sa, :tl, :kind, :mode, :st, :b) RETURNING id",
+            Long id = jdbc.queryForObject("INSERT INTO quiz_test(paper_id, teacher_id, class_id, title, show_answer, time_limit, kind, mode, status, batch_key, "
+                            + "shuffle_questions, shuffle_options) VALUES (:p, :t, :k, :ti, :sa, :tl, :kind, :mode, :st, :b, :sq, :so) RETURNING id",
                     p("p", paperId, "t", teacherId, "k", classId, "ti", title == null || title.trim().isEmpty() ? paper.get("name") : title.trim(),
-                            "sa", showAnswer, "tl", timeLimit, "kind", k, "mode", m, "st", "CONTROL".equals(m) ? "STANDBY" : "OPEN", "b", batch), Long.class);
+                            "sa", showAnswer, "tl", timeLimit, "kind", k, "mode", m, "st", "CONTROL".equals(m) ? "STANDBY" : "OPEN", "b", batch,
+                            "sq", shuffleQuestions, "so", shuffleOptions), Long.class);
             out.add(get(id));
         }
         return out;
@@ -107,22 +115,32 @@ public class TestService {
     /** 课堂测验页的考试设置。 */
     @Transactional(readOnly = true)
     public Map<String, Object> pageConfig(Long pageId) {
-        List<Map<String, Object>> l = jdbc.queryForList("SELECT mode, time_limit AS \"timeLimit\", show_answer AS \"showAnswer\" FROM quiz_page_config WHERE page_id = :p",
+        List<Map<String, Object>> l = jdbc.queryForList("SELECT mode, time_limit AS \"timeLimit\", show_answer AS \"showAnswer\", "
+                        + "shuffle_questions AS \"shuffleQuestions\", shuffle_options AS \"shuffleOptions\" FROM quiz_page_config WHERE page_id = :p",
                 p("p", pageId));
         if (!l.isEmpty()) return l.get(0);
         Map<String, Object> d = new HashMap<>();
         d.put("mode", "CONTROL");
         d.put("timeLimit", null);
         d.put("showAnswer", true);
+        d.put("shuffleQuestions", false);
+        d.put("shuffleOptions", false);
         return d;
     }
 
     @Transactional
     public Map<String, Object> savePageConfig(Long pageId, String mode, Integer timeLimit, boolean showAnswer) {
+        return savePageConfig(pageId, mode, timeLimit, showAnswer, false, false);
+    }
+
+    @Transactional
+    public Map<String, Object> savePageConfig(Long pageId, String mode, Integer timeLimit, boolean showAnswer, boolean shuffleQuestions, boolean shuffleOptions) {
         if (!MODES.contains(mode)) throw new IllegalArgumentException("无效考试方式");
-        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer) VALUES (:p, :m, :tl, :sa) "
-                        + "ON CONFLICT (page_id) DO UPDATE SET mode = EXCLUDED.mode, time_limit = EXCLUDED.time_limit, show_answer = EXCLUDED.show_answer",
-                p("p", pageId, "m", mode, "tl", timeLimit == null || timeLimit <= 0 ? null : timeLimit, "sa", showAnswer));
+        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer, shuffle_questions, shuffle_options) VALUES (:p, :m, :tl, :sa, :sq, :so) "
+                        + "ON CONFLICT (page_id) DO UPDATE SET mode = EXCLUDED.mode, time_limit = EXCLUDED.time_limit, show_answer = EXCLUDED.show_answer, "
+                        + "shuffle_questions = EXCLUDED.shuffle_questions, shuffle_options = EXCLUDED.shuffle_options",
+                p("p", pageId, "m", mode, "tl", timeLimit == null || timeLimit <= 0 ? null : timeLimit, "sa", showAnswer,
+                        "sq", shuffleQuestions, "so", shuffleOptions));
         return pageConfig(pageId);
     }
 
@@ -137,11 +155,12 @@ public class TestService {
         Map<String, Object> lesson = lessons.get(lessonId);
         Map<String, Object> cfg = pageConfig(pageId);
         String mode = (String) cfg.get("mode");
-        Long id = jdbc.queryForObject("INSERT INTO quiz_test(paper_id, teacher_id, class_id, lesson_id, page_id, title, kind, mode, status, time_limit, show_answer) "
-                        + "VALUES (:p, :t, :k, :l, :pg, :ti, 'TEST', :m, :st, :tl, :sa) RETURNING id",
+        Long id = jdbc.queryForObject("INSERT INTO quiz_test(paper_id, teacher_id, class_id, lesson_id, page_id, title, kind, mode, status, time_limit, show_answer, "
+                        + "shuffle_questions, shuffle_options) VALUES (:p, :t, :k, :l, :pg, :ti, 'TEST', :m, :st, :tl, :sa, :sq, :so) RETURNING id",
                 p("p", page.get("refId"), "t", lesson.get("teacherId"), "k", lesson.get("classId"), "l", lessonId, "pg", pageId,
                         "ti", page.get("title"), "m", mode, "st", "CONTROL".equals(mode) ? "STANDBY" : "OPEN",
-                        "tl", cfg.get("timeLimit"), "sa", cfg.get("showAnswer")), Long.class);
+                        "tl", cfg.get("timeLimit"), "sa", cfg.get("showAnswer"),
+                        "sq", Boolean.TRUE.equals(cfg.get("shuffleQuestions")), "so", Boolean.TRUE.equals(cfg.get("shuffleOptions"))), Long.class);
         return get(id);
     }
 
@@ -402,7 +421,7 @@ public class TestService {
             org.apache.poi.ss.usermodel.Sheet s = wb.createSheet("成绩");
             org.apache.poi.ss.usermodel.Row title = s.createRow(0);
             title.createCell(0).setCellValue(t.get("title") + " · " + t.get("className") + " · 满分 " + t.get("totalScore"));
-            String[] head = {"学号", "姓名", "状态", "得分", "答对题数", "答错题数", "交卷时间"};
+            String[] head = {"班内学号", "姓名", "状态", "得分", "答对题数", "答错题数", "交卷时间"};
             org.apache.poi.ss.usermodel.Row h = s.createRow(1);
             for (int i = 0; i < head.length; i++) h.createCell(i).setCellValue(head[i]);
             int r = 2;
@@ -516,9 +535,37 @@ public class TestService {
                 }
             }
         }
-        out.put("questions", qs);
+        out.put("questions", shuffleFor(t, studentId, qs));
         out.put("answerRevealed", reveal);
         return out;
+    }
+
+    private static boolean choice(Object qtype) {
+        return "SINGLE".equals(qtype) || "MULTI".equals(qtype);
+    }
+
+    /** 每人乱序：重排题目、选项，并把答案/已答换成显示字母。 */
+    private List<Map<String, Object>> shuffleFor(Map<String, Object> t, Long studentId, List<Map<String, Object>> qs) {
+        long testId = ((Number) t.get("id")).longValue();
+        if (Boolean.TRUE.equals(t.get("shuffleOptions"))) {
+            for (Map<String, Object> q : qs) {
+                List<?> opts = (List<?>) q.get("options");
+                if (!choice(q.get("qtype")) || opts == null || opts.size() < 2) continue;
+                int[] perm = Shuffle.perm(opts.size(), testId, studentId, ((Number) q.get("id")).longValue());
+                q.put("options", Shuffle.apply(opts, perm));
+                if (q.get("answer") instanceof String) q.put("answer", Shuffle.toShown((String) q.get("answer"), perm));
+                if (q.get("given") instanceof String) q.put("given", Shuffle.toShown((String) q.get("given"), perm));
+            }
+        }
+        return Boolean.TRUE.equals(t.get("shuffleQuestions")) ? Shuffle.order(qs, testId, studentId) : qs;
+    }
+
+    /** 学生提交的是显示字母：换回原选项字母再保存。 */
+    private Object toOriginalAnswer(Map<String, Object> t, Long studentId, Map<String, Object> q, Object v) {
+        if (!Boolean.TRUE.equals(t.get("shuffleOptions")) || !(v instanceof String) || q == null || !choice(q.get("qtype"))) return v;
+        List<?> opts = (List<?>) q.get("options");
+        if (opts == null || opts.size() < 2) return v;
+        return Shuffle.toOriginal((String) v, Shuffle.perm(opts.size(), ((Number) t.get("id")).longValue(), studentId, ((Number) q.get("id")).longValue()));
     }
 
     private List<Map<String, Object>> attemptOf(Long testId, Long studentId) {
@@ -545,8 +592,12 @@ public class TestService {
             throw new IllegalArgumentException(finalized(t) ? "已结分，不能修改" : "测验已停止回收");
         }
         Long attemptId = ((Number) a.get(0).get("id")).longValue();
+        Map<Long, Map<String, Object>> byId = new HashMap<>();
+        if (Boolean.TRUE.equals(t.get("shuffleOptions"))) {
+            for (Map<String, Object> q : papers.paperQuestions(((Number) t.get("paperId")).longValue(), false)) byId.put(((Number) q.get("id")).longValue(), q);
+        }
         for (Map<String, Object> ans : answers) {
-            Object v = ans.get("answer");
+            Object v = toOriginalAnswer(t, studentId, byId.get(((Number) ans.get("questionId")).longValue()), ans.get("answer"));
             String stored = v instanceof List ? questions.toJson(v) : (v == null ? null : String.valueOf(v));
             jdbc.update("INSERT INTO quiz_answer(attempt_id, question_id, answer) VALUES (:a, :q, :v) "
                             // 答案改了才取消教师的人工改分；没改的保留（发还重改时其余题的人工分不丢）

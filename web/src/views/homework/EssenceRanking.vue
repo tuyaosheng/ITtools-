@@ -46,8 +46,8 @@ onMounted(async () => {
 <style scoped>
 .ops { display: flex; gap: 8px; margin-bottom: 10px; }
 .w140 { width: 140px; }
-.rank { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: #f0f2f5; font-weight: 600; }
+.rank { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; background: var(--el-fill-color-light); font-weight: 600; }
 .rank.r1 { background: #f7ba2a; color: #fff; }
-.rank.r2 { background: #c0c4cc; color: #fff; }
+.rank.r2 { background: var(--el-text-color-placeholder); color: #fff; }
 .rank.r3 { background: #d9a066; color: #fff; }
 </style>

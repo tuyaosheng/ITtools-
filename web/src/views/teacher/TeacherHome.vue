@@ -92,15 +92,15 @@ onMounted(async () => {
 .home { display: flex; flex-direction: column; gap: 16px; }
 .hero { display: flex; justify-content: space-between; align-items: center; }
 .hero h2 { margin: 0; }
-.sub { color: #909399; margin: 6px 0 0; }
+.sub { color: var(--el-text-color-secondary); margin: 6px 0 0; }
 .lesson-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.lesson { border: 1px solid #e4e7ed; border-radius: 10px; padding: 14px; cursor: pointer; transition: box-shadow .2s; }
+.lesson { border: 1px solid var(--el-border-color-lighter); border-radius: 10px; padding: 14px; cursor: pointer; transition: box-shadow .2s; }
 .lesson:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, .08); }
 .lesson-title { font-weight: 600; font-size: 16px; }
-.lesson-meta { color: #909399; font-size: 13px; margin: 6px 0 10px; }
+.lesson-meta { color: var(--el-text-color-secondary); font-size: 13px; margin: 6px 0 10px; }
 .lesson-stat { display: flex; justify-content: space-between; align-items: center; }
 .two { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.tt-row { padding: 6px 0; border-bottom: 1px dashed #ebeef5; }
+.tt-row { padding: 6px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
 </style>

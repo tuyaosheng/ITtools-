@@ -26,14 +26,14 @@ public class QuizPageExtension implements PageExtension {
 
     @Override
     public void copy(long fromPage, long toPage) {
-        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer) "
-                + "SELECT :to, mode, time_limit, show_answer FROM quiz_page_config WHERE page_id = :from", p("from", fromPage, "to", toPage));
+        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer, shuffle_questions, shuffle_options) "
+                + "SELECT :to, mode, time_limit, show_answer, shuffle_questions, shuffle_options FROM quiz_page_config WHERE page_id = :from", p("from", fromPage, "to", toPage));
     }
 
     @Override
     public Map<String, Object> export(long pageId) {
-        List<Map<String, Object>> l = jdbc.queryForList("SELECT mode, time_limit AS \"timeLimit\", show_answer AS \"showAnswer\" "
-                + "FROM quiz_page_config WHERE page_id = :p", p("p", pageId));
+        List<Map<String, Object>> l = jdbc.queryForList("SELECT mode, time_limit AS \"timeLimit\", show_answer AS \"showAnswer\", "
+                + "shuffle_questions AS \"shuffleQuestions\", shuffle_options AS \"shuffleOptions\" FROM quiz_page_config WHERE page_id = :p", p("p", pageId));
         return l.isEmpty() ? null : l.get(0);
     }
 
@@ -43,7 +43,8 @@ public class QuizPageExtension implements PageExtension {
         if (!Arrays.asList("CONTROL", "AUTO", "INSTANT").contains(mode)) return;
         Object tl = data.get("timeLimit");
         Integer limit = tl instanceof Number && ((Number) tl).intValue() > 0 ? Math.min(300, ((Number) tl).intValue()) : null;
-        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer) VALUES (:p, :m, :t, :s)",
-                p("p", pageId, "m", mode, "t", limit, "s", !Boolean.FALSE.equals(data.get("showAnswer"))));
+        jdbc.update("INSERT INTO quiz_page_config(page_id, mode, time_limit, show_answer, shuffle_questions, shuffle_options) VALUES (:p, :m, :t, :s, :sq, :so)",
+                p("p", pageId, "m", mode, "t", limit, "s", !Boolean.FALSE.equals(data.get("showAnswer")),
+                        "sq", Boolean.TRUE.equals(data.get("shuffleQuestions")), "so", Boolean.TRUE.equals(data.get("shuffleOptions"))));
     }
 }

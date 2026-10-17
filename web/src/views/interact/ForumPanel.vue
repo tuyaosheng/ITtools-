@@ -111,12 +111,12 @@ onMounted(load)
 
 <style scoped>
 .ops { display: flex; gap: 8px; margin: 8px 0; }
-.topic { padding: 10px 4px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-.topic:hover { background: #fafafa; }
+.topic { padding: 10px 4px; border-bottom: 1px solid var(--el-border-color-lighter); cursor: pointer; }
+.topic:hover { background: var(--el-fill-color-lighter); }
 .t-title { font-weight: 600; display: flex; gap: 6px; align-items: center; }
 .t-title.big { font-size: 16px; }
-.muted { color: #909399; font-size: 12px; }
-.post { padding: 10px 0; border-bottom: 1px dashed #ebeef5; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+.post { padding: 10px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .content { margin-top: 6px; white-space: pre-wrap; line-height: 1.7; }
 .reply { margin-top: 12px; }
 .mt { margin-top: 8px; }

@@ -71,7 +71,7 @@ public class AuthController {
 
     /**
      * 第三方程序登录学生界面（原 weblogin.aspx?id=&checknum=）。第三方程序与平台共享密钥，生成一次性签名链接：
-     * /api/auth/sso?u=学籍号&t=Unix秒&s=HMAC-SHA256(密钥, "学籍号|t") 的十六进制，5 分钟内有效且只能使用一次。
+     * /api/auth/sso?u=学号&t=Unix秒&s=HMAC-SHA256(密钥, "学号|t") 的十六进制，5 分钟内有效且只能使用一次。
      */
     @GetMapping("/sso")
     public void sso(@RequestParam("u") String u, @RequestParam("t") long t, @RequestParam("s") String sig,

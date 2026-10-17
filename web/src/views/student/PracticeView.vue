@@ -63,7 +63,7 @@
           </el-select>
           <el-button type="primary" @click="next">{{ q ? '换一题' : '开始练习' }}</el-button>
         </div>
-        <el-empty v-if="empty" description="题库中暂无可练习的题目" />
+        <el-empty v-if="empty" description="暂无题目" />
         <template v-if="q">
           <QuestionItem v-model="answer" :q="shown" :index="count - 1" :readonly="!!result" :show-key="!!result" />
           <el-alert v-if="result" :type="result.correct ? 'success' : 'error'" :closable="false" :title="result.correct ? '回答正确！' : '回答错误，看看解析吧'" class="mb" />
@@ -191,12 +191,12 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.stats { display: flex; gap: 16px; font-size: 13px; color: #606266; }
+.stats { display: flex; gap: 16px; font-size: 13px; color: var(--el-text-color-regular); }
 .stats b { color: var(--el-color-primary); font-size: 16px; }
 .filters { display: flex; gap: 8px; margin-bottom: 14px; }
 .w140 { width: 140px; } .w160 { width: 160px; } .w200 { width: 200px; } .w280 { width: 280px; }
 .full { width: 100%; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .draw { max-width: 640px; }
 .s-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .score { margin-left: auto; }

@@ -21,7 +21,7 @@ import static com.ittools.platform.db.Sql.p;
 public class CourseService {
     public static final List<String> PAGE_TYPES = Arrays.asList(
             "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST", "PYTHON",
-            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH");
+            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH", "MPYTHON");
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;

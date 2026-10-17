@@ -10,7 +10,7 @@
   >
     <template #filters>
       <span class="filter-label">角色</span>
-      <el-select v-model="roleFilter" placeholder="全部角色" clearable class="filter-select" @change="load">
+      <el-select v-model="roleFilter" placeholder="全部角色" clearable class="filter-select" @change="search">
         <el-option v-for="r in roleOptions" :key="r.value" :label="r.label" :value="r.value" />
       </el-select>
 
@@ -26,10 +26,20 @@
         clearable
         class="filter-select"
         :disabled="!filterYearId"
-        @change="load"
+        @change="search"
       >
         <el-option v-for="c in filterClasses" :key="c.id" :label="c.name" :value="c.id" />
       </el-select>
+
+      <el-input
+        v-model="keyword"
+        placeholder="姓名 / 学号 / 登录名"
+        clearable
+        class="filter-keyword"
+        @keyup.enter="search"
+        @clear="search"
+      />
+      <el-button @click="search">查询</el-button>
     </template>
 
     <template #actions>
@@ -42,8 +52,8 @@
         <template #default="{ row }: { row: any }">{{ roleLabel(row.role) }}</template>
       </el-table-column>
       <el-table-column prop="loginName" label="登录名" width="140" />
-      <el-table-column prop="studentNo" label="学号" width="120" />
-      <el-table-column prop="xjh" label="学籍号" width="140" />
+      <el-table-column prop="studentNo" label="班内学号" width="120" />
+      <el-table-column prop="xjh" label="学号" width="140" />
       <el-table-column prop="className" label="班级" width="140" />
       <el-table-column label="毕业" width="90">
         <template #default="{ row }: { row: any }">
@@ -67,6 +77,17 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      v-model:current-page="page"
+      v-model:page-size="pageSize"
+      :total="total"
+      :page-sizes="[20, 50, 100, 200]"
+      layout="total, sizes, prev, pager, next, jumper"
+      background
+      class="pager"
+      @current-change="load"
+      @size-change="search"
+    />
 
     <template #dialog>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
@@ -82,11 +103,11 @@
           <el-input v-model="form.loginName" />
         </el-form-item>
         <template v-if="form.role === 'STUDENT'">
-          <el-form-item label="学号" prop="studentNo">
-            <el-input v-model="form.studentNo" />
+          <el-form-item label="学号" prop="xjh">
+            <el-input v-model="form.xjh" placeholder="全校唯一，学生可用学号登录" />
           </el-form-item>
-          <el-form-item label="学籍号" prop="xjh">
-            <el-input v-model="form.xjh" />
+          <el-form-item label="班内学号" prop="studentNo">
+            <el-input v-model="form.studentNo" placeholder="可不填" />
           </el-form-item>
           <el-form-item label="学年" prop="enrollYearId">
             <el-select v-model="form.enrollYearId" class="full-width" @change="onFormYearChange">
@@ -120,6 +141,7 @@ import {
   ElInput,
   ElSelect,
   ElOption,
+  ElPagination,
   ElMessage,
   ElMessageBox,
   type FormInstance,
@@ -148,20 +170,41 @@ const roleFilter = ref<UserRole | ''>('')
 const filterYearId = ref<number | undefined>(undefined)
 const classFilter = ref<number | undefined>(undefined)
 const filterClasses = ref<ClassItem[]>([])
+const keyword = ref('')
+const page = ref(1)
+const pageSize = ref(50)
+const total = ref(0)
 
 async function onFilterYearChange() {
   classFilter.value = undefined
   filterClasses.value = filterYearId.value ? await adminApi.classes.list(filterYearId.value) : []
-  await load()
+  await search()
+}
+
+/** Filters changed: go back to page 1. */
+function search() {
+  page.value = 1
+  return load()
 }
 
 async function load() {
   loading.value = true
   try {
-    users.value = await adminApi.users.list({
+    const res = await adminApi.users.page({
       role: roleFilter.value || undefined,
-      classId: classFilter.value
+      yearId: filterYearId.value,
+      classId: classFilter.value,
+      keyword: keyword.value.trim() || undefined,
+      page: page.value,
+      size: pageSize.value
     })
+    users.value = res.items
+    total.value = res.total
+    // deleting the last row of the last page leaves an empty page
+    if (!res.items.length && res.total > 0 && page.value > 1) {
+      page.value = Math.ceil(res.total / pageSize.value)
+      await load()
+    }
   } finally {
     loading.value = false
   }
@@ -190,7 +233,14 @@ const form = reactive({
 const rules: FormRules = {
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  xjh: [{ validator: (_r: unknown, v: string, cb: (e?: Error) => void) => (form.role === 'STUDENT' && !String(v || '').trim() ? cb(new Error('请输入学号')) : cb()), trigger: 'blur' }],
+  studentNo: [{ validator: (_r: unknown, v: string, cb: (e?: Error) => void) => (classNoOk(v) ? cb() : cb(new Error('班内学号应为正整数'))), trigger: 'blur' }]
+}
+
+function classNoOk(v: string) {
+  const s = String(v || '').trim()
+  return !s || (/^\d{1,6}$/.test(s) && +s >= 1)
 }
 
 function resetForm() {
@@ -343,11 +393,20 @@ async function toggleEnabled(row: UserItem, value: boolean) {
 }
 
 .filter-label {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
 }
 
 .filter-select {
   width: 160px;
+}
+
+.filter-keyword {
+  width: 200px;
+}
+
+.pager {
+  margin-top: 16px;
+  justify-content: flex-end;
 }
 </style>

@@ -2,7 +2,7 @@
   <div>
     <el-divider content-position="left">抢答控制</el-divider>
     <div class="start">
-      <el-input v-model="question" placeholder="抢答题目（默认取页面说明）" />
+      <el-input v-model="question" placeholder="抢答题目" />
       <el-button type="danger" @click="start">发起抢答</el-button>
     </div>
     <div v-for="r in rounds" :key="r.id" class="round">

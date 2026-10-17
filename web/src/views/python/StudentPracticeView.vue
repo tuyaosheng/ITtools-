@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span v-if="!current">Python 课后练习 <span class="muted">（老师开放的课后题库，可反复提交，记录最高分）</span></span>
+        <span v-if="!current">Python 课后练习</span>
         <el-button v-else link type="primary" @click="back">← 返回题目列表</el-button>
       </div>
     </template>
@@ -65,5 +65,5 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 </style>

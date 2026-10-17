@@ -7,7 +7,7 @@
       </div>
     </template>
 
-    <el-empty v-if="!list.length" description="当前没有面向你的选课活动" />
+    <el-empty v-if="!list.length" description="暂无选课" />
     <div v-for="a in list" :key="a.id" class="activity">
       <div class="a-head">
         <b>{{ a.name }}</b>
@@ -70,10 +70,10 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .pre { white-space: pre-wrap; }
 .activity { margin-bottom: 20px; }
 .a-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.chosen { color: #67c23a; font-size: 13px; }
-.full { color: #f56c6c; }
+.chosen { color: var(--el-color-success); font-size: 13px; }
+.full { color: var(--el-color-danger); }
 </style>

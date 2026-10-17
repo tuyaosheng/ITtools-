@@ -51,12 +51,12 @@ function download() {
 </script>
 
 <style scoped>
-.rich { line-height: 1.8; color: #303133; }
+.rich { line-height: 1.8; color: var(--el-text-color-primary); }
 .rich :deep(img) { max-width: 100%; }
-.file-box { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid #ebeef5; border-radius: 8px; margin: 12px 0; background: #fafafa; }
+.file-box { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; margin: 12px 0; background: var(--el-fill-color-lighter); }
 .file-icon { font-size: 22px; color: var(--el-color-primary); }
 .file-name { flex: 1; word-break: break-all; }
-.preview-frame { width: 100%; height: 520px; border: 1px solid #ebeef5; border-radius: 8px; margin-top: 8px; background: #fff; }
+.preview-frame { width: 100%; height: 520px; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; margin-top: 8px; background: var(--el-bg-color); }
 .preview-img { max-width: 100%; border-radius: 8px; margin-top: 8px; }
 .video { width: 100%; max-height: 520px; background: #000; border-radius: 8px; }
 .link-box { display: flex; flex-direction: column; gap: 10px; }

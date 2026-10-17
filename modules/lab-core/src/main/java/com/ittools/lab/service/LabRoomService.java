@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +145,186 @@ public class LabRoomService {
         return saveLayout(roomId, cells);
     }
 
+    // ================= 机房方案（文本排版 + 规则生成机位） =================
+
+    static final java.util.regex.Pattern IPV4 = java.util.regex.Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$");
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> scheme(Long roomId) {
+        get(roomId);
+        return jdbc.queryForMap("SELECT id, name, rows_count AS \"rows\", cols_count AS \"cols\", prefix, pad, base_ip AS \"baseIp\", "
+                + "ip_step AS \"step\", layout_text AS \"layoutText\" FROM lab_room WHERE id = :id", p("id", roomId));
+    }
+
+    static long ipToLong(String ip) {
+        java.util.regex.Matcher m = IPV4.matcher(ip == null ? "" : ip.trim());
+        if (!m.matches()) throw new IllegalArgumentException("IP 格式不对：" + ip);
+        long v = 0;
+        for (int i = 1; i <= 4; i++) {
+            int n = Integer.parseInt(m.group(i));
+            if (n > 255) throw new IllegalArgumentException("IP 格式不对：" + ip);
+            v = v * 256 + n;
+        }
+        return v;
+    }
+
+    static String longToIp(long v) {
+        return ((v >> 24) & 255) + "." + ((v >> 16) & 255) + "." + ((v >> 8) & 255) + "." + (v & 255);
+    }
+
+    /** 解析文本排版：一行一排，座位号空格隔开，过道/空位写 . 或 0。返回每行的座位号（0 = 空位）。 */
+    static List<List<Integer>> parseLayout(String text) {
+        List<List<Integer>> rows = new java.util.ArrayList<>();
+        Set<Integer> seen = new HashSet<>();
+        for (String line : (text == null ? "" : text).split("\\r?\\n")) {
+            if (line.trim().isEmpty()) continue;
+            List<Integer> row = new java.util.ArrayList<>();
+            for (String tok : line.trim().split("\\s+")) {
+                if (".".equals(tok) || "0".equals(tok)) {
+                    row.add(0);
+                    continue;
+                }
+                int n;
+                try {
+                    n = Integer.parseInt(tok);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("排版里有无法识别的内容：" + tok + "（座位号写数字，过道写 .）");
+                }
+                if (n < 1 || n > 999) throw new IllegalArgumentException("座位号要在 1~999：" + n);
+                if (!seen.add(n)) throw new IllegalArgumentException("座位号 " + n + " 重复了");
+                row.add(n);
+            }
+            if (row.size() > 40) throw new IllegalArgumentException("每排最多 40 个位置");
+            rows.add(row);
+        }
+        if (rows.isEmpty() || seen.isEmpty()) throw new IllegalArgumentException("排版里没有座位");
+        if (rows.size() > 40) throw new IllegalArgumentException("最多 40 排");
+        return rows;
+    }
+
+    /**
+     * 保存机房方案：按 前缀+编号 生成计算机名、按 1号IP ± (编号-1) 生成IP，新增或更新机位，并按排版重建座位格子。
+     * roomId 为空时新建机房。已存在的同名/同IP机位会被复用（改名或改IP）。
+     */
+    @Transactional
+    public Map<String, Object> saveScheme(Long roomId, Map<String, Object> b) {
+        String name = b.get("name") == null ? "" : String.valueOf(b.get("name")).trim();
+        String prefix = b.get("prefix") == null ? "" : String.valueOf(b.get("prefix")).trim();
+        if (prefix.length() > 12) throw new IllegalArgumentException("座位名前缀最多 12 个字符");
+        int pad = b.get("pad") instanceof Number ? ((Number) b.get("pad")).intValue() : 2;
+        if (pad < 0 || pad > 3) throw new IllegalArgumentException("编号位数为 0~3");
+        int step = b.get("step") instanceof Number ? ((Number) b.get("step")).intValue() : 1;
+        if (step != 1 && step != -1) throw new IllegalArgumentException("IP 只能递增或递减");
+        String baseIp = b.get("baseIp") == null ? "" : String.valueOf(b.get("baseIp")).trim();
+        long base = ipToLong(baseIp);
+        String text = b.get("layoutText") == null ? "" : String.valueOf(b.get("layoutText"));
+        List<List<Integer>> layout = parseLayout(text);
+        int rows = layout.size(), cols = 0;
+        for (List<Integer> r : layout) cols = Math.max(cols, r.size());
+        validate(name, rows, cols);
+
+        // 目标机位：座位号 → (计算机名, IP)
+        Map<Integer, String[]> target = new java.util.LinkedHashMap<>();
+        for (List<Integer> r : layout) {
+            for (Integer n : r) {
+                if (n == 0) continue;
+                long ip = base + (long) (n - 1) * step;
+                if (ip < 0 || ip > 0xFFFFFFFFL || (ip & 255) == 0 || (ip & 255) == 255) {
+                    throw new IllegalArgumentException("座位 " + n + " 算出的 IP 不可用（超出网段或以 .0/.255 结尾），请检查 1 号座位 IP 和递增方向");
+                }
+                String num = pad == 0 ? String.valueOf(n) : String.format("%0" + pad + "d", n);
+                target.put(n, new String[]{prefix + num, longToIp(ip)});
+            }
+        }
+
+        if (roomId == null) {
+            roomId = ((Number) create(name, rows, cols).get("id")).longValue();
+        } else {
+            update(roomId, name, rows, cols);
+        }
+        Map<Integer, Long> wsOf = upsertWorkstations(target);
+        // 重建格子：保留排版里有座位的格子（学生座位绑定引用格子 id），删除其余
+        List<Map<String, Object>> cells = new java.util.ArrayList<>();
+        Set<String> keep = new HashSet<>();
+        for (int r = 0; r < rows; r++) {
+            List<Integer> row = layout.get(r);
+            for (int c = 0; c < row.size(); c++) {
+                int n = row.get(c);
+                if (n == 0) continue;
+                Map<String, Object> cell = new java.util.HashMap<>();
+                cell.put("row", r + 1);
+                cell.put("col", c + 1);
+                cell.put("workstationId", wsOf.get(n));
+                cells.add(cell);
+                keep.add((r + 1) + ":" + (c + 1));
+            }
+        }
+        for (Map<String, Object> s : jdbc.queryForList("SELECT id, row_no, col_no FROM lab_seat WHERE room_id = :r", p("r", roomId))) {
+            if (!keep.contains(s.get("row_no") + ":" + s.get("col_no"))) jdbc.update("DELETE FROM lab_seat WHERE id = :id", p("id", s.get("id")));
+        }
+        saveLayout(roomId, cells);
+        jdbc.update("UPDATE lab_room SET prefix = :pf, pad = :pad, base_ip = :ip, ip_step = :st, layout_text = :t WHERE id = :id",
+                p("pf", prefix, "pad", pad, "ip", baseIp, "st", step, "t", text.trim(), "id", roomId));
+        return scheme(roomId);
+    }
+
+    /**
+     * 机位名与 IP 都唯一：先把有冲突的机位改成临时值，再逐个复用（同 IP 优先，其次同名）或新增；
+     * 没被复用的冲突机位删除（座位引用随之置空）。返回 座位号 → 机位 id。
+     */
+    private Map<Integer, Long> upsertWorkstations(Map<Integer, String[]> target) {
+        List<String> names = new java.util.ArrayList<>(), ips = new java.util.ArrayList<>();
+        for (String[] t : target.values()) {
+            names.add(t[0]);
+            ips.add(t[1]);
+        }
+        List<Map<String, Object>> conflict = jdbc.queryForList("SELECT id, pc_name, ip_address FROM lab_workstation WHERE pc_name IN (:n) OR ip_address IN (:i)",
+                p("n", names, "i", ips));
+        Map<String, Long> byIp = new HashMap<>(), byName = new HashMap<>();
+        for (Map<String, Object> w : conflict) {
+            long id = ((Number) w.get("id")).longValue();
+            byIp.put((String) w.get("ip_address"), id);
+            byName.put((String) w.get("pc_name"), id);
+            jdbc.update("UPDATE lab_workstation SET pc_name = :n, ip_address = :i WHERE id = :id", p("n", "__tmp_" + id, "i", "__tmp_" + id, "id", id));
+        }
+        Set<Long> used = new HashSet<>();
+        Map<Integer, Long> out = new HashMap<>();
+        for (Map.Entry<Integer, String[]> e : target.entrySet()) {
+            String[] t = e.getValue();
+            Long id = byIp.get(t[1]);
+            if (id == null || used.contains(id)) id = byName.get(t[0]);
+            if (id != null && used.contains(id)) id = null;
+            if (id == null) {
+                id = jdbc.queryForObject("INSERT INTO lab_workstation(pc_name, ip_address) VALUES (:n, :i) RETURNING id", p("n", t[0], "i", t[1]), Long.class);
+            } else {
+                jdbc.update("UPDATE lab_workstation SET pc_name = :n, ip_address = :i WHERE id = :id", p("n", t[0], "i", t[1], "id", id));
+            }
+            used.add(id);
+            out.put(e.getKey(), id);
+        }
+        for (Map<String, Object> w : conflict) {
+            long id = ((Number) w.get("id")).longValue();
+            if (!used.contains(id)) jdbc.update("DELETE FROM lab_workstation WHERE id = :id", p("id", id));
+        }
+        return out;
+    }
+
+    /** 交换两台机位的 IP（原“交换这两个座位的IP”：两台电脑的网线或 IP 对调时使用）。 */
+    @Transactional
+    public void swapIp(Long a, Long b) {
+        if (a == null || b == null || a.equals(b)) throw new IllegalArgumentException("请选择两台不同的机位");
+        List<Map<String, Object>> l = jdbc.queryForList("SELECT id, ip_address FROM lab_workstation WHERE id IN (:a, :b)", p("a", a, "b", b));
+        if (l.size() != 2) throw new IllegalArgumentException("机位不存在");
+        String ipA = null, ipB = null;
+        for (Map<String, Object> w : l) {
+            if (((Number) w.get("id")).longValue() == a) ipA = (String) w.get("ip_address");
+            else ipB = (String) w.get("ip_address");
+        }
+        jdbc.update("UPDATE lab_workstation SET ip_address = :t WHERE id = :id", p("t", "__swap_" + a, "id", a));
+        jdbc.update("UPDATE lab_workstation SET ip_address = :ip WHERE id = :id", p("ip", ipA, "id", b));
+        jdbc.update("UPDATE lab_workstation SET ip_address = :ip WHERE id = :id", p("ip", ipB, "id", a));
+    }
+
     private boolean exists(String sql, org.springframework.jdbc.core.namedparam.MapSqlParameterSource ps) {
         Long n = jdbc.queryForObject(sql, ps, Long.class);
         return n != null && n > 0;
@@ -151,6 +332,6 @@ public class LabRoomService {
 
     private static void validate(String name, int rows, int cols) {
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("名称不能为空");
-        if (rows < 1 || rows > 30 || cols < 1 || cols > 30) throw new IllegalArgumentException("行列数需在 1-30 之间");
+        if (rows < 1 || rows > 40 || cols < 1 || cols > 40) throw new IllegalArgumentException("行列数需在 1-40 之间");
     }
 }

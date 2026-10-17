@@ -8,7 +8,7 @@
       <span v-else class="muted">我还没有加入小组</span>
       <el-button v-if="data.joinOpen && me.groupNo" size="small" link type="danger" @click="join(0)">退出小组</el-button>
     </div>
-    <el-alert v-if="!me.joined" title="请先进入课堂签到后再分组" type="info" :closable="false" class="mb" />
+    <el-alert v-if="!me.joined" title="先进入课堂再分组" type="info" :closable="false" class="mb" />
     <el-empty v-if="!data.groups.length" description="老师还没有设置小组" />
 
     <div class="board">
@@ -84,15 +84,15 @@ onMounted(load)
 
 <style scoped>
 .status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.mine { color: #409eff; font-weight: 600; }
-.muted { color: #909399; font-size: 12px; }
+.mine { color: var(--el-color-primary); font-weight: 600; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .mb { margin-bottom: 12px; }
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.group { border: 1px solid #e4e7ed; border-radius: 6px; padding: 8px 10px; }
-.group.mine { border-color: #409eff; background: #ecf5ff; }
+.group { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 8px 10px; }
+.group.mine { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
 .g-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .join { margin-left: auto; }
 .member { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 2px 0; }
 .me { font-weight: 600; }
-.crown { color: #e6a23c; margin-right: 2px; }
+.crown { color: var(--el-color-warning); margin-right: 2px; }
 </style>

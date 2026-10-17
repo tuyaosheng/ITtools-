@@ -5,14 +5,14 @@
       <el-alert v-if="data.config.allowedExts" type="info" :closable="false" :title="`允许的文件类型：${data.config.allowedExts}`" />
       <el-alert v-if="sub?.returned" type="error" :closable="false" show-icon
         :title="`老师发回了你的作品，请修改后重新提交${sub.returnNote ? '：' + sub.returnNote : ''}`" />
-      <el-alert v-if="!data.canSubmit" type="warning" :closable="false" title="课堂已结束，暂不接收提交" />
+      <el-alert v-if="!data.canSubmit" type="warning" :closable="false" title="课堂已结束" />
       <template v-else>
         <div class="meta-row">
           <el-input v-model="title" placeholder="作品名（可选）" maxlength="100" class="w240" />
           <span class="muted">自我评分</span>
           <el-input-number v-model="selfScore" :min="0" :max="100" controls-position="right" class="w120" />
         </div>
-        <el-input v-model="description" placeholder="作品简介（可选，500 字内）" maxlength="500" type="textarea" :rows="2" />
+        <el-input v-model="description" placeholder="作品简介（可选）" maxlength="500" type="textarea" :rows="2" />
         <div class="upload-row">
           <input ref="fileInput" type="file" @change="onFile" />
           <el-button type="primary" :loading="uploading" :disabled="!file" @click="submit">
@@ -159,19 +159,19 @@ onMounted(load)
 .upload-row { display: flex; align-items: center; gap: 12px; }
 .result { margin-top: 14px; }
 .res-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .scores { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
-.score-box { display: flex; flex-direction: column; align-items: center; padding: 8px 16px; background: #f5f7fa; border-radius: 8px; min-width: 90px; }
-.score-box span { font-size: 12px; color: #909399; }
+.score-box { display: flex; flex-direction: column; align-items: center; padding: 8px 16px; background: var(--el-fill-color-light); border-radius: 8px; min-width: 90px; }
+.score-box span { font-size: 12px; color: var(--el-text-color-secondary); }
 .score-box b { font-size: 20px; color: var(--el-color-primary); }
-.score-box small { font-size: 11px; color: #a8abb2; }
-.comment { background: #fdf6ec; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
+.score-box small { font-size: 11px; color: var(--el-text-color-placeholder); }
+.comment { background: var(--el-color-warning-light-9); padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; }
 .rubric { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; margin-bottom: 10px; }
-.rubric-row { display: flex; justify-content: space-between; background: #f5f7fa; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.rubric-row { display: flex; justify-content: space-between; background: var(--el-fill-color-light); padding: 6px 10px; border-radius: 6px; font-size: 13px; }
 .mt { margin-top: 10px; }
 .reviews { margin-top: 10px; }
 .sub-title { font-weight: 600; margin-bottom: 6px; }
-.review { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #ebeef5; }
+.review { font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); }
 .peer { display: flex; gap: 4px; }
 .w90 { width: 90px; flex-shrink: 0; }
 </style>

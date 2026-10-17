@@ -57,7 +57,7 @@
       <el-form :model="form" label-width="80px">
         <el-form-item label="课程名称"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="分类">
-          <el-select v-model="form.category" filterable allow-create clearable default-first-option placeholder="选择或输入新分类，如 网络基础、Python" class="full">
+          <el-select v-model="form.category" filterable allow-create clearable default-first-option placeholder="选择或输入分类" class="full">
             <el-option v-for="c in myCategories" :key="c" :label="c" :value="c" />
           </el-select>
         </el-form-item>
@@ -67,7 +67,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="简介"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="共享"><el-switch v-model="form.shared" /><span class="tip">共享后其他教师可查看，并可作为模板新建课程</span></el-form-item>
+        <el-form-item label="共享"><el-switch v-model="form.shared" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialog = false">取消</el-button>
@@ -213,7 +213,7 @@ onMounted(async () => {
 .ops { display: flex; gap: 8px; }
 .ml { margin-left: 6px; }
 .full { width: 100%; }
-.tip { margin-left: 10px; font-size: 12px; color: #909399; }
+.tip { margin-left: 10px; font-size: 12px; color: var(--el-text-color-secondary); }
 .w140 { width: 140px; }
 .warns { color: var(--el-color-warning-dark-2); line-height: 1.8; padding-left: 20px; }
 </style>

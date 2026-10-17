@@ -1,6 +1,6 @@
 <template>
   <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
-  <el-empty v-else-if="data && !data.groupNo" description="你还没有加入小组，请先在「分组」页面加入或等待老师分组" />
+  <el-empty v-else-if="data && !data.groupNo" description="你还没有加入小组" />
   <div v-else-if="data" class="work">
     <div class="head">
       <b>第 {{ data.groupNo }} 组</b>
@@ -11,7 +11,7 @@
     <section>
       <div class="sec-title">研究主题</div>
       <div v-if="data.isLeader" class="row">
-        <el-input v-model="topic" maxlength="200" placeholder="组长填写本组研究主题" />
+        <el-input v-model="topic" maxlength="200" placeholder="研究主题" />
         <el-button type="primary" @click="saveTopic">保存</el-button>
       </div>
       <div v-else class="topic">{{ group.topic || '组长还没有设置主题' }}</div>
@@ -59,7 +59,7 @@
     <section>
       <div class="sec-title">小组成果</div>
       <template v-if="data.isLeader">
-        <el-input v-model="resultText" type="textarea" :rows="3" placeholder="组长总结本组的研究结论或成果说明" />
+        <el-input v-model="resultText" type="textarea" :rows="3" placeholder="研究结论" />
         <div class="row mt8">
           <span class="muted">成果文件</span>
           <el-select v-model="resultFileId" clearable placeholder="从组内资源中选择" class="w240">
@@ -75,7 +75,7 @@
     </section>
 
     <section v-if="data.myEvaluations.length">
-      <div class="sec-title">组员互评 <span class="muted">（评价其他组员在本次合作中的表现）</span></div>
+      <div class="sec-title">组员互评</div>
       <div v-for="e in data.myEvaluations" :key="e.studentId" class="peer">
         <span class="p-name">{{ e.name }}</span>
         <el-rate v-model="peerScore[e.studentId]" />
@@ -222,18 +222,18 @@ onMounted(() => load())
 .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 section { margin-top: 16px; }
 .sec-title { font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
-.muted { color: #909399; font-size: 12px; font-weight: normal; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; font-weight: normal; }
 .row { display: flex; gap: 8px; align-items: center; }
-.topic { padding: 8px 12px; background: #f5f7fa; border-radius: 4px; }
-.crown { color: #e6a23c; margin-right: 2px; }
+.topic { padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 4px; }
+.crown { color: var(--el-color-warning); margin-right: 2px; }
 .mt8 { margin-top: 8px; }
 .ml8 { margin-left: 8px; }
 .w240 { width: 240px; }
-.file { display: flex; justify-content: space-between; gap: 8px; border: 1px solid #ebeef5; border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; }
-.file.result { border-color: #67c23a; background: #f0f9eb; }
-.intro { font-size: 13px; color: #606266; margin-top: 2px; }
+.file { display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; }
+.file.result { border-color: var(--el-color-success); background: var(--el-color-success-light-9); }
+.intro { font-size: 13px; color: var(--el-text-color-regular); margin-top: 2px; }
 .ops { white-space: nowrap; }
-.pre { white-space: pre-wrap; padding: 8px 12px; background: #f5f7fa; border-radius: 4px; }
+.pre { white-space: pre-wrap; padding: 8px 12px; background: var(--el-fill-color-light); border-radius: 4px; }
 .peer { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .p-name { width: 80px; }
 .p-comment { max-width: 280px; }

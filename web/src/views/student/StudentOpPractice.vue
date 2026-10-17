@@ -1,7 +1,6 @@
 <template>
   <el-card shadow="never">
     <template #header>课后操作题</template>
-    <p class="muted">老师开放的 Word / Excel / PPT 等操作题：下载素材，完成后上传即可自动评分，可以反复提交，保留最好成绩。</p>
     <el-table :data="list" stripe empty-text="暂时没有开放的课后操作题">
       <el-table-column label="题目" min-width="200">
         <template #default="{ row }: { row: any }"><el-link type="primary" @click="open(row)">{{ row.title }}</el-link></template>
@@ -77,7 +76,7 @@ async function submit(o: UploadRequestOptions) {
   sending.value = true
   try {
     cur.value = await api.upload(`/student/op-practice/${cur.value.id}`, o.file)
-    ElMessage.success('已提交并完成评分')
+    ElMessage.success('已提交')
     await load()
   } catch (err) {
     ElMessage.error(errMsg(err))

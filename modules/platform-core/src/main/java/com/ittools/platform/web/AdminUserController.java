@@ -4,6 +4,7 @@ import com.ittools.platform.service.UserService;
 import com.ittools.platform.service.dto.UserDtos.CreateUserCommand;
 import com.ittools.platform.service.dto.UserDtos.ResetPasswordCommand;
 import com.ittools.platform.service.dto.UserDtos.UpdateUserCommand;
+import com.ittools.platform.service.dto.UserDtos.UserPage;
 import com.ittools.platform.service.dto.UserDtos.UserView;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +37,16 @@ public class AdminUserController {
     public ApiResponse<List<UserView>> list(@RequestParam(required = false) String role,
                                              @RequestParam(required = false) Long classId) {
         return ApiResponse.ok(svc.list(role, classId));
+    }
+
+    @GetMapping("/page")
+    public ApiResponse<UserPage> page(@RequestParam(required = false) String role,
+                                      @RequestParam(required = false) Long classId,
+                                      @RequestParam(required = false) Long yearId,
+                                      @RequestParam(required = false) String keyword,
+                                      @RequestParam(defaultValue = "1") int page,
+                                      @RequestParam(defaultValue = "50") int size) {
+        return ApiResponse.ok(svc.page(role, classId, yearId, keyword, page, size));
     }
 
     @PostMapping

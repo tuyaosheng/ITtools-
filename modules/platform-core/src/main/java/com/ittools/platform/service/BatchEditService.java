@@ -23,12 +23,12 @@ import java.util.Set;
 import static com.ittools.platform.db.Sql.p;
 
 /**
- * 用表格批量修改学生信息（合并原 studentrename 改名、studentxjh 改学籍号、studentPlacement 重新分班、studentinsc 改入学年份）：
+ * 用表格批量修改学生信息（合并原 studentrename 改名、studentxjh 改学号（原学籍号）、studentPlacement 重新分班、studentinsc 改入学年份）：
  * 下载某年级的学生信息表 → 在表格中修改 → 上传预览改动 → 确认后一次性写入。以“编号”列对应学生。
  */
 @Service
 public class BatchEditService {
-    static final String[] HEAD = {"编号", "学籍号", "学号", "姓名", "性别", "年级", "班级", "入学年份", "状态"};
+    static final String[] HEAD = {"编号", "学号", "班内学号", "姓名", "性别", "年级", "班级", "入学年份", "状态"};
     static final int MAX_ROWS = 5000;
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -114,6 +114,7 @@ public class BatchEditService {
         Map<String, Integer> col = new HashMap<>();
         List<String> head = rows.get(0);
         for (int i = 0; i < head.size(); i++) col.put(head.get(i).trim(), i);
+        StudentNumbers.normalizeHeaders(col);
         if (!col.containsKey("编号")) throw new IllegalArgumentException("表格缺少“编号”列，请使用下载的学生信息表修改");
         if (rows.size() - 1 > MAX_ROWS) throw new IllegalArgumentException("一次最多修改 " + MAX_ROWS + " 名学生");
 
@@ -159,15 +160,19 @@ public class BatchEditService {
                 if (v.isEmpty() || v.length() > 64) errors.add(err(line, "姓名不能为空且不超过 64 字"));
                 else diff(items, neu, "name", "姓名", old.get("name"), v);
             }
-            if (col.containsKey("学籍号")) {
-                String v = cell(row, col, "学籍号");
-                if (v.length() > 32) errors.add(err(line, "学籍号过长"));
-                else if (diff(items, neu, "xjh", "学籍号", old.get("xjh"), v.isEmpty() ? null : v)) neu.put("xjhChanged", true);
-            }
             if (col.containsKey("学号")) {
                 String v = cell(row, col, "学号");
-                if (v.length() > 32) errors.add(err(line, "学号过长"));
-                else diff(items, neu, "studentNo", "学号", old.get("studentNo"), v.isEmpty() ? null : v);
+                if (v.isEmpty()) errors.add(err(line, "学号不能为空"));
+                else if (v.length() > 32) errors.add(err(line, "学号过长"));
+                else if (diff(items, neu, "xjh", "学号", old.get("xjh"), v)) neu.put("xjhChanged", true);
+            }
+            if (col.containsKey("班内学号")) {
+                String v = cell(row, col, "班内学号");
+                try {
+                    diff(items, neu, "studentNo", "班内学号", old.get("studentNo"), StudentNumbers.classNo(v));
+                } catch (IllegalArgumentException e) {
+                    errors.add(err(line, e.getMessage()));
+                }
             }
             if (col.containsKey("性别")) {
                 String v = cell(row, col, "性别");
@@ -226,7 +231,7 @@ public class BatchEditService {
         return a;
     }
 
-    /** 最终状态下：学籍号全局不重复；同一班级在读学生学号不重复（原“防止同班同学号”）。 */
+    /** 最终状态下：学号全局不重复；同一班级在读学生班内学号不重复（原“防止同班同学号”）。 */
     private void checkUnique(Map<Long, Map<String, Object>> finals, List<Map<String, Object>> errors) {
         if (finals.isEmpty()) return;
         List<Long> ids = new ArrayList<>(finals.keySet());
@@ -235,9 +240,9 @@ public class BatchEditService {
             Object x = u.get("xjh");
             if (x == null) continue;
             Long prev = xjhOwner.put(String.valueOf(x), (Long) u.get("id"));
-            if (prev != null) errors.add(err(0, "学籍号 " + x + " 在表格中重复"));
+            if (prev != null) errors.add(err(0, "学号 " + x + " 在表格中重复"));
             List<Long> other = jdbc.queryForList("SELECT id FROM users WHERE xjh = :x AND id NOT IN (:ids)", p("x", x, "ids", ids), Long.class);
-            if (!other.isEmpty()) errors.add(err(0, "学籍号 " + x + " 已被其他学生使用"));
+            if (!other.isEmpty()) errors.add(err(0, "学号 " + x + " 已被其他学生使用"));
         }
         Set<Long> classes = new HashSet<>();
         for (Map<String, Object> u : finals.values()) if (u.get("classId") != null) classes.add(((Number) u.get("classId")).longValue());
@@ -250,7 +255,7 @@ public class BatchEditService {
             for (Map<String, Object> u : finals.values()) {
                 if (u.get("classId") == null || ((Number) u.get("classId")).longValue() != k || Boolean.TRUE.equals(u.get("graduated")) || u.get("studentNo") == null) continue;
                 String prev = byNo.put(s(u.get("studentNo")), s(u.get("name")));
-                if (prev != null) errors.add(err(0, "同一班级中学号 " + u.get("studentNo") + " 重复（" + prev + "、" + u.get("name") + "）"));
+                if (prev != null) errors.add(err(0, "同一班级中班内学号 " + u.get("studentNo") + " 重复（" + prev + "、" + u.get("name") + "）"));
             }
         }
     }

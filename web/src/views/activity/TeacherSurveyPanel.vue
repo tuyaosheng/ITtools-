@@ -8,7 +8,7 @@
       <span v-if="scope === 'GRADE'" class="muted">同年级 {{ data.lessons }} 个课堂的汇总，不显示学生名字</span>
       <el-button size="small" @click="load">刷新</el-button>
     </div>
-    <el-empty v-if="!items.length" description="还没有设置调查题目（在课程编辑中设置）" />
+    <el-empty v-if="!items.length" description="还没有设置调查题目" />
     <SurveyResults v-else :items="items" :results="data.results" :total="scope === 'CLASS' ? data.classSize : undefined" />
   </div>
 </template>

@@ -71,7 +71,7 @@
         </el-collapse-item>
       </el-collapse>
     </template>
-    <p class="tip">段落编号 = 评分点中的“第几段”（只数非空正文段落）；颜色为十六进制，评分点里也可以写“红色”“蓝色”等颜色名。</p>
+    <div><Hint block>段落编号 = 评分点中的“第几段”（只数非空正文段落）；颜色为十六进制，评分点里也可以写“红色”“蓝色”等颜色名。</Hint></div>
   </div>
 </template>
 

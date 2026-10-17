@@ -76,6 +76,20 @@ export interface UserListParams {
   classId?: number
 }
 
+export interface UserPageParams {
+  role?: string
+  classId?: number
+  yearId?: number
+  keyword?: string
+  page: number
+  size: number
+}
+
+export interface UserPage {
+  items: UserItem[]
+  total: number
+}
+
 export interface PermissionItem {
   id: number
   code: string
@@ -113,6 +127,30 @@ export interface ImportResult {
   errors: ImportRowError[]
 }
 
+export type ImportJobStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED'
+
+export interface ImportJob {
+  id: string
+  kind: 'STUDENTS' | 'TEACHERS'
+  filename: string
+  status: ImportJobStatus
+  total: number
+  processed: number
+  imported: number
+  failed: number
+  message: string | null
+  /** Only present once status is DONE. */
+  result: ImportResult | null
+}
+
+function startJob(url: string, file: File, onUpload?: (percent: number) => void): Promise<ImportJob> {
+  const fd = new FormData()
+  fd.append('file', file)
+  return unwrap(http.post(url, fd, {
+    onUploadProgress: e => { if (onUpload && e.total) onUpload(Math.round((e.loaded / e.total) * 100)) }
+  }))
+}
+
 function uploadFile(url: string, file: File): Promise<ImportResult> {
   const fd = new FormData()
   fd.append('file', file)
@@ -148,6 +186,7 @@ export const adminApi = {
   },
   users: {
     list: (params: UserListParams = {}): Promise<UserItem[]> => unwrap(http.get('/admin/users', { params })),
+    page: (params: UserPageParams): Promise<UserPage> => unwrap(http.get('/admin/users/page', { params })),
     create: (body: CreateUserBody): Promise<UserItem> => unwrap(http.post('/admin/users', body)),
     update: (id: number, body: UpdateUserBody): Promise<UserItem> => unwrap(http.put(`/admin/users/${id}`, body)),
     remove: (id: number): Promise<void> => unwrap(http.delete(`/admin/users/${id}`)),
@@ -172,6 +211,11 @@ export const adminApi = {
   imports: {
     students: (file: File): Promise<ImportResult> => uploadFile('/admin/import/students', file),
     teachers: (file: File): Promise<ImportResult> => uploadFile('/admin/import/teachers', file),
+    startStudentJob: (file: File, onUpload?: (percent: number) => void): Promise<ImportJob> =>
+      startJob('/admin/import/students/jobs', file, onUpload),
+    startTeacherJob: (file: File, onUpload?: (percent: number) => void): Promise<ImportJob> =>
+      startJob('/admin/import/teachers/jobs', file, onUpload),
+    job: (id: string): Promise<ImportJob> => unwrap(http.get(`/admin/import/jobs/${id}`)),
     downloadStudentTemplate: (): Promise<void> =>
       downloadTemplate('/admin/import/students/template', 'students_template.xlsx'),
     downloadTeacherTemplate: (): Promise<void> =>

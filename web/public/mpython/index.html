@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>掌控板实验室</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="mpl/style.css">
+<!-- ITtools：接到平台后端（见 mpl/bridge.js），必须最先加载 -->
+<script src="mpl/bridge.js"></script>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">掌控板实验室 <small id="demoTitle"></small></div>
+  <button id="groupBtn" class="chip" title="点这里换组">第 <b id="groupNo">?</b> 组</button>
+  <span class="chip" id="srvChip">连接服务器中</span>
+  <span class="chip" id="boardChip">掌控板未连接</span>
+  <div class="spacer"></div>
+  <button id="connectBtn">连接掌控板</button>
+  <!-- 只留“刷入”：写进板子的 main.py 再软重启，写完马上就在跑，拔掉电脑线换个电源也照跑。
+       原来还有个“运行”（只发过去跑、不存），效果和刷入几乎一样，两个按钮只会让学生犹豫点哪个。 -->
+  <button id="saveBtn" class="primary btn-icon" disabled title="把程序写进掌控板并马上开始运行；拔掉电脑线、换个电源也会自己跑">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="13" width="12" height="8" rx="1.5"/><path d="M12 2.5v8.5M8.5 7.5 12 11l3.5-3.5"/><path d="M9 16.5h6"/></svg>
+    刷入
+  </button>
+  <button id="stopBtn" disabled>■ 停止</button>
+  <button id="rebootBtn" disabled title="代替板子上的复位键：按物理复位键会让 USB 断开重连，容易让板子掉进下载模式">↻ 重启板子</button>
+</header>
+<div id="secureWarn" class="banner" hidden></div>
+
+<main class="split" id="split">
+  <section class="left" id="left">
+    <!-- 关卡条：圆圈 1 2 3 4，点哪个去哪关；通关的下面写“已通关”。放在左栏里：它是“任务”的一部分，
+         收起左栏专心拼积木时一起收走 -->
+    <div class="card levels-card">
+      <div class="levels-head"><b>闯关进度</b><span id="levelsProgress"></span></div>
+      <nav class="levels" id="levels" aria-label="关卡"></nav>
+    </div>
+    <!-- 任务卡：上面是要求，下面是大致步骤；具体怎么操作收在“看提示”里，卡住了自己点开。
+         提示一上来就摊开，学生会跳过思考直接照抄，而且整张卡一屏字没人读 -->
+    <div class="card task">
+      <h2 id="taskTitle">加载中…</h2>
+      <div class="task-sec"><b>🎯 要求</b><p id="taskBrief"></p></div>
+      <div class="task-sec" id="taskStepsBox" hidden><b>🛠 步骤</b><p id="taskSteps"></p></div>
+      <button class="hint-btn" id="hintBtn" hidden>💡 看提示</button>
+      <p class="hint" id="taskHint" hidden></p>
+    </div>
+
+    <div class="scene" id="scene" aria-live="polite"></div>
+
+    <div class="card check" id="check">
+      <h3>还差哪几块</h3>
+      <ul id="checklist"></ul>
+      <div class="done" id="doneHint"></div>
+      <div class="pass-box" id="passedBox" hidden>
+        <div class="big">🎉 本关已通关！</div>
+        <button class="primary" id="nextBtn" hidden>下一关 →</button>
+        <span class="all" id="allDone" hidden>全部关卡都通关了，了不起！</span>
+      </div>
+    </div>
+
+    <div class="card console">
+      <h3>板子说</h3>
+      <div class="board-warn" id="boardWarn" hidden></div>
+      <pre id="console">（连上掌控板、点刷入之后，板子打印的内容会出现在这里）</pre>
+    </div>
+  </section>
+
+  <!-- 拖这条竖线调左右两栏的宽度；中间的小按钮收起/展开左栏 -->
+  <div class="splitter" id="splitter" title="拖动可以调整左右两边的宽度">
+    <button id="foldBtn" class="fold" title="收起左边，积木区变大" aria-label="收起左边"><span class="ar">‹</span><span class="tx">收起任务</span></button>
+  </div>
+
+  <section class="right">
+    <div class="tabs">
+      <button data-tab="blocks" class="on">积木</button>
+      <button data-tab="code">看代码</button>
+      <button data-tab="ai" id="aiTab" hidden>🤖 AI 写代码</button>
+      <div class="spacer"></div>
+      <button class="reset" id="resetBtn">恢复成初始积木</button>
+    </div>
+    <div class="editbar" id="editBar" hidden>
+      <span class="who">教师编辑模式</span>
+      <span class="tip">点积木上的小锁、或右键积木，可以锁定/解锁。锁住的积木学生拖不动、删不掉。</span>
+      <div class="btns">
+        <button id="lockAllBtn">🔒 全部锁定</button>
+        <button id="unlockAllBtn">🔓 全部解锁</button>
+        <button id="saveStarterBtn" class="primary">存为学生的初始积木</button>
+        <button id="resetStarterBtn">恢复默认</button>
+      </div>
+    </div>
+    <div class="editbar viewbar" id="viewBar" hidden>
+      <span class="who">演示</span>
+      <span class="tip" id="viewTip"></span>
+    </div>
+    <div id="blocklyDiv"></div>
+    <pre id="codeView" hidden></pre>
+    <!-- 只有带 ai 配置的关卡（汉堡店）才出这个页签。给没学过代码的学生：只用中文写要求，代码交给 AI -->
+    <div id="aiView" hidden>
+      <div class="ai-task" id="aiTask"></div>
+      <ol class="ai-steps">
+        <li>点一条句子模板，加进下面的①（能加好几条）</li>
+        <li>点一个词块、再点句子里的下划线，把它填上去（也能直接拖）</li>
+        <li>核对一下①，再点 <b>复制给 AI</b></li>
+        <li>打开智谱清言/百度AI 粘贴发送 → 代码粘进 ② → <b>刷入这段代码</b></li>
+      </ol>
+      <!-- 词块/句子模板的来源库，不是要求本身，所以单独放在上面一小块 -->
+      <div class="ai-builder" id="aiBuilder" hidden>
+        <div class="ai-bank" id="aiSentBank"></div>
+        <div class="ai-bank word" id="aiWordBank"></div>
+      </div>
+      <!-- ①就是拼接区本身：不再另外摆一个文本框重复显示同一段话。有 DEMO.ai.builder() 时
+           #aiZone 就是①——拖/点词块直接改这里；没有 builder 的关卡退回 #aiPrompt 手动打字。
+           两个一次只显示一个（看 renderBuilder 里的 hidden 切换），不会同时出现、也不会看着像两块地方 -->
+      <div class="ai-req">
+        <div class="ai-head"><b>① 我的要求</b>
+          <button type="button" id="aiBuildReset" class="ai-plain">🔄 清空重拼</button>
+          <button id="aiCopyBtn" class="primary">📋 复制给 AI</button>
+        </div>
+        <div class="ai-zone" id="aiZone"></div>
+        <textarea id="aiPrompt" spellcheck="false" placeholder="例如：A 键放面包，B 键放肉饼，触摸键 P 放……"></textarea>
+        <!-- 发给 AI 的完整的话摊开给学生看：后面那段代码和技术交代是页面替他加的，不是藏起来的秘密 -->
+        <details class="ai-full"><summary>看看发给 AI 的完整的话</summary><pre id="aiFull"></pre></details>
+      </div>
+      <!-- 新窗口打开：在本页里跳过去，学生拼了一半的积木、粘了一半的代码就丢了。机房断网时要把这三家加进白名单 -->
+      <div class="ai-links">复制后去问：
+        <a href="https://chatglm.cn/" target="_blank" rel="noopener">智谱清言 ↗</a>
+        <a href="https://chat.baidu.com/" target="_blank" rel="noopener">百度AI ↗</a>
+        <a href="https://metaso.cn/" target="_blank" rel="noopener">秘塔AI ↗</a>
+      </div>
+      <div class="ai-head"><b>② 粘贴 AI 写的代码</b><button id="aiFlashBtn" class="primary">刷入这段代码</button></div>
+      <textarea id="aiCode" spellcheck="false" placeholder="把 AI 回答里的代码整段粘到这里（带不带 ```python 都行）"></textarea>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="groupModal" hidden>
+  <div class="box">
+    <h2>你们是第几组？</h2>
+    <p>看桌上贴的组号。组号决定掌控板的消息发给哪个网页，选错了别人的台灯会被你点亮。</p>
+    <div class="grid" id="groupGrid"></div>
+  </div>
+</div>
+
+<script src="blockly/blockly_compressed.js"></script>
+<script src="blockly/blocks_compressed.js"></script>
+<script src="blockly/python_compressed.js"></script>
+<script src="blockly/msg/zh-hans.js"></script>
+<script src="mpl/serial.js"></script>
+<script src="mpl/blocks.js"></script>
+<script src="mpl/lock.js"></script>
+<script src="demos/common.js"></script>
+<script src="demos/demo0.js"></script>
+<script src="demos/demo1.js"></script>
+<script src="demos/demo2.js"></script>
+<script src="demos/demo3.js"></script>
+<script src="demos/demo4.js"></script>
+<!-- 自由农场（demos/demo5.js）已从关卡列表里拿掉，代码和 farm/ 都还在；要恢复就把下面这行加回来：
+<script src="demos/demo5.js"></script> -->
+<script src="demos/demo6.js"></script>
+<script src="demos/demo7.js"></script>
+<script src="mpl/app.js"></script>
+</body>
+</html>

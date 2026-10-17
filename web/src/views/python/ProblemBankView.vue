@@ -58,19 +58,17 @@
         <el-form-item label="半成品代码">
           <div class="full">
             <PyEditor v-model="form.starterCode" :readonly="readonly" height="160px" />
-            <div class="muted">学生打开题目时编辑器里的初始代码，可留空</div>
           </div>
         </el-form-item>
         <el-form-item label="参考代码">
           <div class="full">
             <PyEditor v-model="form.referenceCode" :readonly="readonly" height="180px" />
-            <div class="muted">课堂中可「开放参考代码」给学生；也用于自动生成测试点的期望输出</div>
           </div>
         </el-form-item>
         <el-form-item label="测试点">
           <div class="full">
             <div class="case-tools">
-              <span class="muted">每个测试点：把「输入」作为标准输入运行学生代码，输出与「期望输出」一致即得分（忽略行尾空格和末尾空行）。合计 {{ total }} 分</span>
+              <div><Hint block>每个测试点：把「输入」作为标准输入运行学生代码，输出与「期望输出」一致即得分（忽略行尾空格和末尾空行）。合计 {{ total }} 分</Hint></div>
               <el-button v-if="!readonly" size="small" :loading="generating" :disabled="!form.referenceCode || !form.cases.length" @click="generate">用参考代码生成期望输出</el-button>
             </div>
             <div v-for="(c, i) in form.cases" :key="i" class="case">
@@ -94,7 +92,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <span v-if="form.id && !readonly" class="muted footer-tip">修改测试点会使版本号 +1，已有成绩会标记为「需重测」</span>
+        <span v-if="form.id && !readonly" class="muted footer-tip">修改测试点后已有成绩需重测</span>
         <el-button @click="visible = false">{{ readonly ? '关闭' : '取消' }}</el-button>
         <el-button v-if="!readonly" type="primary" :loading="saving" @click="save">保存</el-button>
       </template>
@@ -210,7 +208,7 @@ onMounted(load)
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .filters { display: flex; gap: 8px; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .full { width: 100%; }
 .w100 { width: 100px; }
 .w140 { width: 140px; }
@@ -219,11 +217,11 @@ onMounted(load)
 .ml16 { margin-left: 16px; }
 .mr8 { margin-right: 8px; }
 .case-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
-.case { border: 1px solid #ebeef5; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
+.case { border: 1px solid var(--el-border-color-lighter); border-radius: 4px; padding: 8px; margin-bottom: 8px; }
 .case-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .case-io { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .mono :deep(textarea) { font-family: Consolas, monospace; }
 .spacer { flex: 1; }
-.gen-err { color: #f56c6c; font-size: 12px; margin-top: 4px; }
+.gen-err { color: var(--el-color-danger); font-size: 12px; margin-top: 4px; }
 .footer-tip { margin-right: 12px; }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <RoleLayout brand="ITtools 教师工作台" :menu="menu" />
+  <RoleLayout brand="教师工作台" :menu="menu" />
 </template>
 
 <script setup lang="ts">

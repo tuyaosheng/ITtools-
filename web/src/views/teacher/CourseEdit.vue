@@ -34,7 +34,7 @@
       </el-card>
 
       <el-card shadow="never" class="editor">
-        <el-empty v-if="!current" description="选择左侧页面进行编辑，或添加新页面" />
+        <el-empty v-if="!current" description="选择左侧页面" />
         <template v-else-if="!isOwner">
           <h3>{{ current.title }}</h3>
           <PageContent :page="current" />
@@ -68,20 +68,17 @@
             <el-select v-model="current.refId" filterable clearable placeholder="从题库试卷中选择" class="w240">
               <el-option v-for="p in papers" :key="p.id" :label="p.name" :value="p.id" />
             </el-select>
-            <span class="muted ml">在“题库与试卷”中编辑试卷</span>
           </el-form-item>
           <el-form-item v-if="current.pageType === 'PYTHON'" label="Python 题目">
             <el-select v-model="current.refId" filterable clearable placeholder="从 Python 题库中选择" class="w240">
               <el-option v-for="p in pyProblems" :key="p.id" :label="p.title + (p.mine ? '' : '（共享）')" :value="p.id" />
             </el-select>
-            <span class="muted ml">在“Python 题库”中编辑题目和测试点</span>
           </el-form-item>
           <el-form-item v-if="['HOMEWORK', 'QUIZ'].includes(current.pageType)" label="分值">
             <el-input-number v-model="current.score" :min="0" :max="1000" />
           </el-form-item>
           <el-form-item label="学生可见">
             <el-switch v-model="current.studentVisible" />
-            <span class="muted ml">开课后教师仍可在课堂控制台随时开放/隐藏</span>
           </el-form-item>
           <component :is="settingsComponent" v-if="settingsComponent && current.id" :page="current" />
           <el-form-item>
@@ -211,15 +208,15 @@ onMounted(async () => {
 .layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
 .card-head { display: flex; justify-content: space-between; align-items: center; }
 .page-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-.page-item:hover { background: #f5f7fa; }
+.page-item:hover { background: var(--el-fill-color-light); }
 .page-item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
-.seq { width: 24px; height: 24px; border-radius: 50%; background: #e5eaf3; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.seq { width: 24px; height: 24px; border-radius: 50%; background: var(--el-fill-color); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
 .info { flex: 1; min-width: 0; }
 .ptitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ptype { font-size: 12px; color: #909399; }
+.ptype { font-size: 12px; color: var(--el-text-color-secondary); }
 .w240 { width: 240px; }
-.opt-sub { float: right; color: #a8abb2; font-size: 12px; margin-left: 16px; }
+.opt-sub { float: right; color: var(--el-text-color-placeholder); font-size: 12px; margin-left: 16px; }
 .attach { display: flex; align-items: center; gap: 10px; }
-.muted { color: #a8abb2; font-size: 12px; }
+.muted { color: var(--el-text-color-placeholder); font-size: 12px; }
 @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
 </style>

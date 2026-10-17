@@ -1,6 +1,7 @@
 package com.ittools.homework.service;
 
 import com.ittools.classroom.service.LessonService;
+import com.ittools.interact.service.MpyService;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,17 +17,19 @@ import java.util.Map;
 import static com.ittools.platform.db.Sql.p;
 
 /**
- * 测验 + 操作组合统分（原 coursetestview）：一堂课里各测验页、作品提交页、Python 页的成绩合并成一张表，
+ * 测验 + 操作组合统分（原 coursetestview）：一堂课里各测验页、作品提交页、Python 页、掌控板页的成绩合并成一张表，
  * 再加上课堂表现分，按学生汇总，可导出 Excel。
  */
 @Service
 public class LessonScoreService {
     private final NamedParameterJdbcTemplate jdbc;
     private final LessonService lessons;
+    private final MpyService mpy;
 
-    public LessonScoreService(NamedParameterJdbcTemplate jdbc, LessonService lessons) {
+    public LessonScoreService(NamedParameterJdbcTemplate jdbc, LessonService lessons, MpyService mpy) {
         this.jdbc = jdbc;
         this.lessons = lessons;
+        this.mpy = mpy;
     }
 
     @Transactional(readOnly = true)
@@ -35,7 +38,7 @@ public class LessonScoreService {
         List<Map<String, Object>> columns = new ArrayList<>();
         Map<String, Map<Long, Object>> values = new HashMap<>();
         for (Map<String, Object> pg : jdbc.queryForList("SELECT id, title, page_type, score, ref_id FROM course_page WHERE course_id = :c "
-                + "AND page_type IN ('QUIZ', 'HOMEWORK', 'PYTHON') ORDER BY seq", p("c", lesson.get("courseId")))) {
+                + "AND page_type IN ('QUIZ', 'HOMEWORK', 'PYTHON', 'MPYTHON') ORDER BY seq", p("c", lesson.get("courseId")))) {
             Long pageId = ((Number) pg.get("id")).longValue();
             String type = (String) pg.get("page_type");
             Map<Long, Object> v = new HashMap<>();
@@ -54,6 +57,12 @@ public class LessonScoreService {
                 int pageScore = ((Number) pg.get("score")).intValue();
                 full = pageScore > 0 ? pageScore : rows.get(0).get("auto_max");
                 for (Map<String, Object> r : rows) v.put(((Number) r.get("student_id")).longValue(), r.get("score"));
+            } else if ("MPYTHON".equals(type)) {
+                int pageScore = ((Number) pg.get("score")).intValue();
+                Map<Long, Double> sc = mpy.lessonScores(lessonId, pageId, pageScore);
+                if (sc.isEmpty()) continue;
+                full = mpy.fullScore(pageId, pageScore);
+                v.putAll(sc);
             } else {
                 List<Map<String, Object>> rows = jdbc.queryForList("SELECT student_id, score, max_score FROM py_submission "
                         + "WHERE lesson_id = :l AND page_id = :p AND score IS NOT NULL", p("l", lessonId, "p", pageId));
@@ -138,7 +147,7 @@ public class LessonScoreService {
             org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet("课堂成绩");
             org.apache.poi.ss.usermodel.Row h = sh.createRow(0);
             int c = 0;
-            h.createCell(c++).setCellValue("学号");
+            h.createCell(c++).setCellValue("班内学号");
             h.createCell(c++).setCellValue("姓名");
             for (Map<String, Object> col : cols) h.createCell(c++).setCellValue(col.get("title") + "（" + col.get("full") + "）");
             h.createCell(c++).setCellValue("课堂表现");

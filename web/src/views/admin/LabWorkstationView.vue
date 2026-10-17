@@ -30,8 +30,6 @@
     </el-table>
 
     <el-dialog v-model="importVisible" title="批量导入机位" width="520px" append-to-body>
-      <el-alert type="info" :closable="false" show-icon
-        title="表头需包含“计算机名”“IP地址”两列，支持 .xlsx / .xls / .csv" />
       <div class="import-row">
         <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" @change="onFile" />
       </div>
@@ -197,6 +195,6 @@ async function remove(row: LabWorkstationItem) {
 .import-result {
   margin-top: 12px;
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 </style>

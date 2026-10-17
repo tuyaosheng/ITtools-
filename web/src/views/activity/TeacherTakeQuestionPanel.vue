@@ -1,13 +1,13 @@
 <template>
   <div v-if="data">
-    <el-empty v-if="!data.questions.length" description="还没有设置题目（在课程编辑中设置）" />
+    <el-empty v-if="!data.questions.length" description="还没有设置题目" />
     <template v-else>
       <div class="bar">
         <span class="muted">已抽取 {{ drawn }} / {{ data.students.length }} 人</span>
         <el-button size="small" @click="load">刷新</el-button>
       </div>
       <el-table :data="data.students" size="small" stripe max-height="460">
-        <el-table-column prop="studentNo" label="学号" width="70" />
+        <el-table-column prop="studentNo" label="班内学号" width="84" />
         <el-table-column prop="name" label="姓名" width="90" />
         <el-table-column label="分到的题目" min-width="260">
           <template #default="{ row }: { row: any }">

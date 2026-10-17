@@ -236,7 +236,7 @@ public class ClassReportService {
 
     @Transactional(readOnly = true)
     public byte[] export(Long teacherId, Long classId, Long termId, double[] weights) {
-        String[] head = {"学号", "姓名", "出席", "出席率%", "请假", "课堂表现", "作品数", "精华", "作品%", "操作题数", "操作题%",
+        String[] head = {"班内学号", "姓名", "出席", "出席率%", "请假", "课堂表现", "作品数", "精华", "作品%", "操作题数", "操作题%",
                 "作业 已交/布置", "作业%", "测验 已考/总数", "测验%", "总评", "名次"};
         String[] keys = {"studentNo", "name", "present", "attendancePct", "leave", "lessonScore", "works", "essence", "workPct", "python", "pythonPct",
                 "homeworkDone/homeworkTotal", "homeworkPct", "testDone/testTotal", "testPct", "total", "rank"};
@@ -260,7 +260,7 @@ public class ClassReportService {
                 org.apache.poi.ss.usermodel.Sheet ds = wb.createSheet(names[k]);
                 @SuppressWarnings("unchecked") List<Map<String, Object>> cols = (List<Map<String, Object>>) d.get("columns");
                 org.apache.poi.ss.usermodel.Row h = ds.createRow(0);
-                h.createCell(0).setCellValue("学号");
+                h.createCell(0).setCellValue("班内学号");
                 h.createCell(1).setCellValue("姓名");
                 for (int i = 0; i < cols.size(); i++) h.createCell(i + 2).setCellValue(String.valueOf(cols.get(i).get("title")));
                 int rr = 1;

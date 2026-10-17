@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="card-head">
-        <span>学习笔记 <span class="muted">（关联课程并勾选「提交给老师」即作为课后学习心得）</span></span>
+        <span>学习笔记</span>
         <el-button type="primary" @click="open()">写笔记</el-button>
       </div>
     </template>
@@ -95,11 +95,11 @@ onMounted(load)
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml8 { margin-left: 8px; }
 .w260 { width: 260px; }
-.note { border: 1px solid #ebeef5; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.note { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
 .n-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .n-body { margin-top: 8px; font-size: 14px; }
-.t-comment { margin-top: 8px; padding: 8px; background: #f0f9eb; border-radius: 4px; color: #529b2e; font-size: 13px; }
+.t-comment { margin-top: 8px; padding: 8px; background: var(--el-color-success-light-9); border-radius: 4px; color: #529b2e; font-size: 13px; }
 </style>

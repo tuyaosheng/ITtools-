@@ -88,7 +88,7 @@ const emit = defineEmits<{
   gap: 12px;
   margin-bottom: var(--admin-gap);
   padding-bottom: var(--admin-gap);
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .admin-crud-panel__body {

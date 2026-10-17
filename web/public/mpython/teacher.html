@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>掌控板实验室 · 教师看板</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="mpl/style.css">
+<!-- ITtools：接到平台后端（见 mpl/bridge.js），必须最先加载 -->
+<script src="mpl/bridge.js"></script>
+<style>
+/* 看板：上方汇总数字，下方每组一张卡片；点卡片，右侧看这组的积木（和学生屏幕上一样）或代码。 */
+.wrap{flex:1;min-height:0;display:grid;grid-template-columns:1fr 460px;gap:12px;padding:12px}
+.main{overflow:auto;min-height:0}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:120px}
+.stat .n{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .l{font-size:12px;color:var(--dim)}
+.stat.lvl .n{color:#0B6B4F}
+.stat.lvl{cursor:pointer;transition:border-color .15s ease}
+.stat.lvl:hover{border-color:var(--board)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.g{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;
+  display:flex;flex-direction:column;gap:6px;position:relative;transition:border-color .15s ease;white-space:normal}
+.g:hover,.g.sel{border-color:var(--board)}
+.g.sel{box-shadow:0 0 0 2px rgba(30,136,229,.18)}
+.g .no{font-size:20px;font-weight:800}
+.g .lvname{font-size:12px;color:var(--board);font-weight:700}
+.g .dots{display:flex;gap:4px}
+.g .dot{width:18px;height:6px;border-radius:3px;background:#DDE3EA}
+.g .dot.ok{background:var(--net)}
+.g .passes{display:flex;gap:3px}
+.g .pc{width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;
+  border:1.5px solid #C9D2DC;color:#8995A3;background:#fff}
+.g .pc{border-color:var(--lc);color:var(--lc)}
+.g .pc.ok{background:var(--lc);border-color:var(--lc);color:#fff}
+.g .pc.cur{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--lc)}
+.g .meta{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.g .last{position:absolute;right:10px;top:10px;font-size:11px;border-radius:999px;padding:1px 8px;background:#FFF4DA;color:#7A4B00}
+.g.idle{opacity:.55}
+.g.blink{animation:blink .6s ease}
+@keyframes blink{0%{background:#FFF4DA}100%{background:#fff}}
+.side{display:flex;flex-direction:column;gap:12px;min-height:0}
+.detail{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.detail .head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.detail .head h3{margin:0;font-size:14px;flex:1;min-width:160px}
+.dtabs{display:flex;gap:4px}
+.dtabs button{border:none;background:transparent;border-radius:6px;padding:4px 10px;color:var(--dim)}
+.dtabs button.on{background:#EAF3FD;color:var(--board);font-weight:700}
+#toggleBtn{border:none;background:transparent;color:var(--dim);padding:4px 6px;font-size:12px}
+.detail.collapsed{flex:0 0 auto}
+.detail.collapsed .view,.detail.collapsed .btns{display:none}
+.view{flex:1;min-height:260px;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;background:#FBFCFD}
+#dBlocks{position:absolute;inset:0}
+#dCode{position:absolute;inset:0;margin:0;overflow:auto;padding:10px;font:12px/1.55 var(--mono);white-space:pre}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-size:13px;padding:20px;text-align:center}
+.detail .btns{display:flex;gap:8px;flex-wrap:wrap}
+.detail .btns button{padding:6px 10px;font-size:13px}
+/* 投屏：这一组的积木铺满整个屏幕，后排也看得清 */
+.detail.full{position:fixed;inset:0;z-index:500;border-radius:0;padding:14px 18px}
+.detail.full .head h3{font-size:20px}
+.detail.full .btns .sim{display:none}
+.feed{max-height:30vh;overflow:auto}
+.feed ul{list-style:none;margin:0;padding:0;font-size:12.5px;font-variant-numeric:tabular-nums}
+.feed li{padding:4px 0;border-bottom:1px dashed var(--line)}
+.feed li .t{color:var(--dim);margin-right:6px}
+.tag{font-size:11px;border-radius:4px;padding:0 5px;margin-left:4px;background:#EEF2F7;color:var(--dim)}
+@media (max-width:1000px){.wrap{grid-template-columns:1fr}.detail{min-height:480px}}
+.lesson-pick{font-size:13px;color:#5A6878;margin-right:8px}
+.lesson-pick select{font:inherit;padding:3px 6px;border:1px solid #D9E0E8;border-radius:6px;background:#fff;color:#18222E}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">掌控板实验室 <small>教师看板</small></div>
+  <span class="chip" id="srvChip">连接中</span>
+  <div class="spacer"></div>
+  <!-- 两节课共用一套程序：熟悉课用温室巡检认识掌控板，公开课上四个小场景 + 汉堡店。学生刷新页面就换 -->
+  <label class="lesson-pick">这节课：<select id="lessonSel">
+    <option value="熟悉课">熟悉课（认识掌控板 + 温室巡检 5 关）</option>
+    <option value="公开课">公开课（夜灯·声控灯·门·骰子·汉堡店）</option>
+    <option value="全部">全部关卡</option>
+  </select></label>
+  <a href="/index.html?edit=1" target="_blank" rel="noopener"><button>✏️ 编辑学生初始积木（锁定/解锁）</button></a>
+  <span class="chip" id="addr"></span>
+</header>
+
+<div class="wrap">
+  <div class="main">
+    <div class="stats" id="stats"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <aside class="side">
+    <div class="card detail" id="detail">
+      <div class="head">
+        <h3 id="dTitle">点左边任意一组，看他们现在的积木</h3>
+        <div class="dtabs" id="dTabs">
+          <button data-v="blocks" class="on">积木</button>
+          <button data-v="code">代码</button>
+        </div>
+        <button id="toggleBtn" title="收起/展开这块面板">收起 ▾</button>
+      </div>
+      <div class="view">
+        <div id="dBlocks"></div>
+        <pre id="dCode" hidden></pre>
+        <div class="empty" id="dEmpty">还没选组</div>
+      </div>
+      <div class="btns" id="dBtns" hidden>
+        <button id="fullBtn">⛶ 投屏展示</button>
+        <button id="openBtn" title="把这一组的积木原样搬到老师这台电脑上：可以讲解、也可以接老师的板子刷进去演示，不影响学生">↗ 在我的电脑上打开</button>
+        <span class="sim" id="simBtns"></span>
+      </div>
+    </div>
+    <div class="card feed">
+      <h3 style="margin:0 0 6px;font-size:14px">实时动态</h3>
+      <ul id="feed"></ul>
+    </div>
+  </aside>
+</div>
+
+<script src="blockly/blockly_compressed.js"></script>
+<script src="blockly/blocks_compressed.js"></script>
+<script src="blockly/python_compressed.js"></script>
+<script src="blockly/msg/zh-hans.js"></script>
+<script src="mpl/blocks.js"></script>
+<script src="mpl/lock.js"></script>
+<script src="demos/common.js"></script>
+<script src="demos/demo0.js"></script>
+<script src="demos/demo1.js"></script>
+<script src="demos/demo2.js"></script>
+<script src="demos/demo3.js"></script>
+<script src="demos/demo4.js"></script>
+<!-- 自由农场（demos/demo5.js）已从关卡列表里拿掉，代码和 farm/ 都还在；要恢复就把下面这行加回来：
+<script src="demos/demo5.js"></script> -->
+<script src="demos/demo6.js"></script>
+<script src="demos/demo7.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  // 这个页面把两节课的关卡脚本都加载了（方便切课不用重开页面），所以 window.MPL_DEMOS
+  // 一直是全部关卡；看板要显示的是"这节课选的那几关"，不是全部——和 app.js boot() 里
+  // 学生页那份 LESSONS 过滤表必须保持一致，改一处要记得改另一处
+  var ALL_DEMOS = window.MPL_DEMOS;
+  var LESSONS = { "熟悉课": ["kb0", "gh1", "gh2", "gh3", "gh4", "demo6"], "公开课": ["demo1", "demo2", "demo3", "demo4", "demo7"] };
+  var DEMOS = ALL_DEMOS;
+  function applyLesson(v) {
+    var keep = LESSONS[v];
+    DEMOS = keep ? ALL_DEMOS.filter(function (d) { return keep.indexOf(d.id) >= 0; }) : ALL_DEMOS;
+  }
+  var N = 30, S = {}, sel = null, view = "blocks", shownWs = null;
+  // ITtools：卡片列表与名字由平台给出（按组时是组号，按人 / 没分组的学生是名字）
+  var KEYS = null, LABELS = {};
+  function gname(g){ return LABELS[g] || (g + " 组"); }
+
+  function st(g){ return S[g] || (S[g] = {code:"", filled:[], updated:null, events:[], lamp:null, runs:0, level:null, passed:[], ws:null}); }
+  function demoOf(s){ return DEMOS.filter(function(d){ return d.id === s.level; })[0] || null; }
+  function lvNo(id){ for (var i=0;i<DEMOS.length;i++) if (DEMOS[i].id === id) return i+1; return null; }
+  function sendText(k){ return MPL_SENDS[k] ? MPL_SENDS[k].text : k; }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  function render(){
+    var grid = $("grid"); grid.innerHTML = "";
+    var per = DEMOS.map(function(){ return 0; });
+    // 5 列，每列从下往上数（对应教室座位：第1列最后一排是1组，往前数到第1排，
+    // 再接第2列最后一排），卡片顺序跟实际座位对得上，老师扫一眼就知道哪张卡是哪一组
+    var cols = 5, rows = Math.ceil(N / cols), order = [];
+    if (KEYS) order = KEYS.slice();
+    else for (var r=1;r<=rows;r++) for (var c=1;c<=cols;c++){ var v=c*rows-r+1; if (v>=1 && v<=N) order.push(v); }
+    for (var oi=0; oi<order.length; oi++){
+      var i = order[oi];
+      var g = String(i), s = st(g), d = demoOf(s);
+      DEMOS.forEach(function(dm, k){ if ((s.passed||[]).indexOf(dm.id) >= 0) per[k]++; });
+      var total = s.filled.length || 2, dots = "", passes = "";
+      for (var k=0;k<total;k++) dots += '<span class="dot' + (s.filled[k] && s.filled[k].ok ? " ok" : "") + '"></span>';
+      DEMOS.forEach(function(dm, k){
+        var ok = (s.passed||[]).indexOf(dm.id) >= 0;
+        // 和学生页关卡条同一套颜色：通关的涂满这一关的颜色
+        passes += '<span class="pc' + (ok ? " ok" : "") + (dm === d ? " cur" : "") + '" style="--lc:' + (dm.color || "#00A884") + '" title="第' + (k+1) + '关 ' + esc(dm.title) + (ok ? " 已通关" : "") + '">' + (ok ? "✓" : k+1) + '</span>';
+      });
+      var b = document.createElement("button");
+      b.className = "g" + (s.updated ? "" : " idle") + (sel === g ? " sel" : "");
+      b.id = "g" + g;
+      b.innerHTML = (s.lamp ? '<span class="last">' + esc(sendText(s.lamp)) + '</span>' : "") +
+        '<span class="no">' + esc(gname(g)) + '</span>' +
+        '<span class="lvname">' + (d ? "第 " + lvNo(d.id) + " 关 · " + esc(d.title) : "&nbsp;") + '</span>' +
+        '<span class="dots">' + dots + '</span><span class="passes">' + passes + '</span>' +
+        '<span class="meta">' + (s.updated ? "最近修改 " + s.updated : "还没开始") +
+        (s.runs ? " · 刷入 " + s.runs + " 次" : "") + '</span>';
+      b.addEventListener("click", pick.bind(null, g));
+      grid.appendChild(b);
+    }
+    var h = "";
+    DEMOS.forEach(function(dm, k){
+      var rate = N ? Math.round(per[k] / N * 100) : 0;
+      h += '<div class="stat lvl" data-level="' + (k+1) + '" title="点一下，以编辑身份跳到这一关"><div class="n">' + rate + '%</div><div class="l">第 ' + (k+1) + ' 关「' + esc(dm.short || dm.title) + '」通关率</div></div>';
+    });
+    $("stats").innerHTML = h;
+  }
+  // 点通关率卡片，直接以编辑身份跳到那一关（不用先在学生页翻到那一关再点"编辑"）
+  $("stats").addEventListener("click", function(e){
+    var el = e.target.closest(".stat.lvl");
+    if (el) window.open("/index.html?edit=1&level=" + el.dataset.level, "_blank", "noopener");
+  });
+
+  // ---------------- 右侧：这一组的积木 ----------------
+  // 只读的 Blockly：和学生屏幕上同一套积木、同一套颜色，锁住的积木也带着小锁。
+  // 可以拖动画布、缩放，但改不了。
+  var ws = Blockly.inject("dBlocks", {
+    readOnly: true, media: "blockly/media/", theme: mplTheme(),
+    zoom: { controls: true, wheel: true, startScale: 0.9, maxScale: 2.5, minScale: 0.3 },
+    move: { scrollbars: true, drag: true, wheel: false }
+  });
+  function fit(maxScale){
+    Blockly.svgResize(ws);
+    if (!ws.getTopBlocks(false).length) return;
+    ws.zoomToFit();
+    // 程序很短时 zoomToFit 会放得很大，积木糊满屏反而难看
+    if (ws.scale > maxScale) { ws.setScale(maxScale); ws.scrollCenter(); }
+  }
+  function showBlocks(s, refit){
+    var json = s.ws ? JSON.stringify(s.ws) : "";
+    $("dEmpty").hidden = !!s.ws || view !== "blocks";
+    if (!s.ws) { ws.clear(); shownWs = null; return; }
+    if (json === shownWs && !refit) return;   // 学生只是拖了一下画布，积木没变，不重画（不然老师正看的位置会跳）
+    shownWs = json;
+    window.MPL_DEMO = demoOf(s);               // “告诉网页”的下拉框按这一组的关卡来
+    Blockly.Events.disable();
+    try { ws.clear(); Blockly.serialization.workspaces.load(s.ws, ws); }
+    catch (e) { $("dEmpty").hidden = false; $("dEmpty").textContent = "这一组的积木画不出来：" + e.message; }
+    Blockly.Events.enable();
+    MplLock.syncAll(ws);
+    // 等这一帧布局排完再缩放：刚换完内容时量到的积木尺寸还是旧的，缩出来会切掉一截
+    if (refit) requestAnimationFrame(function(){ fit($("detail").classList.contains("full") ? 1.6 : 1.0); });
+  }
+  function showDetail(refit){
+    var s = st(sel), d = demoOf(s);
+    $("dTitle").textContent = gname(sel) + (d ? " · 第 " + lvNo(d.id) + " 关 " + d.title : "") +
+      (s.updated ? "（" + s.updated + " 更新）" : "（还没开始）");
+    $("dCode").textContent = s.code || "（这一组还没打开页面或还没动积木）";
+    $("dEmpty").textContent = "这一组还没打开页面或还没动积木";
+    $("dBtns").hidden = false;
+    // 模拟按钮按这一组当前的关卡来：第 3 关的组要的是“开门/关门”，不是“变暗了”
+    var sim = $("simBtns"); sim.innerHTML = "";
+    // 自由农场关没有“告诉网页”的话，模拟的是“农场收到数据”（帮板子坏了的组过关）
+    (d ? (d.sends.length ? d.sends : d.need || []) : ["dark", "light"]).forEach(function(k){
+      var b = document.createElement("button");
+      b.textContent = "替这组模拟“" + sendText(k) + "”";
+      b.title = "板子坏了、或者想先给学生看效果时用；学生网页会当成真的收到（也算通关）";
+      b.addEventListener("click", function(){ fetch("/event?group=" + encodeURIComponent(sel) + "&type=" + k + "&sim=1"); });
+      sim.appendChild(b);
+    });
+    showBlocks(s, refit);
+  }
+  function pick(g){ var changed = sel !== g; sel = g; render(); showDetail(changed); setCollapsed(false); }
+
+  // 右边"这一组的积木"面板可以收起，腾地方给左边的分组网格（投影时尤其有用）
+  var collapsed = false;
+  try { collapsed = localStorage.getItem("mpl_teacher_collapsed") === "1"; } catch (e) {}
+  function setCollapsed(on){
+    collapsed = on;
+    $("detail").classList.toggle("collapsed", collapsed);
+    $("toggleBtn").textContent = collapsed ? "展开 ▸" : "收起 ▾";
+    try { localStorage.setItem("mpl_teacher_collapsed", collapsed ? "1" : "0"); } catch (e) {}
+  }
+  setCollapsed(collapsed);
+  $("toggleBtn").addEventListener("click", function(){ setCollapsed(!collapsed); });
+
+  document.querySelectorAll("#dTabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      view = b.getAttribute("data-v");
+      document.querySelectorAll("#dTabs button").forEach(function(x){ x.classList.toggle("on", x === b); });
+      $("dCode").hidden = view !== "code";
+      $("dBlocks").style.visibility = view === "blocks" ? "" : "hidden";
+      if (sel) showDetail(view === "blocks");
+    });
+  });
+  function setFull(on){
+    $("detail").classList.toggle("full", on);
+    $("fullBtn").textContent = on ? "✕ 退出投屏（Esc）" : "⛶ 投屏展示";
+    setTimeout(function(){ fit(on ? 1.6 : 1.0); }, 30);
+  }
+  $("fullBtn").addEventListener("click", function(){ setFull(!$("detail").classList.contains("full")); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && $("detail").classList.contains("full")) setFull(false); });
+  $("openBtn").addEventListener("click", function(){ if (sel) window.open("/index.html?from=" + encodeURIComponent(sel), "_blank", "noopener"); });
+  window.addEventListener("resize", function(){ Blockly.svgResize(ws); });
+
+  function feed(html){
+    var li = document.createElement("li"); li.innerHTML = html;
+    var ul = $("feed"); ul.insertBefore(li, ul.firstChild);
+    while (ul.children.length > 80) ul.removeChild(ul.lastChild);
+  }
+  function blink(g){ var el = $("g"+g); if (el){ el.classList.remove("blink"); void el.offsetWidth; el.classList.add("blink"); } }
+
+  fetch("/api/state").then(function(r){return r.json();}).then(function(d){
+    N = d.groups || 30; S = d.state || {};
+    if (d.keys) { KEYS = d.keys.map(function(k){ if (k.label) LABELS[k.key] = k.label; return k.key; }); }
+    render();
+  });
+  fetch("/api/config").then(function(r){return r.json();}).then(function(c){
+    $("addr").hidden = true;   // ITtools：学生从平台课堂进入，不用另给地址
+    $("lessonSel").value = c.lesson || "熟悉课";
+    applyLesson(c.lesson || "熟悉课"); render();
+  });
+  $("lessonSel").addEventListener("change", function(){
+    var v = this.value, sel = this;
+    fetch("/api/settings", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ lesson: v }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok) throw new Error(d.error || "保存失败");
+        applyLesson(v); render();
+        alert("已换成「" + v + "」。学生刷新页面就只看到这节课的关卡。");
+      })
+      .catch(function(e){ alert(e.message); sel.value = sel.dataset.prev || "全部"; });
+  });
+  $("lessonSel").addEventListener("focus", function(){ this.dataset.prev = this.value; });
+
+  var es = new EventSource("/stream?teacher=1");
+  es.onopen = function(){ $("srvChip").className = "chip ok"; $("srvChip").textContent = "实时连接中"; };
+  es.onerror = function(){ $("srvChip").className = "chip bad"; $("srvChip").textContent = "断开，重连中"; };
+  es.onmessage = function(m){
+    var msg; try { msg = JSON.parse(m.data); } catch(e){ return; }
+    var s = st(msg.group), t = '<span class="t">' + esc(msg.updated || msg.t) + '</span>' + esc(gname(msg.group));
+    if (msg.label) LABELS[msg.group] = msg.label;
+    if (KEYS && KEYS.indexOf(msg.group) < 0) KEYS.push(msg.group);
+    t = '<span class="t">' + esc(msg.updated || msg.t) + '</span>' + esc(gname(msg.group));
+    if (msg.kind === "code"){
+      var sameLevel = s.level === msg.level;
+      var before = sameLevel ? s.filled.filter(function(f){return f.ok;}).length : 0;
+      var passedBefore = (s.passed || []).length;
+      s.code = msg.code; s.filled = msg.filled || []; s.updated = msg.updated; s.runs = msg.runs || s.runs;
+      s.level = msg.level || s.level; s.passed = msg.passed || s.passed; if (msg.ws) s.ws = msg.ws;
+      var after = s.filled.filter(function(f){return f.ok;}).length;
+      var d = demoOf(s), ln = d ? "第 " + lvNo(d.id) + " 关" : "";
+      if (msg.action === "save") feed(t + '刷入了程序（' + ln + '）');
+      else if (msg.action === "pass" && s.passed.length > passedBefore) feed(t + ' <b style="color:#0B6B4F">🎉 通关' + ln + '「' + esc(d ? d.title : "") + '」</b>');
+      else if (msg.action === "level" && !sameLevel) feed(t + '进入' + ln + '「' + esc(d ? d.title : "") + '」');
+      else if (msg.action === "board-idf") feed(t + '<b style="color:#B4232A">的板子不是 MicroPython 固件，需要刷固件</b>');
+      else if (msg.action === "board-noreply") feed(t + '<b style="color:#B4232A">的板子没有回应，可能要复位或刷固件</b>');
+      else if (sameLevel && after > before) feed(t + '放对了一块（' + after + '/' + s.filled.length + '）');
+      if (msg.group === sel) showDetail(!sameLevel);
+    } else if (msg.kind === "event"){
+      s.events.push({t: msg.t, type: msg.type, src: msg.src});
+      s.lamp = msg.type;
+      feed(t + '板子：' + esc(sendText(msg.type)) + (msg.src === "sim" ? '<span class="tag">老师模拟</span>' : ''));
+    }
+    render(); blink(msg.group);
+  };
+})();
+</script>
+</body>
+</html>

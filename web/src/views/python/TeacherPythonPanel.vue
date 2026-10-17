@@ -1,6 +1,6 @@
 <template>
   <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
-  <el-empty v-else-if="data && !data.problem" description="该页面还没有选择 Python 题目，请在课程编辑中设置" />
+  <el-empty v-else-if="data && !data.problem" description="还没有选择 Python 题目" />
   <div v-else-if="data">
     <div class="head">
       <div>
@@ -23,7 +23,7 @@
       <el-tag v-if="staleCount" type="warning">{{ staleCount }} 人成绩基于旧版题目，需重新评测</el-tag>
     </div>
     <el-table :data="data.rows" size="small" stripe max-height="520">
-      <el-table-column prop="studentNo" label="学号" width="80" />
+      <el-table-column prop="studentNo" label="班内学号" width="84" />
       <el-table-column prop="name" label="姓名" width="100" />
       <el-table-column label="得分" width="100" sortable :sort-method="(a: any, b: any) => Number(a.score ?? -1) - Number(b.score ?? -1)">
         <template #default="{ row }">
@@ -144,13 +144,13 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .ops { display: flex; align-items: center; gap: 8px; }
 .stats { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-.muted { color: #909399; font-size: 12px; }
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .ml8 { margin-left: 8px; }
 .mr4 { margin-right: 4px; }
-.full { color: #67c23a; font-weight: 600; }
+.full { color: var(--el-color-success); font-weight: 600; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; }
-.dot.ok { background: #67c23a; }
-.dot.bad { background: #f56c6c; }
+.dot.ok { background: var(--el-color-success); }
+.dot.bad { background: var(--el-color-danger); }
 .detail { margin-top: 8px; }
-.err { color: #f56c6c; background: #fef0f0; padding: 8px; border-radius: 4px; white-space: pre-wrap; font-size: 12px; }
+.err { color: var(--el-color-danger); background: var(--el-color-danger-light-9); padding: 8px; border-radius: 4px; white-space: pre-wrap; font-size: 12px; }
 </style>

@@ -110,7 +110,8 @@ onMounted(async () => {
 function openCreate() {
   editingId.value = null
   form.name = ''
-  form.displayOrder = 0
+  // 新班级默认排在本年级最后
+  form.displayOrder = classes.value.reduce((m, c) => Math.max(m, c.displayOrder), 0) + 1
   dialogVisible.value = true
 }
 
@@ -167,7 +168,7 @@ async function remove(row: ClassItem) {
 }
 
 .filter-label {
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
 }
 
