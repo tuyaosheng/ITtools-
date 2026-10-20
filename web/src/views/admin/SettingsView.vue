@@ -3,8 +3,9 @@
     <template #header><span>系统参数设置</span></template>
     <el-form v-loading="loading" :model="form" label-width="140px" class="form">
       <el-divider content-position="left">基本</el-divider>
-      <el-form-item label="学校名称">
-        <el-input v-model="form['school.name']" />
+      <el-form-item label="平台名称">
+        <el-input v-model="form['school.name']" maxlength="30" show-word-limit placeholder="信息科技教学辅助平台" />
+        <Hint>显示在登录页标题、左侧栏和浏览器标签上，保存后刷新页面生效。</Hint>
       </el-form-item>
       <el-form-item label="工作模式">
         <el-radio-group v-model="form['login.mode']">

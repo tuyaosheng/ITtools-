@@ -17,10 +17,13 @@ public class LessonNetworkService {
     private final LabQueryService lab;
     private final NetworkControlService network;
 
-    public LessonNetworkService(LessonService lessons, LabQueryService lab, NetworkControlService network) {
+    private final NetGateService gate;
+
+    public LessonNetworkService(LessonService lessons, LabQueryService lab, NetworkControlService network, NetGateService gate) {
         this.lessons = lessons;
         this.lab = lab;
         this.network = network;
+        this.gate = gate;
     }
 
     /** 网络状态总览，只保留本课堂机房里的电脑。 */
@@ -42,7 +45,9 @@ public class LessonNetworkService {
         for (String ip : ips) {
             if (!room.contains(ip)) throw new IllegalArgumentException("不是本课堂机房的电脑（" + ip + "）");
         }
-        return network.setIps(ips, on);
+        Map<String, Object> out = network.setIps(ips, on);
+        gate.onManualBatch(lessonId, ips, on);
+        return out;
     }
 
     @SuppressWarnings("unchecked")

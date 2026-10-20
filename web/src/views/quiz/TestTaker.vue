@@ -26,6 +26,19 @@
       <el-alert v-else-if="submitted && !data.answerRevealed" type="success" :closable="false" class="mb"
         title="已交卷" />
 
+      <template v-if="data.netGate">
+        <el-alert v-if="data.netGate.passed" type="success" :closable="false" show-icon class="mb"
+          :title="`已达标（≥ ${data.netGate.passScore} 分），网络已开放`" />
+        <el-alert v-else-if="submitted" :type="data.netGate.left > 0 ? 'warning' : 'error'" :closable="false" show-icon class="mb"
+          :title="data.netGate.left > 0
+            ? `还没达标（需要 ≥ ${data.netGate.passScore} 分），你还有 ${data.netGate.left} 次机会`
+            : `没达标（需要 ≥ ${data.netGate.passScore} 分），机会用完了，请找老师`">
+          <el-button v-if="data.netGate.left > 0" type="primary" size="small" :loading="saving" @click="retake">重新作答</el-button>
+        </el-alert>
+        <el-alert v-else type="info" :closable="false" class="mb"
+          :title="`达标分数 ${data.netGate.passScore} 分，达标后开放网络；共 ${data.netGate.allowed} 次机会，已用 ${data.netGate.tries} 次`" />
+      </template>
+
       <QuestionItem v-for="(q, i) in data.questions" :key="q.id" v-model="answers[q.id]" :q="q" :index="i"
         :readonly="!data.canEdit" :show-key="data.answerRevealed" />
 
@@ -92,6 +105,17 @@ async function save(submit: boolean) {
   }
 }
 
+async function retake() {
+  saving.value = true
+  try {
+    apply(await api.post(`/student/quiz/tests/${data.value.test.id}/retake`))
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  } finally {
+    saving.value = false
+  }
+}
+
 async function submit() {
   const left = data.value.questions.length - answeredCount.value
   try {
@@ -114,7 +138,9 @@ onMounted(async () => {
   poll = window.setInterval(() => {
     const d = data.value
     if (!d || d.test.finalizedAt || (submitted.value && d.test.status === 'CLOSED')) return
-    if (d.test.status === 'STANDBY' || (d.test.mode === 'CONTROL' && now.value % 15000 < 3000)) load(true)
+    // 成绩开网：已交卷未达标时，及时看到老师加的机会 / 放行
+    const gateWaiting = d.netGate && !d.netGate.passed && submitted.value
+    if (d.test.status === 'STANDBY' || (d.test.mode === 'CONTROL' && now.value % 15000 < 3000) || (gateWaiting && now.value % 6000 < 3000)) load(true)
   }, 3000)
 })
 onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(poll) })

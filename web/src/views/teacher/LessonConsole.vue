@@ -8,6 +8,14 @@
             {{ lesson.className }} · {{ fmtTime(lesson.startedAt) }}{{ lesson.endedAt ? ' ~ ' + fmtTime(lesson.endedAt) : '' }}
             · 分组模型：{{ lesson.groupModelName || '不分组' }}
           </div>
+          <div v-if="active" class="feat">
+            学生功能：
+            <span v-for="f in features" :key="f.key" class="feat-item">
+              {{ f.label }}
+              <el-switch :model-value="featureOn(f.key)" size="small" inline-prompt active-text="开" inactive-text="关"
+                @change="(v: any) => setFeature(f.key, !!v)" />
+            </span>
+          </div>
         </div>
         <div class="stats">
           <div class="stat"><b>{{ present }}</b><span>出席</span></div>
@@ -138,7 +146,7 @@
               <span class="fl top">前10</span>课堂总分前 10 <span class="fl ess">精品</span>有精华作品
               <span class="fl todo">待阅</span>有作品未批阅 <span class="fl read">已阅</span>已全部批阅 <span class="star on">★</span>关注
               <template v-if="net.enabled">· 🌐已开 ⛔已断 —没下发过</template>
-              <Hint>灰色虚线的座位还没有学生登录；点 ★ 切换关注。<template v-if="net.enabled">网络状态是本平台最后一次给这台电脑下发的指令，不是实时探测；上课中点“管理”可以批量暂停 / 恢复网络。</template></Hint>
+              <Hint>灰色虚线的座位还没有学生登录；点 ★ 切换关注。<template v-if="net.enabled">网络状态每 5 秒向控制器读取一次实际状态（电脑不在线时显示本平台最后下发的指令）；上课中点“管理”可以批量暂停 / 恢复网络。</template></Hint>
             </div>
             <div v-if="seatAbsent.length" class="absent">
               <b>缺席 / 请假（{{ seatAbsent.length }}）：</b>
@@ -199,7 +207,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 import { pageTypes } from '../../modules/pageTypes'
-import { consoleTabs } from '../../modules/consoleTabs'
+import { closedFeatures, consoleTabs } from '../../modules/consoleTabs'
 import PageContent from '../../components/PageContent.vue'
 
 const route = useRoute()
@@ -218,6 +226,17 @@ const active = computed(() => lesson.value?.status === 'ACTIVE')
 const present = computed(() => attendance.value.filter(a => a.status === 'PRESENT').length)
 const leave = computed(() => attendance.value.filter(a => a.status === 'LEAVE').length)
 const notYet = computed(() => attendance.value.filter(a => !a.status || a.status === 'ABSENT').length)
+
+// 本堂课可开关的学生互动功能（对应后端 LessonService.FEATURES）
+const features = [{ key: 'HELP', label: '举手求助' }, { key: 'FORUM', label: '课堂论坛' }]
+const featureOn = (key: string) => !closedFeatures(lesson.value).includes(key)
+async function setFeature(key: string, on: boolean) {
+  try {
+    Object.assign(lesson.value, await api.put(`/teacher/lessons/${id}/features`, { [key]: on }))
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 
 async function loadLesson() {
   lesson.value = await api.get(`/teacher/lessons/${id}`)
@@ -294,6 +313,9 @@ const net = reactive<{ enabled: boolean; reachable: boolean; status: Record<stri
   { enabled: false, reachable: false, status: {}, last: {} })
 const seatPowered = computed(() => seatList.value.filter(s => net.status[s.ipAddress]?.online).length)
 function netOf(s: any): 'on' | 'off' | 'unk' {
+  // 优先用控制器实测状态（normal = 网络正常，其余 = 已断开）；电脑不在线时退回本平台最后下发的指令
+  const a = net.status[s?.ipAddress]
+  if (a?.online && a.netState) return a.netState === 'normal' ? 'on' : 'off'
   const v = net.last[s?.ipAddress]
   return v === true ? 'on' : v === false ? 'off' : 'unk'
 }
@@ -355,7 +377,7 @@ onMounted(async () => {
   await loadSeats()
   await refresh()
   await loadNet()
-  timer = window.setInterval(() => { if (active.value) refresh() }, 5000)
+  timer = window.setInterval(() => { if (active.value) { refresh(); if (net.enabled && tab.value === 'seats') loadNet() } }, 5000)
 })
 onBeforeUnmount(() => window.clearInterval(timer))
 </script>
@@ -386,6 +408,8 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--el-fill-color); color: var(--el-text-color-regular); }
 .chip.ok { background: var(--el-color-success-light-9); color: var(--el-color-success-dark-2); }
 .chip.bad { background: var(--el-color-danger-light-9); color: var(--el-color-danger); }
+.feat { margin-top: 6px; font-size: 13px; color: var(--el-text-color-secondary); }
+.feat-item { margin-right: 14px; }
 .seatbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .seatbar .el-button + .el-button { margin-left: 0; }
 .grow { flex: 1; }

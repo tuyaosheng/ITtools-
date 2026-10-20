@@ -176,6 +176,14 @@ public class TeacherClassroomController {
         return ApiResponse.ok(null);
     }
 
+    /** 开关本堂课的互动功能：body 如 {"HELP": false, "FORUM": true}。 */
+    @PutMapping("/lessons/{id}/features")
+    public ApiResponse<Map<String, Object>> setFeatures(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Map<String, Boolean> enabled = new HashMap<>();
+        for (Map.Entry<String, Object> e : body.entrySet()) enabled.put(e.getKey(), Boolean.valueOf(String.valueOf(e.getValue())));
+        return ApiResponse.ok(lessons.setFeatures(CurrentUser.id(), id, enabled));
+    }
+
     /** 撤销课堂（原 coursemanage“撤销”）：清除本堂课全部学习记录。 */
     @DeleteMapping("/lessons/{id}")
     public ApiResponse<Void> revokeLesson(@PathVariable Long id) {

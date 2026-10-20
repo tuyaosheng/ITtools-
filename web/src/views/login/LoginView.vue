@@ -140,7 +140,7 @@ const studentNameRules: FormRules = {
 }
 
 // 工作模式（系统设置）：学号模式只显示学号入口，其余模式显示班级+姓名入口；未取得设置时全部显示
-const schoolName = ref('ITtools 平台登录')
+const schoolName = ref('信息科技教学辅助平台')
 const loginMode = ref<string | null>(null)
 const showNameTab = computed(() => loginMode.value !== 'XJH')
 const showXjhTab = computed(() => loginMode.value === null || loginMode.value === 'XJH')
@@ -152,6 +152,7 @@ onMounted(async () => {
     const { data } = await http.get('/public/settings')
     if (data?.data?.schoolName) {
       schoolName.value = data.data.schoolName
+      document.title = data.data.schoolName
       notice.value = data.data.notice || ''
       loginMode.value = data.data.loginMode
       if (loginMode.value === 'XJH') activeTab.value = 'student-xjh'

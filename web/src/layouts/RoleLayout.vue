@@ -70,6 +70,7 @@ async function logout() {
 onMounted(async () => {
   try {
     schoolName.value = (await api.get('/public/settings')).schoolName
+    if (schoolName.value) document.title = schoolName.value
   } catch {
     /* ignore */
   }

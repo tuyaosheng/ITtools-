@@ -46,7 +46,7 @@ public class SystemSettingService {
 
     private static final Map<String, String> DEFAULTS = new LinkedHashMap<>();
     static {
-        DEFAULTS.put(SCHOOL_NAME, "信息技术教学辅助平台");
+        DEFAULTS.put(SCHOOL_NAME, "信息科技教学辅助平台");
         DEFAULTS.put(LOGIN_MODE, "NORMAL");
         DEFAULTS.put(BLOCKED_EXT, "exe,bat,cmd,com,vbs,msi,scr,ps1,jsp,asp,aspx,php");
         DEFAULTS.put(DISK_QUOTA_MB, "50");

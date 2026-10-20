@@ -38,7 +38,7 @@ public class LessonService {
             "l.id, l.course_id AS \"courseId\", c.name AS \"courseName\", l.class_id AS \"classId\", "
                     + "sy.label || k.name AS \"className\", l.teacher_id AS \"teacherId\", u.name AS \"teacherName\", "
                     + "l.status, l.started_at AS \"startedAt\", l.ended_at AS \"endedAt\", l.group_model_id AS \"groupModelId\", "
-                    + "gm.name AS \"groupModelName\", l.summary, l.term_id AS \"termId\", "
+                    + "gm.name AS \"groupModelName\", l.summary, l.term_id AS \"termId\", l.disabled_features AS \"disabledFeatures\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'PRESENT') AS \"presentCount\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'ABSENT') AS \"absentCount\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'LEAVE') AS \"leaveCount\", "
@@ -128,6 +128,42 @@ public class LessonService {
         requireTeacher(teacherId, lessonId);
         jdbc.update("INSERT INTO lesson_page_state(lesson_id, page_id, is_open) VALUES (:l, :p, :o) "
                 + "ON CONFLICT (lesson_id, page_id) DO UPDATE SET is_open = EXCLUDED.is_open", p("l", lessonId, "p", pageId, "o", open));
+    }
+
+    /** 教师可按课堂开关的互动功能：HELP 举手求助，FORUM 课堂论坛。 */
+    public static final List<String> FEATURES = java.util.Arrays.asList("HELP", "FORUM");
+
+    private static List<String> disabledOf(Object v) {
+        List<String> out = new ArrayList<>();
+        if (v != null) for (String s : String.valueOf(v).split(",")) if (!s.trim().isEmpty()) out.add(s.trim());
+        return out;
+    }
+
+    /** enabled：功能名 → 是否开放；只改传入的功能。 */
+    @Transactional
+    public Map<String, Object> setFeatures(Long teacherId, Long lessonId, Map<String, Boolean> enabled) {
+        Map<String, Object> l = requireTeacher(teacherId, lessonId);
+        List<String> disabled = disabledOf(l.get("disabledFeatures"));
+        for (Map.Entry<String, Boolean> e : enabled.entrySet()) {
+            if (!FEATURES.contains(e.getKey())) throw new IllegalArgumentException("未知功能：" + e.getKey());
+            disabled.remove(e.getKey());
+            if (Boolean.FALSE.equals(e.getValue())) disabled.add(e.getKey());
+        }
+        jdbc.update("UPDATE lesson SET disabled_features = :d WHERE id = :l", p("d", String.join(",", disabled), "l", lessonId));
+        return get(lessonId);
+    }
+
+    /** 课堂已关闭该功能时抛出异常（msg 为给学生的提示）。 */
+    public void requireFeature(Long lessonId, String feature, String msg) {
+        if (disabledOf(get(lessonId).get("disabledFeatures")).contains(feature)) throw new IllegalArgumentException(msg);
+    }
+
+    /** 学生所在班级正在进行的课堂（课程为 courseId）是否关闭了该功能。 */
+    public boolean featureClosedForStudent(Long studentId, Long courseId, String feature) {
+        List<String> ds = jdbc.queryForList("SELECT l.disabled_features FROM lesson l JOIN users s ON s.class_id = l.class_id "
+                + "WHERE s.id = :s AND l.course_id = :c AND l.status = 'ACTIVE'", p("s", studentId, "c", courseId), String.class);
+        for (String d : ds) if (disabledOf(d).contains(feature)) return true;
+        return false;
     }
 
     /** 全班学生考勤（含未进课学生，状态 null 表示尚未进课）。 */

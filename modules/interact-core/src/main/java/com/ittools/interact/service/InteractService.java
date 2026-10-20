@@ -47,6 +47,7 @@ public class InteractService {
     @Transactional
     public Map<String, Object> raiseHand(Long studentId, Long lessonId, String message, String ip) {
         requireActive(lessons.requireStudent(studentId, lessonId));
+        lessons.requireFeature(lessonId, "HELP", "老师已关闭举手功能");
         Long open = jdbc.queryForObject("SELECT COUNT(*) FROM help_request WHERE lesson_id = :l AND student_id = :s AND status = 'OPEN'",
                 p("l", lessonId, "s", studentId), Long.class);
         if (open != null && open > 0) throw new IllegalArgumentException("你已经举手了，请等待老师处理");

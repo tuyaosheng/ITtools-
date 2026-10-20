@@ -41,7 +41,7 @@
 
       <el-card shadow="never" class="tools">
         <el-tabs v-model="toolTab">
-          <el-tab-pane v-for="t in studentTools" :key="t.name" :label="t.label" :name="t.name" lazy>
+          <el-tab-pane v-for="t in tools" :key="t.name" :label="t.label" :name="t.name" lazy>
             <component :is="t.component" :lesson="lesson" />
           </el-tab-pane>
         </el-tabs>
@@ -51,12 +51,12 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { pageTypes } from '../../modules/pageTypes'
-import { studentTools } from '../../modules/consoleTabs'
+import { closedFeatures, studentTools } from '../../modules/consoleTabs'
 import PageContent from '../../components/PageContent.vue'
 
 const route = useRoute()
@@ -65,10 +65,18 @@ const lesson = ref<any>(null)
 const pages = ref<any[]>([])
 const page = ref<any>(null)
 const toolTab = ref(studentTools[0]?.name)
+// 教师关闭的功能（如课堂论坛）不显示对应标签
+const tools = computed(() => studentTools.filter(t => !t.feature || !closedFeatures(lesson.value).includes(t.feature)))
 let timer: number | undefined
 let hbTimer: number | undefined
 
 async function loadPages() {
+  if (lesson.value?.status === 'ACTIVE') {
+    // 顺带刷新教师对本堂课功能开关的改动
+    api.get('/student/lessons/current').then((cur: any) => {
+      if (cur && cur.id === id && lesson.value) lesson.value.disabledFeatures = cur.disabledFeatures
+    }).catch(() => {})
+  }
   pages.value = await api.get(`/student/lessons/${id}/pages`)
   if (page.value && !pages.value.some(p => p.id === page.value.id)) page.value = null
 }

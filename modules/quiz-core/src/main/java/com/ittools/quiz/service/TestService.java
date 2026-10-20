@@ -2,6 +2,7 @@ package com.ittools.quiz.service;
 
 import com.ittools.classroom.service.ClassBindingService;
 import com.ittools.classroom.service.LessonService;
+import com.ittools.classroom.service.NetGateService;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,14 +37,16 @@ public class TestService {
     private final QuestionService questions;
     private final LessonService lessons;
     private final ClassBindingService bindings;
+    private final NetGateService netGate;
 
     public TestService(NamedParameterJdbcTemplate jdbc, PaperService papers, QuestionService questions,
-                       LessonService lessons, ClassBindingService bindings) {
+                       LessonService lessons, ClassBindingService bindings, NetGateService netGate) {
         this.jdbc = jdbc;
         this.papers = papers;
         this.questions = questions;
         this.lessons = lessons;
         this.bindings = bindings;
+        this.netGate = netGate;
     }
 
     private static final String TEST_COLS =
@@ -364,6 +367,33 @@ public class TestService {
     private void recompute(Long attemptId) {
         jdbc.update("UPDATE quiz_attempt SET score = (SELECT COALESCE(SUM(score), 0) FROM quiz_answer WHERE attempt_id = :a) WHERE id = :a",
                 p("a", attemptId));
+        notifyNetGate(attemptId, false);
+    }
+
+    /** 成绩开网：答卷出分 / 改分后通知（countTry=true 表示这是一次新的交卷）。 */
+    private void notifyNetGate(Long attemptId, boolean countTry) {
+        Map<String, Object> a = jdbc.queryForMap("SELECT test_id, student_id, score, status FROM quiz_attempt WHERE id = :a", p("a", attemptId));
+        if (a.get("score") == null || !"SUBMITTED".equals(a.get("status"))) return;
+        netGate.onScored(((Number) a.get("test_id")).longValue(), ((Number) a.get("student_id")).longValue(),
+                ((Number) a.get("score")).doubleValue(), countTry);
+    }
+
+    /** 成绩开网的重做：未达标且还有机会时，清空答卷重新作答。 */
+    @Transactional
+    public Map<String, Object> studentRetake(Long studentId, Long testId) {
+        Map<String, Object> t = requireStudentTest(studentId, testId);
+        Map<String, Object> info = netGate.studentInfo(studentId, testId);
+        if (info == null) throw new IllegalArgumentException("这次测验没有重做机会设置");
+        if (Boolean.TRUE.equals(info.get("passed"))) throw new IllegalArgumentException("你已经达标了");
+        if (((Number) info.get("left")).intValue() <= 0) throw new IllegalArgumentException("机会用完了，请找老师");
+        if (finalized(t) || !"OPEN".equals(t.get("status"))) throw new IllegalArgumentException("测验现在不能作答");
+        List<Map<String, Object>> a = attemptOf(testId, studentId);
+        if (a.isEmpty() || !"SUBMITTED".equals(a.get(0).get("status"))) throw new IllegalArgumentException("当前没有可以重做的答卷");
+        Long attemptId = ((Number) a.get(0).get("id")).longValue();
+        jdbc.update("DELETE FROM quiz_answer WHERE attempt_id = :a", p("a", attemptId));
+        jdbc.update("UPDATE quiz_attempt SET status = 'IN_PROGRESS', started_at = now(), submitted_at = NULL, score = NULL, returned_note = NULL WHERE id = :a",
+                p("a", attemptId));
+        return studentOpen(studentId, testId);
     }
 
     /**
@@ -537,6 +567,7 @@ public class TestService {
         }
         out.put("questions", shuffleFor(t, studentId, qs));
         out.put("answerRevealed", reveal);
+        out.put("netGate", netGate.studentInfo(studentId, testId));
         return out;
     }
 
@@ -627,6 +658,7 @@ public class TestService {
         }
         jdbc.update("UPDATE quiz_attempt SET status = 'SUBMITTED', submitted_at = now(), returned_note = NULL, "
                 + "score = (SELECT COALESCE(SUM(score), 0) FROM quiz_answer WHERE attempt_id = :a) WHERE id = :a", p("a", attemptId));
+        notifyNetGate(attemptId, true);
     }
 
     // ================= 错题本（原 Leakfilled / Leakfilledcourse） =================
