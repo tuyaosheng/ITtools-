@@ -20,9 +20,11 @@
       >
         <div class="room-name">{{ r.name }}</div>
         <div class="room-meta">{{ r.rows }} 行 × {{ r.cols }} 列 · 已放置 {{ r.assigned }} 台</div>
+        <div class="room-meta">控制器：{{ r.ctrUrl || '全局' }}</div>
         <div class="room-ops" @click.stop>
           <el-button link type="primary" size="small" @click="openScheme(r)">方案设置</el-button>
           <el-button link type="primary" size="small" @click="openEdit(r)">改名/行列</el-button>
+          <el-button link type="primary" size="small" @click="openCtr(r)">控制器</el-button>
           <el-popconfirm title="删除该机房模型？（班级的机房配置会被清空）" @confirm="remove(r.id)">
             <template #reference><el-button link type="danger" size="small">删除</el-button></template>
           </el-popconfirm>
@@ -101,6 +103,10 @@
           每个座位：排-列、IP 末段、计算机名<template v-if="net.enabled">、开机状态、网络（🌐已开 ⛔已断 —没下发过）</template>。
           <Hint>网络状态是本平台最后一次给这台电脑下发的指令，不是实时探测；开机状态来自网络控制器。<template v-if="!net.enabled">在“系统设置 → 网络控制器”启用后，这里可以批量开网 / 断网。</template></Hint>
         </div>
+        <div v-if="conflicts.length" class="legend warn">
+          有 {{ conflicts.length }} 台电脑同时放在别的机房，实际由别的机房的控制器管理：{{ conflicts.slice(0, 12).join('、') }}{{ conflicts.length > 12 ? '…' : '' }}
+          <Hint>一台电脑放在多个设了控制器的机房时，用最早建的那个机房的控制器。把它从多余的机房里移出就不会冲突。</Hint>
+        </div>
         <div v-if="unplaced.length && mode !== 'edit'" class="legend warn">
           还有 {{ unplaced.length }} 台同前缀的机位没放进座位图：{{ unplaced.slice(0, 12).map(w => w.pcName).join('、') }}{{ unplaced.length > 12 ? '…' : '' }}（点“调整机位”放进去）
         </div>
@@ -125,6 +131,28 @@
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="ctrVisible" :title="`网络控制器 · ${ctrRoom?.name || ''}`" width="520px" append-to-body>
+      <el-form :model="ctrForm" label-width="96px">
+        <el-form-item label="控制器地址">
+          <el-input v-model="ctrForm.ctrUrl" placeholder="留空 = 用全局控制器" class="ctr-input" />
+          <Hint>这个机房的控制器主控端地址，如 http://192.168.1.10:8770。留空就用“系统设置 → 网络控制器”里的全局控制器。控制器不在平台这台电脑上时，它的 api_host 要设为 0.0.0.0。</Hint>
+        </el-form-item>
+        <el-form-item label="访问令牌">
+          <el-input v-model="ctrForm.ctrToken" type="password" show-password placeholder="未设置可留空" class="ctr-input" />
+        </el-form-item>
+        <el-form-item label="测试">
+          <el-button :loading="ctrTesting" @click="testCtr">保存并测试连接</el-button>
+          <div v-if="ctrResult" class="ctr-result" :class="ctrResult.ok ? 'ok' : 'bad'">
+            {{ ctrResult.ok ? `连接成功（${ctrResult.url}）：${ctrResult.agents} 台被控端，在线 ${ctrResult.online} 台` : (ctrResult.error || '连接失败') }}
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="ctrVisible = false">关闭</el-button>
+        <el-button type="primary" :loading="ctrSaving" @click="saveCtr">保存</el-button>
       </template>
     </el-dialog>
 
@@ -195,7 +223,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import Hint from '../../components/Hint.vue'
 
-interface Room { id: number; name: string; rows: number; cols: number; assigned: number }
+interface Room { id: number; name: string; rows: number; cols: number; assigned: number; ctrUrl: string | null }
 
 const rooms = ref<Room[]>([])
 const workstations = ref<any[]>([])
@@ -224,6 +252,7 @@ async function select(id: number) {
   Object.keys(cells).forEach(k => delete cells[k])
   const layout: any[] = await api.get(`/admin/lab/rooms/${id}/layout`)
   layout.forEach(s => { cells[key(s.row, s.col)] = s.workstationId })
+  await loadNet()
 }
 
 function openCreate() {
@@ -468,10 +497,71 @@ function selectWhere(fn: (w: any) => boolean) {
 }
 
 async function loadNet() {
+  const id = currentId.value
   try {
-    Object.assign(net, await api.get('/admin/lab/network/status'))
+    const [st, ctr]: any[] = await Promise.all([
+      api.get('/admin/lab/network/status' + (id ? `?roomId=${id}` : '')),
+      id ? api.get(`/admin/lab/rooms/${id}/controller`) : { conflicts: [] },
+    ])
+    if (id !== currentId.value) return   // 等待期间切了机房，结果已过时
+    Object.assign(net, st)
+    conflicts.value = ctr.conflicts
   } catch {
     net.enabled = false
+  }
+}
+
+// ---- 机房自己的网络控制器 ----
+const conflicts = ref<string[]>([])
+const ctrVisible = ref(false)
+const ctrRoom = ref<Room | null>(null)
+const ctrForm = reactive({ ctrUrl: '', ctrToken: '' })
+const ctrSaving = ref(false)
+const ctrTesting = ref(false)
+const ctrResult = ref<any>(null)
+
+async function openCtr(r: Room) {
+  try {
+    const c: any = await api.get(`/admin/lab/rooms/${r.id}/controller`)
+    ctrRoom.value = r
+    Object.assign(ctrForm, { ctrUrl: c.ctrUrl || '', ctrToken: c.ctrToken || '' })
+    ctrResult.value = null
+    ctrVisible.value = true
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
+async function persistCtr() {
+  await api.put(`/admin/lab/rooms/${ctrRoom.value!.id}/controller`, ctrForm)
+  await loadRooms()
+}
+
+async function saveCtr() {
+  ctrSaving.value = true
+  try {
+    await persistCtr()
+    ctrVisible.value = false
+    ElMessage.success('保存成功')
+    loadNet()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  } finally {
+    ctrSaving.value = false
+  }
+}
+
+async function testCtr() {
+  ctrTesting.value = true
+  ctrResult.value = null
+  try {
+    await persistCtr()
+    ctrResult.value = await api.get(`/admin/lab/rooms/${ctrRoom.value!.id}/controller/test`)
+    loadNet()
+  } catch (err) {
+    ctrResult.value = { ok: false, error: errMsg(err) }
+  } finally {
+    ctrTesting.value = false
   }
 }
 
@@ -515,7 +605,7 @@ onMounted(async () => {
   await loadRooms()
   workstations.value = await api.get('/admin/lab-workstations')
   if (rooms.value.length) await select(rooms.value[0].id)
-  await loadNet()
+  else await loadNet()
 })
 </script>
 
@@ -577,6 +667,10 @@ onMounted(async () => {
 .muted { color: var(--el-text-color-secondary); font-size: 12px; }
 .err { color: var(--el-color-danger); font-size: 13px; margin-top: 6px; }
 .foot-tip { margin-right: 12px; }
+.ctr-input { width: 320px; }
+.ctr-result { width: 100%; margin-top: 6px; font-size: 12px; line-height: 1.6; }
+.ctr-result.ok { color: var(--el-color-success-dark-2); }
+.ctr-result.bad { color: var(--el-color-danger); }
 .podium.sm { margin: 8px 0 6px; padding: 3px; font-size: 12px; }
 .pv { display: grid; gap: 4px; max-height: 300px; overflow: auto; }
 .pv-cell { border: 1px solid var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); border-radius: 4px; padding: 2px; text-align: center; line-height: 1.2; }

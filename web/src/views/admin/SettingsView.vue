@@ -75,7 +75,7 @@
       </el-form-item>
       <el-form-item label="控制器地址">
         <el-input v-model="form['net.ctrUrl']" placeholder="http://127.0.0.1:8770" class="w420" />
-        <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</Hint>
+        <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。这是全局控制器，每个机房有自己的控制器时，到“机房模型”里给机房单独设置，没设置的机房用这里的。</Hint>
       </el-form-item>
       <el-form-item label="访问令牌">
         <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="未设置可留空" class="w420" />

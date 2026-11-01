@@ -133,8 +133,26 @@ public class AdminLabController {
 
     /** 座位图上的网络状态（未启用网络控制器时 enabled=false）。 */
     @GetMapping("/network/status")
-    public ApiResponse<Map<String, Object>> networkStatus() {
-        return ApiResponse.ok(network.overview());
+    public ApiResponse<Map<String, Object>> networkStatus(@RequestParam(required = false) Long roomId) {
+        return ApiResponse.ok(network.overview(roomId));
+    }
+
+    /** 机房自己的网络控制器（地址留空 = 用系统设置里的全局控制器）。 */
+    @GetMapping("/rooms/{id}/controller")
+    public ApiResponse<Map<String, Object>> roomController(@PathVariable Long id) {
+        return ApiResponse.ok(network.roomController(id));
+    }
+
+    @PutMapping("/rooms/{id}/controller")
+    public ApiResponse<Map<String, Object>> saveRoomController(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        network.saveRoomController(id, b.str("ctrUrl"), b.str("ctrToken"));
+        return ApiResponse.ok(network.roomController(id));
+    }
+
+    @GetMapping("/rooms/{id}/controller/test")
+    public ApiResponse<Map<String, Object>> testRoomController(@PathVariable Long id) {
+        return ApiResponse.ok(network.testRoom(id));
     }
 
     /** 座位图批量操作：action = open（恢复网络）| cut（暂停网络）。 */
