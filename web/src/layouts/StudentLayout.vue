@@ -7,12 +7,14 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import RoleLayout from './RoleLayout.vue'
 import { api } from '../api/client'
 import { useNoticeStore } from '../stores/notices'
+import { useFeatureStore } from '../stores/features'
 
 const notices = useNoticeStore()
+const features = useFeatureStore()
 let timer: number | undefined
 
 const extra = ref('')
-const menu = computed(() => [
+const menu = computed(() => ([
   { path: '/student/home', icon: '🏫', label: '我的课堂' },
   { path: '/student/works', icon: '🎨', label: '我的作品' },
   { path: '/student/showcase', icon: '🏆', label: '精华作品' },
@@ -30,11 +32,12 @@ const menu = computed(() => [
   { path: '/student/qa', icon: '💬', label: '师生答疑' },
   { path: '/student/records', icon: '🗂️', label: '学习记录' },
   { path: '/student/report', icon: '📈', label: '我的学情' }
-])
+]).filter(i => features.isOpen(i.path.split('/')[2])))
 
 onBeforeUnmount(() => window.clearInterval(timer))
 
 onMounted(async () => {
+  features.load()
   notices.refresh()
   timer = window.setInterval(() => notices.refresh(), 60000)
   try {

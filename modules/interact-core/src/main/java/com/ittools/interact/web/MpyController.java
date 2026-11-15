@@ -16,7 +16,7 @@ import java.util.Map;
 
 /**
  * 掌控板编程：web/public/mpython（原 mpython-lite）通过 mpl/bridge.js 访问这里。
- * 路径末段与原 server.py 一一对应：config / state / code / event / stream / starter / settings。
+ * 路径末段与原 server.py 一一对应：config / state / code / event / stream / starter / settings / text。
  * 教师的初始积木与设置在课程编辑里也能改（没有课堂），所以另有 /api/teacher/mpy/pages/{pageId}/... 一套。
  */
 @RestController
@@ -61,6 +61,11 @@ public class MpyController {
         return ApiResponse.ok(svc.starterForStudent(CurrentUser.id(), lessonId, pageId, demo));
     }
 
+    @GetMapping(S + "/text")
+    public ApiResponse<Object> studentText(@PathVariable Long lessonId, @PathVariable Long pageId) {
+        return ApiResponse.ok(svc.textsForStudent(CurrentUser.id(), lessonId, pageId));
+    }
+
     // ================= 教师：课堂中 =================
     private static final String T = "/api/teacher/mpy/lessons/{lessonId}/pages/{pageId}";
 
@@ -96,6 +101,16 @@ public class MpyController {
         return ApiResponse.ok(svc.saveStarter(CurrentUser.id(), lessonId, pageId, body));
     }
 
+    @GetMapping(T + "/text")
+    public ApiResponse<Object> teacherText(@PathVariable Long lessonId, @PathVariable Long pageId) {
+        return ApiResponse.ok(svc.textsForTeacher(CurrentUser.id(), lessonId, pageId));
+    }
+
+    @PostMapping(T + "/text")
+    public ApiResponse<Map<String, Object>> saveText(@PathVariable Long lessonId, @PathVariable Long pageId, @RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(svc.saveText(CurrentUser.id(), lessonId, pageId, body));
+    }
+
     @PostMapping(T + "/settings")
     public ApiResponse<Map<String, Object>> saveSettings(@PathVariable Long lessonId, @PathVariable Long pageId, @RequestBody Map<String, Object> body) {
         return ApiResponse.ok(svc.saveSettings(CurrentUser.id(), lessonId, pageId, body));
@@ -117,6 +132,16 @@ public class MpyController {
     @PostMapping(P + "/starter")
     public ApiResponse<Map<String, Object>> pageSaveStarter(@PathVariable Long pageId, @RequestBody Map<String, Object> body) {
         return ApiResponse.ok(svc.saveStarter(CurrentUser.id(), null, pageId, body));
+    }
+
+    @GetMapping(P + "/text")
+    public ApiResponse<Object> pageText(@PathVariable Long pageId) {
+        return ApiResponse.ok(svc.textsForTeacher(CurrentUser.id(), null, pageId));
+    }
+
+    @PostMapping(P + "/text")
+    public ApiResponse<Map<String, Object>> pageSaveText(@PathVariable Long pageId, @RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(svc.saveText(CurrentUser.id(), null, pageId, body));
     }
 
     @PostMapping(P + "/settings")

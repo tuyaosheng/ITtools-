@@ -20,7 +20,7 @@
     <el-dialog
       :model-value="dialogVisible"
       :title="dialogTitle"
-      width="480px"
+      :width="narrow ? '94%' : '480px'"
       append-to-body
       destroy-on-close
       @update:model-value="(v: boolean) => emit('update:dialogVisible', v)"
@@ -37,6 +37,9 @@
 
 <script setup lang="ts">
 import { ElCard, ElDialog, ElButton } from 'element-plus'
+import { useIsMobile } from '../../composables/useIsMobile'
+
+const narrow = useIsMobile()
 
 defineProps<{
   title: string
@@ -92,6 +95,13 @@ const emit = defineEmits<{
 }
 
 .admin-crud-panel__body {
+  min-width: 0;
   min-height: 80px;
+}
+@media (max-width: 768px) {
+  .admin-crud-panel :deep(.el-card__header) { padding: 12px; }
+  .admin-crud-panel :deep(.el-card__body) { padding: 12px; }
+  .admin-crud-panel__filters { gap: 8px; }
+  .admin-crud-panel__filters :deep(.el-select), .admin-crud-panel__filters :deep(.el-input) { width: calc(50% - 4px) !important; }
 }
 </style>

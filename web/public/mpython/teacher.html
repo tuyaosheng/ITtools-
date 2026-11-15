@@ -25,6 +25,9 @@
 .g:hover,.g.sel{border-color:var(--board)}
 .g.sel{box-shadow:0 0 0 2px rgba(30,136,229,.18)}
 .g .no{font-size:20px;font-weight:800}
+/* 这节课坐在这一组两台机器上的学生（ittools 报到记录）。故障机那台不写，所以有时只有一个名字 */
+.g .who{font-size:13px;font-weight:700;color:#18222E;margin-top:-4px}
+.g .who.none{font-weight:400;color:var(--dim)}
 .g .lvname{font-size:12px;color:var(--board);font-weight:700}
 .g .dots{display:flex;gap:4px}
 .g .dot{width:18px;height:6px;border-radius:3px;background:#DDE3EA}
@@ -291,6 +294,7 @@
     while (ul.children.length > 80) ul.removeChild(ul.lastChild);
   }
   function blink(g){ var el = $("g"+g); if (el){ el.classList.remove("blink"); void el.offsetWidth; el.classList.add("blink"); } }
+
 
   fetch("/api/state").then(function(r){return r.json();}).then(function(d){
     N = d.groups || 30; S = d.state || {};

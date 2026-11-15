@@ -9,8 +9,8 @@
       <template v-else>
         <div class="meta-row">
           <el-input v-model="title" placeholder="作品名（可选）" maxlength="100" class="w240" />
-          <span class="muted">自我评分</span>
-          <el-input-number v-model="selfScore" :min="0" :max="100" controls-position="right" class="w120" />
+          <span class="muted">自我评分（0~100 分，可不填）</span>
+          <el-input-number v-model="selfScore" :min="0" :max="100" controls-position="right" class="w120" placeholder="0~100" />
         </div>
         <el-input v-model="description" placeholder="作品简介（可选）" maxlength="500" type="textarea" :rows="2" />
         <div class="upload-row">

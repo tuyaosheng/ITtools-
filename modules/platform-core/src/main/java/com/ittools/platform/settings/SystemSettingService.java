@@ -27,6 +27,9 @@ public class SystemSettingService {
     public static final String SENSITIVE_WORDS = "interact.sensitiveWords";
     /** 学生账号只允许一处登录（再次登录时旧电脑下线） */
     public static final String SINGLE_LOGIN = "login.singleSession";
+    /** 单处登录的处理方式：KICK_OLD 新登录让旧电脑下线 / KEEP_FIRST 先登录的占用，别的电脑登不上（同一台电脑可重登，老师可强制下线） */
+    public static final String SINGLE_LOGIN_MODE = "login.singleMode";
+    public static final List<String> SINGLE_LOGIN_MODES = Arrays.asList("KICK_OLD", "KEEP_FIRST");
     /** 登录页公告 */
     public static final String SITE_NOTICE = "site.notice";
     /** 学生可自行修改密码 / 上传头像 */
@@ -54,6 +57,7 @@ public class SystemSettingService {
         DEFAULTS.put(UPLOAD_MAX_MB, "50");
         DEFAULTS.put(SENSITIVE_WORDS, "");
         DEFAULTS.put(SINGLE_LOGIN, "true");
+        DEFAULTS.put(SINGLE_LOGIN_MODE, "KICK_OLD");
         DEFAULTS.put(SITE_NOTICE, "");
         DEFAULTS.put(STUDENT_PASSWORD, "true");
         DEFAULTS.put(STUDENT_AVATAR, "false");
@@ -63,6 +67,9 @@ public class SystemSettingService {
         DEFAULTS.put(NET_ENABLED, "false");
         DEFAULTS.put(NET_CTR_URL, "http://127.0.0.1:8770");
         DEFAULTS.put(NET_CTR_TOKEN, "");
+        // 管理员关闭的功能（逗号分隔，见 FeatureCatalog），空 = 全部开放
+        DEFAULTS.put("features.disabled.student", "");
+        DEFAULTS.put("features.disabled.teacher", "");
     }
 
     private final SystemSettingRepository repo;
@@ -106,6 +113,9 @@ public class SystemSettingService {
             String v = e.getValue() == null ? "" : e.getValue().trim();
             if (LOGIN_MODE.equals(e.getKey()) && !LOGIN_MODES.contains(v)) {
                 throw new IllegalArgumentException("无效的工作模式：" + v);
+            }
+            if (SINGLE_LOGIN_MODE.equals(e.getKey()) && !SINGLE_LOGIN_MODES.contains(v)) {
+                throw new IllegalArgumentException("无效的单处登录方式：" + v);
             }
             if (SITE_NOTICE.equals(e.getKey()) && v.length() > 1000) throw new IllegalArgumentException("公告不超过 1000 字");
             if (SSO_SECRET.equals(e.getKey()) && !v.isEmpty() && v.length() < 16) throw new IllegalArgumentException("密钥至少 16 位");

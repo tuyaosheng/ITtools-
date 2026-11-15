@@ -6,16 +6,21 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import RoleLayout from './RoleLayout.vue'
 import { useNoticeStore } from '../stores/notices'
+import { useFeatureStore } from '../stores/features'
+import { useAuthStore } from '../stores/auth'
 
 const notices = useNoticeStore()
+const features = useFeatureStore()
+const auth = useAuthStore()
 let timer: number | undefined
 onMounted(() => {
+  features.load()
   notices.refresh()
   timer = window.setInterval(() => notices.refresh(), 60000)
 })
 onBeforeUnmount(() => window.clearInterval(timer))
 
-const menu = computed(() => [
+const menu = computed(() => ([
   { path: '/teacher/home', label: '工作台' },
   { path: '/teacher/courses', label: '我的课程' },
   { path: '/teacher/lessons', label: '上课记录' },
@@ -35,5 +40,7 @@ const menu = computed(() => [
   { path: '/teacher/timetable', label: '课表' },
   { path: '/teacher/messages', label: '系统消息', badge: notices.unreadMessages || undefined },
   { path: '/teacher/qa', label: '师生答疑', badge: notices.pendingQuestions || undefined }
-])
+]).filter(i => features.isOpen(i.path.split('/')[2]))
+  // 兼任管理员：直接进管理后台，不用换账号
+  .concat(auth.user?.canAdmin ? [{ path: '/admin', label: '⚙ 管理后台' }] : []))
 </script>

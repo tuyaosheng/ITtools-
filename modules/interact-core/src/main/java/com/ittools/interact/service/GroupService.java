@@ -41,7 +41,11 @@ public class GroupService {
 
     private Map<String, Object> settings(Long lessonId) {
         return jdbc.queryForMap("SELECT group_count AS \"groupCount\", group_join_open AS \"joinOpen\", leader_vote_open AS \"voteOpen\", "
-                + "class_id AS \"classId\", status FROM lesson WHERE id = :l", p("l", lessonId));
+                + "group_max_size AS \"maxSize\", class_id AS \"classId\", status, "
+                // 自由分组开放期间学生可以随时换组/退出（人数上限只限制加入已满的组）；
+                // 只有成绩开网要求全组完成时才锁定，否则做完的人可以离开没做完的组
+                + "EXISTS (SELECT 1 FROM lesson_net_gate g WHERE g.lesson_id = lesson.id AND g.enabled AND g.require_group) AS locked "
+                + "FROM lesson WHERE id = :l", p("l", lessonId));
     }
 
     /**
@@ -79,13 +83,17 @@ public class GroupService {
             groups.add(m);
         }
         List<Map<String, Object>> ungrouped = new ArrayList<>();
+        int[] sizes = new int[count + 1];
         for (Map<String, Object> st : students) {
+            int g = ((Number) st.get("groupNo")).intValue();
+            sizes[g]++;
             boolean joined = Boolean.TRUE.equals(st.get("joined"));
             if (!joined && !includeAbsent) continue;
-            int g = ((Number) st.get("groupNo")).intValue();
             if (g == 0) ungrouped.add(st);
             else members(groups.get(g - 1)).add(st);
         }
+        int maxSize = ((Number) s.get("maxSize")).intValue();
+        for (int g = 1; g <= count; g++) groups.get(g - 1).put("full", maxSize > 0 && sizes[g] >= maxSize);
         for (Map<String, Object> g : groups) {
             Object leader = g.get("leaderId");
             String leaderName = null;
@@ -98,6 +106,8 @@ public class GroupService {
         out.put("groupCount", s.get("groupCount"));
         out.put("joinOpen", s.get("joinOpen"));
         out.put("voteOpen", s.get("voteOpen"));
+        out.put("maxSize", maxSize);
+        out.put("locked", s.get("locked"));
         out.put("groups", groups);
         out.put("ungrouped", ungrouped);
         return out;
@@ -161,11 +171,26 @@ public class GroupService {
     public Map<String, Object> studentJoin(Long studentId, Long lessonId, int groupNo) {
         Map<String, Object> l = lessons.requireStudent(studentId, lessonId);
         if (!"ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂已结束");
+        // 锁住本堂课：多人同时加入同一组时逐个判断人数，不会超员
+        jdbc.queryForList("SELECT id FROM lesson WHERE id = :l FOR UPDATE", p("l", lessonId));
         Map<String, Object> s = settings(lessonId);
-        if (!Boolean.TRUE.equals(s.get("joinOpen"))) throw new IllegalArgumentException("老师还没有开放自由分组");
+        if (!Boolean.TRUE.equals(s.get("joinOpen"))) {
+            throw new IllegalArgumentException(groupOf(lessonId, studentId) > 0 ? "自由选组已关闭，不能再换组" : "老师还没有开放自由选组");
+        }
         int count = ((Number) s.get("groupCount")).intValue();
         if (groupNo < 0 || groupNo > count) throw new IllegalArgumentException("没有第 " + groupNo + " 组");
         int old = groupOf(lessonId, studentId);
+        if (old > 0 && old != groupNo && Boolean.TRUE.equals(s.get("locked"))) {
+            throw new IllegalArgumentException("本节课开网要求全组完成，你已经在第 " + old + " 组，不能自己退出或换组，需要调整请找老师");
+        }
+        int maxSize = ((Number) s.get("maxSize")).intValue();
+        if (maxSize > 0 && groupNo > 0 && old != groupNo) {
+            Long size = jdbc.queryForObject("SELECT COUNT(*) FROM lesson l JOIN users u ON u.class_id = l.class_id AND u.role = 'STUDENT' AND NOT u.graduated "
+                    + "LEFT JOIN lesson_attendance a ON a.lesson_id = l.id AND a.student_id = u.id "
+                    + "LEFT JOIN lesson_group_preset pr ON pr.lesson_id = l.id AND pr.student_id = u.id "
+                    + "WHERE l.id = :l AND COALESCE(a.group_no, pr.group_no, 0) = :g", p("l", lessonId, "g", groupNo), Long.class);
+            if (size != null && size >= maxSize) throw new IllegalArgumentException("第 " + groupNo + " 组已满（最多 " + maxSize + " 人），请选别的组");
+        }
         if (jdbc.update("UPDATE lesson_attendance SET group_no = :g WHERE lesson_id = :l AND student_id = :s",
                 p("g", groupNo, "l", lessonId, "s", studentId)) == 0) {
             throw new IllegalArgumentException("请先进入课堂签到");
@@ -203,15 +228,17 @@ public class GroupService {
     }
 
     @Transactional
-    public Map<String, Object> updateSettings(Long teacherId, Long lessonId, Integer groupCount, Boolean joinOpen, Boolean voteOpen) {
+    public Map<String, Object> updateSettings(Long teacherId, Long lessonId, Integer groupCount, Boolean joinOpen, Boolean voteOpen, Integer maxSize) {
         lessons.requireTeacher(teacherId, lessonId);
+        if (maxSize != null && (maxSize < 0 || maxSize > 100)) throw new IllegalArgumentException("每组上限须在 0~100 之间（0 表示不限）");
         if (groupCount != null) {
             if (groupCount < 0 || groupCount > MAX_GROUPS) throw new IllegalArgumentException("组数须在 0~" + MAX_GROUPS + " 之间");
             Integer used = jdbc.queryForObject("SELECT COALESCE(MAX(group_no), 0) FROM lesson_attendance WHERE lesson_id = :l", p("l", lessonId), Integer.class);
             if (used != null && groupCount < used) throw new IllegalArgumentException("第 " + used + " 组还有学生，请先调整后再减少组数");
         }
         jdbc.update("UPDATE lesson SET group_count = COALESCE(:c, group_count), group_join_open = COALESCE(:j, group_join_open), "
-                + "leader_vote_open = COALESCE(:v, leader_vote_open) WHERE id = :l", p("c", groupCount, "j", joinOpen, "v", voteOpen, "l", lessonId));
+                + "leader_vote_open = COALESCE(:v, leader_vote_open), group_max_size = COALESCE(:m, group_max_size) WHERE id = :l",
+                p("c", groupCount, "j", joinOpen, "v", voteOpen, "m", maxSize, "l", lessonId));
         changed(lessonId);
         return overview(lessonId, true);
     }

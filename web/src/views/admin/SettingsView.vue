@@ -32,6 +32,14 @@
       <el-form-item label="学生单处登录">
         <el-switch v-model="singleLogin" />
       </el-form-item>
+      <el-form-item v-if="singleLogin" label="重复登录时">
+        <el-radio-group v-model="form['login.singleMode']">
+          <el-radio value="KICK_OLD">新登录让旧电脑下线</el-radio>
+          <el-radio value="KEEP_FIRST">先登录的占用，别的电脑登不上</el-radio>
+        </el-radio-group>
+        <Hint>“先登录的占用”：账号在一台电脑上登录后，别的电脑用这个账号登录会被拒绝；同一台电脑关了浏览器或重启后可以重新登录。
+          学生要换电脑时，老师在“我的班级”或课堂控制台点“强制下线”；学生点“退出”、或关掉浏览器约 30 分钟后也会自动放开。</Hint>
+      </el-form-item>
       <el-divider content-position="left">教学</el-divider>
       <el-form-item label="允许作业补交">
         <el-switch v-model="allowLate" />

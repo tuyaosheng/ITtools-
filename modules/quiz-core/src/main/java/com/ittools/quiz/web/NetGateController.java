@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** 成绩开网：课堂里按某次测验的成绩（达标才开网、限定机会次数）自动控制学生机网络。 */
+/** 成绩开网：课堂里按某次测验的成绩和所选作品页的得分（都达标才开网、限定机会次数）自动控制学生机网络。 */
 @RestController
 public class NetGateController {
     private final NetGateService gate;
@@ -48,7 +48,9 @@ public class NetGateController {
         Double pass = b.dbl("passScore");
         if (pass == null) throw new IllegalArgumentException("请填写达标分数");
         Long testId = ((Number) tests.lessonPageTest(lessonId, pageId).get("id")).longValue();
-        gate.save(CurrentUser.id(), lessonId, testId, pass, b.intv("maxTries", 1), b.bool("enabled", true));
+        Double homeworkPass = b.dbl("homeworkPass");
+        gate.save(CurrentUser.id(), lessonId, testId, pass, b.intv("maxTries", 1), b.bool("enabled", true),
+                b.longs("pageIds"), homeworkPass == null ? 100 : homeworkPass, b.bool("requireGroup", false), b.bool("groupPrograms", false));
         return ApiResponse.ok(null);
     }
 

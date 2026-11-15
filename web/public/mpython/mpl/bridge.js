@@ -12,7 +12,7 @@
   var ctx = window.MPY_CTX = { page: page, lesson: lesson, role: role, base: base, me: null };
 
   var ROUTES = { "/api/code": "/code", "/api/state": "/state", "/api/starter": "/starter", "/api/config": "/config",
-                 "/api/settings": "/settings", "/event": "/event", "/stream": "/stream" };
+                 "/api/settings": "/settings", "/api/text": "/text", "/event": "/event", "/stream": "/stream" };
   function rewrite(url) {
     if (typeof url !== "string") return url;
     var m = /^(\/api\/[a-z]+|\/event|\/stream)(\?.*)?$/.exec(url);

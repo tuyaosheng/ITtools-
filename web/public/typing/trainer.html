@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>键盘操作与打字训练</title>
+<style>
+:root{
+  --bg1:#f3f4f8; --bg2:#eef1fb; --bg3:#f6f2fb;
+  --card:#ffffff; --ink:#1a1d29; --ink2:#42465a; --muted:#767c92;
+  --line:#e3e5ee; --line2:#cbcedd;
+  --primary:#6366f1; --primary-d:#4f46e5; --primary-soft:#e6e6fd;
+  --accent:#f59e0b; --accent-soft:#fef3c7;
+  --ok:#10b981; --ok-soft:#d9f7e9;
+  --bad:#ef4444; --bad-soft:#fde2e2;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(20,20,40,.05), 0 10px 26px -10px rgba(30,30,60,.14);
+  --mono:ui-monospace,"SFMono-Regular",Consolas,"Courier New",monospace;
+  --fL1:#f87171; --fL2:#fb923c; --fL3:#fbbf24; --fL4:#4ade80;
+  --fR1:#38bdf8; --fR2:#818cf8; --fR3:#c084fc; --fR4:#f472b6;
+  --fThumb:#cbd5e1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(150deg,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  background-attachment:fixed;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+.hidden{display:none!important}
+.wrap{max-width:980px;margin:0 auto;padding:22px 20px 70px}
+#topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px}
+.brand{font-weight:800;font-size:15px;white-space:nowrap}
+.brand span{color:var(--primary)}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;
+  font-size:14px;font-weight:600;background:#f1f1f8;color:var(--ink2);border:1px solid var(--line2);transition:.15s}
+.btn:hover{background:#e6e7f5}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover{background:var(--primary-d)}
+.btn.sm{padding:6px 13px;font-size:12.5px}
+.btn:disabled{opacity:.4;cursor:default}
+.view{display:none;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  border:1px solid rgba(226,228,238,.9);padding:24px 26px}
+.card+.card{margin-top:16px}
+h1{font-size:26px;letter-spacing:-.01em}
+h2{font-size:19px}
+.sub{color:var(--muted);font-size:13.5px}
+.hero{background:linear-gradient(135deg,#4338ca 0%,#6366f1 55%,#a855f7 100%);color:#fff;
+  border-radius:18px;padding:30px 30px 26px;box-shadow:0 16px 36px -16px rgba(79,70,229,.55);
+  position:relative;overflow:hidden;margin-bottom:18px}
+.hero:after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;
+  border-radius:50%;background:rgba(255,255,255,.09)}
+.hero h1{margin:8px 0 6px}
+.hero p{opacity:.92;font-size:14px;max-width:640px}
+.hero-actions{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hero-actions .btn.primary{background:#fff;color:var(--primary-d)}
+.hero-actions .btn.primary:hover{background:#f1f1fb}
+.campaign-badge{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;
+  background:rgba(255,255,255,.18);color:#fff}
+.campaign-dots{display:flex;gap:6px;align-items:center}
+.cdot{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#94a3b8;background:#f1f1f8;border:1.5px solid var(--line2);transition:.2s}
+.cdot.cur{background:var(--primary);border-color:var(--primary);color:#fff;transform:scale(1.12)}
+.cdot.done{background:var(--ok-soft);border-color:#86efac;color:#0d7a56}
+
+/* ---- 模块卡片 hub ---- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.mcard{background:var(--card);border-radius:14px;border:1.5px solid var(--line);box-shadow:var(--shadow);
+  padding:18px 16px;text-align:left;transition:.15s;display:flex;flex-direction:column;gap:8px;min-height:150px}
+.mcard:hover{border-color:var(--primary);transform:translateY(-3px)}
+.mcard .num{width:28px;height:28px;border-radius:9px;background:var(--primary-soft);color:var(--primary-d);
+  font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.mcard .ic{font-size:26px}
+.mcard .t{font-weight:700;font-size:15px}
+.mcard .d{font-size:12.5px;color:var(--muted);flex:1}
+.mcard .badge{align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:var(--ok-soft);color:#0d7a56}
+
+/* ---- 虚拟键盘 ---- */
+.kbd{display:flex;flex-direction:column;gap:6px;user-select:none;margin:18px 0}
+.kbd-row{display:flex;gap:6px;justify-content:center}
+.key{height:46px;border-radius:9px;background:#fff;border:1.5px solid var(--line2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:12.5px;font-weight:600;color:var(--ink2);position:relative;transition:.12s;flex-shrink:0}
+.key .shiftc{font-size:10px;color:var(--muted);line-height:1}
+.key.w15{width:69px}.key.w18{width:83px}.key.w2{width:92px}.key.w225{width:104px}
+.key.w275{width:127px}.key.w625{width:290px}.key.w1{width:46px}
+.key.target{box-shadow:0 0 0 3px rgba(0,0,0,.0);animation:pulseKey 1s infinite}
+@keyframes pulseKey{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.5)}50%{box-shadow:0 0 0 6px rgba(99,102,241,0)}}
+.key.ok{background:var(--ok-soft)!important;border-color:var(--ok)!important}
+.key.bad{background:var(--bad-soft)!important;border-color:var(--bad)!important;animation:shakeKey .3s}
+@keyframes shakeKey{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.finger-legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.finger-legend .lg{display:flex;align-items:center;gap:5px}
+.finger-legend .sw{width:12px;height:12px;border-radius:3px}
+
+/* ---- 指法示意手：直接叠在键盘上（不是分开摆在上面的插画） ---- */
+.kbd-stage{position:relative}
+.hands-panel{position:absolute;inset:0;pointer-events:none;z-index:3}
+.hand-svg{width:100%;height:100%;overflow:visible;display:block}
+.hand-svg .palm-group{opacity:.94}
+.hand-svg .palm,.hand-svg .thumb{stroke:#d7d9ee;stroke-width:1.5}
+.hand-svg .finger{stroke:rgba(255,255,255,.5);stroke-width:1;transition:fill .15s,stroke .15s}
+.hand-svg .finger-sheen,.hand-svg .nail{pointer-events:none}
+.hand-svg .nail{fill:#fff;opacity:.55}
+.hand-svg .finger-g{transform-box:fill-box;transform-origin:50% 100%}
+.hand-svg .finger-reach{transition:transform .32s cubic-bezier(.34,1.1,.4,1)}
+.hand-svg .finger.active{stroke-width:0}
+.hand-svg .finger-g.active{animation:fingerPulse 1.1s ease-in-out infinite}
+.hand-svg [data-finger="lp"]{fill:color-mix(in srgb, var(--fL1) 32%, white)}
+.hand-svg [data-finger="lr"]{fill:color-mix(in srgb, var(--fL2) 32%, white)}
+.hand-svg [data-finger="lm"]{fill:color-mix(in srgb, var(--fL3) 32%, white)}
+.hand-svg [data-finger="li"]{fill:color-mix(in srgb, var(--fL4) 32%, white)}
+.hand-svg [data-finger="ri"]{fill:color-mix(in srgb, var(--fR1) 32%, white)}
+.hand-svg [data-finger="rm"]{fill:color-mix(in srgb, var(--fR2) 32%, white)}
+.hand-svg [data-finger="rr"]{fill:color-mix(in srgb, var(--fR3) 32%, white)}
+.hand-svg [data-finger="rp"]{fill:color-mix(in srgb, var(--fR4) 32%, white)}
+.hand-svg [data-finger="lp"].active{fill:var(--fL1)}
+.hand-svg [data-finger="lr"].active{fill:var(--fL2)}
+.hand-svg [data-finger="lm"].active{fill:var(--fL3)}
+.hand-svg [data-finger="li"].active{fill:var(--fL4)}
+.hand-svg [data-finger="ri"].active{fill:var(--fR1)}
+.hand-svg [data-finger="rm"].active{fill:var(--fR2)}
+.hand-svg [data-finger="rr"].active{fill:var(--fR3)}
+.hand-svg [data-finger="rp"].active{fill:var(--fR4)}
+.hand-svg .palm-group,.hand-svg .finger-pos{transition:opacity .25s}
+.hands-panel.low-row .palm-group{opacity:.15}
+.hands-panel.low-row .finger-pos{opacity:.15}
+.hands-panel.low-row .finger-pos.is-target{opacity:.72}
+.hand-svg .finger-g.press{animation:fingerPress .22s ease-out}
+.hand-svg .finger-g.bad{animation:fingerShake .3s ease-in-out}
+@keyframes fingerPulse{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(4px) scaleY(.94)}}
+@keyframes fingerPress{0%{transform:translateY(0) scaleY(1)}50%{transform:translateY(10px) scaleY(.82)}100%{transform:translateY(0) scaleY(1)}}
+@keyframes fingerShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* ---- 练习通用组件 ---- */
+.practice-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;
+  background:var(--primary-soft);color:var(--primary-d)}
+.stat-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+.stat{font-size:13px;color:var(--ink2)}
+.stat b{font-family:var(--mono);color:var(--primary-d)}
+.display-char{text-align:center;font-family:var(--mono);font-size:64px;font-weight:700;
+  padding:22px 0 6px;color:var(--ink);user-select:none}
+.display-hint{text-align:center;color:var(--muted);font-size:13px;margin-bottom:6px}
+.status-pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
+  padding:7px 14px;border-radius:999px;background:#f1f1f8;color:var(--ink2);border:1.5px solid var(--line2)}
+.status-pill.on{background:var(--ok-soft);color:#0d7a56;border-color:#86efac}
+.status-pill.off{background:var(--bad-soft);color:#b91c1c;border-color:#fca5a5}
+.status-pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.typebox{width:100%;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line2);
+  font-size:18px;font-family:var(--mono);outline:none;transition:.15s;background:#fff;color:var(--ink)}
+.typebox:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(99,102,241,.14)}
+.typebox.ok{border-color:var(--ok);box-shadow:0 0 0 4px rgba(16,185,129,.14)}
+.typebox.bad{border-color:var(--bad);box-shadow:0 0 0 4px rgba(239,68,68,.14)}
+.feedback{margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13.5px;line-height:1.7;display:none}
+.feedback.show{display:block}
+.feedback.info{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
+.feedback.warn{background:var(--accent-soft);color:#92400e;border:1px solid #fde68a}
+.feedback.bad{background:var(--bad-soft);color:#991b1b;border:1px solid #fca5a5}
+.explain-box{background:#f8f9fc;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  font-size:13.5px;color:var(--ink2);line-height:1.85;margin:14px 0}
+.explain-box b{color:var(--primary-d)}
+.group-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.gtab{padding:7px 14px;border-radius:9px;font-size:13px;font-weight:600;background:#f1f1f8;
+  color:var(--ink2);border:1.5px solid var(--line2)}
+.gtab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ---- 终极测试 ---- */
+.typing-target{font-family:var(--mono);font-size:18px;line-height:2;letter-spacing:.02em;
+  padding:18px 20px;border-radius:12px;background:#f8f9fc;border:1px solid var(--line);
+  margin:14px 0;word-break:break-all;user-select:none}
+.typing-target .ch{color:var(--muted)}
+.typing-target .ch.done-ok{color:var(--ok);background:var(--ok-soft);border-radius:3px}
+.typing-target .ch.done-bad{color:#fff;background:var(--bad);border-radius:3px}
+.typing-target .ch.cur{border-bottom:2px solid var(--primary)}
+.result-box{margin-top:16px;padding:20px;border-radius:14px;text-align:center;
+  background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:2px solid #c7d2fe;display:none}
+.result-box.show{display:block;animation:fade .35s}
+.result-box .big{font-family:var(--mono);font-size:44px;font-weight:800;color:var(--primary-d)}
+.result-box .lbl{font-size:13px;color:var(--muted);margin-top:2px}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+@media(max-width:600px){.result-grid{grid-template-columns:1fr}}
+.result-item{background:#fff;border-radius:10px;border:1px solid var(--line);padding:10px 14px}
+.result-item .k{font-size:11.5px;color:var(--muted)}
+.result-item .v{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--ink2)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:99;background:#1e1e2e;color:#fff;
+  padding:11px 20px;border-radius:11px;font-size:13.5px;box-shadow:0 14px 34px -10px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:.3s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.confirm-overlay{position:fixed;inset:0;z-index:100;background:rgba(20,20,40,.45);display:flex;
+  align-items:center;justify-content:center;padding:20px}
+.confirm-box{background:#fff;border-radius:14px;padding:22px 24px;max-width:380px;width:100%;
+  box-shadow:0 20px 50px -15px rgba(20,20,40,.5)}
+.confirm-box p{font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:18px}
+.confirm-box .row{display:flex;gap:10px;justify-content:flex-end}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">⌨️ 键盘操作与打字训练</div>
+  <div class="campaign-dots hidden" id="campaignDots"></div>
+  <div class="spacer"></div>
+  <button class="btn sm hidden" id="btnExitCampaign">🚪 退出闯关</button>
+  <button class="btn sm" id="btnReset">🔄 重置进度</button>
+  <button class="btn sm" id="btnHome">🏠 返回主页</button>
+</header>
+
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <p>确定要清空所有模块的完成记录和最佳成绩吗？（每次换学生用这台电脑练习前，建议先点这个）</p>
+    <div class="row">
+      <button class="btn sm" id="confirmCancel">取消</button>
+      <button class="btn sm primary" id="confirmOk">确定清空</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ 主页 ============ -->
+<section id="view-home" class="view active">
+  <div class="hero">
+    <h1>键盘操作与打字训练</h1>
+    <p>不限时、可以反复练习的小工具。六个模块，想练哪个点哪个，练完可以再练一遍——系统会记住你上次的成绩。</p>
+    <div class="hero-actions">
+      <button class="btn primary" id="btnStartCampaign">🚀 闯关模式（按顺序把六关挨个过一遍）</button>
+      <span class="campaign-badge hidden" id="campaignBadge">✓ 闯关模式已完成</span>
+    </div>
+  </div>
+  <p class="sub" style="margin:4px 4px 10px">也可以自由练习，想练哪个点哪个：</p>
+  <div class="grid" id="hubGrid"></div>
+</section>
+
+<!-- ============ 模块 1：指法认知 ============ -->
+<section id="view-m1" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>1️⃣ 指法认知</h2>
+      <span class="tag" id="m1Tag">主键区</span>
+    </div>
+    <p class="sub">屏幕上会提示要按的字母，键盘上对应的键和手指颜色会一起亮起来。不追求速度，先追求"用对手指"。</p>
+    <div class="group-tabs" id="m1Tabs"></div>
+    <div class="display-char" id="m1Char">a</div>
+    <div class="display-hint" id="m1Hint">用左手小指按这个键</div>
+    <div class="stat-row">
+      <span class="stat">已练 <b id="m1Total">0</b> 个</span>
+      <span class="stat">正确率 <b id="m1Acc">100%</b></span>
+      <span class="stat">用时 <b id="m1Time">00:00</b></span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="kbd-stage" id="m1Stage">
+      <div id="m1Kbd"></div>
+      <div class="hands-panel" id="m1Hands"></div>
+    </div>
+    <div class="finger-legend" id="m1Legend"></div>
+  </div>
+</section>
+
+<!-- ============ 模块 2：中英文切换 ============ -->
+<section id="view-m2" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>2️⃣ 中英文切换</h2>
+      <span class="tag" id="m2Tag">第 1 / 10 题</span>
+    </div>
+    <div class="explain-box">
+      <b>小知识：</b>电脑同时装着"英文"和"中文（拼音）"两种输入法，打字前要先看清楚当前是哪一种。大多数电脑用
+      <b>Ctrl + 空格</b> 切换中英文（也可能是点右下角的输入法图标切换），具体看你电脑上装的是哪个输入法。
+    </div>
+    <div class="display-hint" id="m2Prompt">请切换到<b>英文</b>输入，打出：</div>
+    <div class="display-char" id="m2Target" style="font-size:40px">hello</div>
+    <input class="typebox" id="m2Input" placeholder="在这里输入…" autocomplete="off">
+    <div class="feedback" id="m2FB"></div>
+    <div class="stat-row">
+      <span class="stat">已完成 <b id="m2Done">0</b> / <span id="m2TotalN">10</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 模块 3：大小写切换 ============ -->
+<section id="view-m3" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>3️⃣ 大小写切换</h2>
+      <span class="tag" id="m3Tag">第 1 / 8 题</span>
+    </div>
+    <div class="explain-box">
+      <b>小知识：</b><b>Shift</b> 是"按住才生效"，松手就变回原来的大小写；<b>Caps Lock</b> 是"按一下就锁定"，
+      再按一下才解锁，不用一直按着。打字母时到底是大写还是小写，就看这两个键的状态。
+    </div>
+    <div style="text-align:center;margin:14px 0">
+      <span class="status-pill" id="m3CapsPill"><span class="dot"></span>Caps Lock：检测中…</span>
+    </div>
+    <div class="display-hint" id="m3Hint">请输入（首字母大写，其余小写）：</div>
+    <div class="display-char" id="m3Target" style="font-size:40px">Hello</div>
+    <input class="typebox" id="m3Input" placeholder="在这里输入…" autocomplete="off">
+    <div class="feedback" id="m3FB"></div>
+    <div class="stat-row">
+      <span class="stat">已完成 <b id="m3Done">0</b> / <span id="m3TotalN">8</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 模块 4：小键盘 NumLock ============ -->
+<section id="view-m4" class="view">
+  <div class="card">
+    <h2>4️⃣ 小键盘（Num Lock）训练</h2>
+    <div class="explain-box">
+      <b>为什么小键盘按了没反应？</b>键盘右边那一块数字小键盘，其实同时管两件事：<b>输入数字</b>（0~9、小数点）
+      和<b>方向/翻页控制</b>（上下左右、Home、End、PageUp…）。到底做哪件事，由 <b>Num Lock</b> 这个开关决定——
+      开着就是数字，关着就是方向控制。顶排的数字键不受它影响，一直能打数字。
+    </div>
+    <div style="text-align:center;margin:14px 0">
+      <span class="status-pill" id="m4NumPill"><span class="dot"></span>Num Lock：检测中…</span>
+    </div>
+    <div class="display-hint" id="m4Hint">用<b>小键盘</b>（不是顶排数字）试着按一下数字 5，看看会发生什么：</div>
+    <div class="display-char" id="m4Display" style="font-size:34px;min-height:1.3em">—</div>
+    <div class="feedback show info" id="m4FB">还没检测到按键，请用鼠标点一下上面的输入框，再用小键盘按键试试。</div>
+    <input class="typebox" id="m4Input" placeholder="点这里，然后用小键盘按键" autocomplete="off" style="margin-top:10px">
+  </div>
+  <div class="card">
+    <h2 style="margin-bottom:10px">小键盘对比练习</h2>
+    <p class="sub" id="m4DrillHint">请打开 Num Lock 后，用小键盘输入：</p>
+    <div class="display-char" id="m4DrillTarget">483</div>
+    <input class="typebox" id="m4DrillInput" placeholder="必须用小键盘按键" autocomplete="off" style="background:#f8f9fc">
+    <div class="feedback" id="m4DrillFB"></div>
+    <div class="stat-row"><span class="stat">已完成 <b id="m4Done">0</b> / <span id="m4TotalN">6</span></span></div>
+  </div>
+</section>
+
+<!-- ============ 模块 5：特殊字符 ============ -->
+<section id="view-m5" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>5️⃣ 特殊字符</h2>
+      <span class="tag" id="m5Tag">第 1 / 12 题</span>
+    </div>
+    <p class="sub">大部分符号是 <b>Shift + 数字/某个键</b> 打出来的，键盘上会提示你按哪个键。</p>
+    <div class="explain-box">
+      <b>先切成英文输入：</b>这些符号要在<b>英文输入状态</b>下才能正常打出来，中文状态下按键可能会变成别的东西。
+      大多数电脑用 <b>Ctrl + 空格</b> 切换中英文，部分电脑也可以直接按 <b>Shift</b> 键切换，具体看你电脑上装的是哪个输入法。
+    </div>
+    <div class="display-hint" id="m5Hint">请输入这个符号：</div>
+    <div class="display-char" id="m5Target">@</div>
+    <input class="typebox" id="m5Input" placeholder="在这里输入…" autocomplete="off">
+    <div class="feedback" id="m5FB"></div>
+    <div class="stat-row"><span class="stat">已完成 <b id="m5Done">0</b> / <span id="m5TotalN">12</span></span></div>
+  </div>
+  <div class="card">
+    <div id="m5Kbd"></div>
+  </div>
+</section>
+
+<!-- ============ 模块 6：终极测试 ============ -->
+<section id="view-m6" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>6️⃣ 终极测试 6-1 随机文本</h2>
+      <span class="tag">中英文 + 大小写 + 数字 + 符号，随机生成</span>
+    </div>
+    <p class="sub">下面这段文字每次生成的都不一样。开始打字后自动计时，打完自动结束，也可以随时换一段重新开始。</p>
+    <div class="typing-target" id="m6Target"></div>
+    <input class="typebox" id="m6Input" placeholder="点这里开始输入…" autocomplete="off">
+    <div class="stat-row">
+      <span class="stat">用时 <b id="m6Time">00:00</b></span>
+      <span class="stat">正确率 <b id="m6Acc">100%</b></span>
+      <span class="stat">速度 <b id="m6Speed">0</b> 字符/分钟</span>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary sm" id="m6Regen">🔀 换一段重新开始</button>
+      <button class="btn sm hidden" id="m6SubmitBtn">有几个字符打不出来？点这里提前交卷（按已打的部分算分）→</button>
+    </div>
+    <div class="result-box" id="m6Result">
+      <div class="lbl">本次成绩</div>
+      <div class="big" id="m6ResultSpeed">0</div>
+      <div class="lbl">字符 / 分钟</div>
+      <div class="result-grid">
+        <div class="result-item"><div class="k">正确率</div><div class="v" id="m6ResultAcc">100%</div></div>
+        <div class="result-item"><div class="k">用时</div><div class="v" id="m6ResultTime">00:00</div></div>
+        <div class="result-item"><div class="k">历史最佳</div><div class="v" id="m6ResultBest">—</div></div>
+      </div>
+      <button class="btn primary sm hidden" id="m6CampaignDone" style="margin-top:14px">继续 6-2 固定文本 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 模块 6-2：终极测试（固定文本，属于第 6 个模块） ============ -->
+<section id="view-m7" class="view">
+  <div class="card">
+    <div class="practice-head">
+      <h2>6️⃣ 终极测试 6-2 固定文本</h2>
+      <span class="tag">固定文本，所有人打同样的内容</span>
+    </div>
+    <p class="sub">下面是固定的一句话，注意中文标点。开始打字后自动计时，打完自动结束，也可以随时重新开始。</p>
+    <div class="typing-target" id="m7Target"></div>
+    <input class="typebox" id="m7Input" placeholder="点这里开始输入…" autocomplete="off">
+    <div class="stat-row">
+      <span class="stat">用时 <b id="m7Time">00:00</b></span>
+      <span class="stat">正确率 <b id="m7Acc">100%</b></span>
+      <span class="stat">速度 <b id="m7Speed">0</b> 字符/分钟</span>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary sm" id="m7Regen">🔁 重新开始</button>
+      <button class="btn sm hidden" id="m7SubmitBtn">有几个字符打不出来？点这里提前交卷（按已打的部分算分）→</button>
+    </div>
+    <div class="result-box" id="m7Result">
+      <div class="lbl">本次成绩</div>
+      <div class="big" id="m7ResultSpeed">0</div>
+      <div class="lbl">字符 / 分钟</div>
+      <div class="result-grid">
+        <div class="result-item"><div class="k">正确率</div><div class="v" id="m7ResultAcc">100%</div></div>
+        <div class="result-item"><div class="k">用时</div><div class="v" id="m7ResultTime">00:00</div></div>
+        <div class="result-item"><div class="k">历史最佳</div><div class="v" id="m7ResultBest">—</div></div>
+      </div>
+      <button class="btn primary sm hidden" id="m7CampaignDone" style="margin-top:14px">🎉 完成闯关，返回主页 →</button>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ================= 工具 ================= */
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function pad2(n){ return String(n).padStart(2,'0'); }
+function mmss(sec){ sec=Math.max(0,Math.floor(sec)); return pad2(Math.floor(sec/60))+':'+pad2(sec%60); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function isCJK(s){ return /[一-鿿]/.test(s); }
+function isAsciiLetters(s){ return /^[A-Za-z]+$/.test(s); }
+
+// 打字练习必须真正动手敲键盘：禁止粘贴/拖入文本抄近道
+function blockPaste(el){
+  if(!el) return;
+  ['paste','drop'].forEach(evt=>el.addEventListener(evt, e=>e.preventDefault()));
+}
+['m2Input','m3Input','m4Input','m4DrillInput','m5Input','m6Input','m7Input'].forEach(id=>blockPaste($(id)));
+
+/* ================= 本地存档（用于"反复练习记住成绩" ） ================= */
+// ITtools：机房电脑多人共用，进度按登录用户分开存（页面由指法练习标签以 ?uid= 嵌入）
+const STORE_KEY = 'typingTrainerV1' + (new URLSearchParams(location.search).get('uid') ? ':' + new URLSearchParams(location.search).get('uid') : '');
+function loadStore(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveStore(d){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(d)); }catch(e){}
+}
+function setModuleBest(mid, patch){
+  const s = loadStore();
+  s[mid] = Object.assign({}, s[mid]||{}, patch, {done:true});
+  saveStore(s);
+  renderHub();
+}
+function askConfirm(){
+  return new Promise(resolve=>{
+    $('confirmOverlay').classList.remove('hidden');
+    const cleanup = (r)=>{
+      $('confirmOverlay').classList.add('hidden');
+      $('confirmOk').onclick = null; $('confirmCancel').onclick = null;
+      resolve(r);
+    };
+    $('confirmOk').onclick = ()=>cleanup(true);
+    $('confirmCancel').onclick = ()=>cleanup(false);
+  });
+}
+$('btnReset').addEventListener('click', async ()=>{
+  const ok = await askConfirm();
+  if(!ok) return;
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  renderHub();
+  toast('已清空进度和成绩记录');
+});
+
+/* ================= 视图切换 ================= */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('btnHome').addEventListener('click', ()=>{ if(campaignMode) exitCampaign(); showView('view-home'); });
+
+/* ================= 主页卡片 ================= */
+const MODULES = [
+  {id:'m1', icon:'🖐️', title:'指法认知', desc:'跟着屏幕和键盘提示，练习每个手指该管哪些键。'},
+  {id:'m2', icon:'🔤', title:'中英文切换', desc:'交替练习切换输入法，打中文和打英文。'},
+  {id:'m3', icon:'🔠', title:'大小写切换', desc:'认识 Shift 和 Caps Lock 的区别。'},
+  {id:'m4', icon:'🔢', title:'小键盘 NumLock', desc:'搞清楚小键盘为什么有时候打不出数字。'},
+  {id:'m5', icon:'✨', title:'特殊字符', desc:'练习 @ # $ % 等符号怎么打出来。'},
+  {id:'m6', icon:'🏁', title:'终极测试', desc:'6-1 中英文+大小写+数字+符号随机混合；6-2 固定文本'},
+];
+function renderHub(){
+  const s = loadStore();
+  $('campaignBadge').classList.toggle('hidden', !s.campaign);
+  $('hubGrid').innerHTML = MODULES.map((m,i)=>{
+    const rec = s[m.id];
+    const badge = rec ? `<span class="badge">✓ ${rec.label||'已练习'}</span>` : '';
+    return `<button class="mcard" data-go="${m.id}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="num">${i+1}</span><span class="ic">${m.icon}</span>
+      </div>
+      <div class="t">${m.title}</div>
+      <div class="d">${m.desc}</div>
+      ${badge}
+    </button>`;
+  }).join('');
+  $('hubGrid').querySelectorAll('[data-go]').forEach(btn=>{
+    btn.addEventListener('click', ()=>enterModule(btn.dataset.go));
+  });
+}
+function enterModule(id){
+  showView('view-'+id);
+  if(id==='m1') M1.enter();
+  else if(id==='m2') M2.enter();
+  else if(id==='m3') M3.enter();
+  else if(id==='m4') M4.enter();
+  else if(id==='m5') M5.enter();
+  else if(id==='m6') M6.enter();
+  else if(id==='m7') M7.enter();
+}
+
+/* ================= 闯关模式：按顺序把六个模块过一遍 ================= */
+const CAMPAIGN_ORDER = ['m1','m2','m3','m4','m5','m6'];
+let campaignMode = false, campaignIdx = 0;
+function renderCampaignDots(){
+  $('campaignDots').innerHTML = CAMPAIGN_ORDER.map((id,i)=>{
+    const cls = i<campaignIdx ? 'cdot done' : (i===campaignIdx ? 'cdot cur' : 'cdot');
+    return `<div class="${cls}">${i<campaignIdx?'✓':(i+1)}</div>`;
+  }).join('');
+}
+function startCampaign(){
+  campaignMode = true;
+  campaignIdx = 0;
+  $('campaignDots').classList.remove('hidden');
+  $('btnExitCampaign').classList.remove('hidden');
+  renderCampaignDots();
+  enterModule(CAMPAIGN_ORDER[0]);
+}
+function exitCampaign(){
+  campaignMode = false;
+  $('campaignDots').classList.add('hidden');
+  $('btnExitCampaign').classList.add('hidden');
+}
+function campaignNext(){
+  campaignIdx++;
+  if(campaignIdx >= CAMPAIGN_ORDER.length){
+    setModuleBest('campaign', {label:'闯关模式已完成'});
+    exitCampaign();
+    showView('view-home');
+    toast('🎉 六个模块全部闯关完成！');
+    return;
+  }
+  renderCampaignDots();
+  enterModule(CAMPAIGN_ORDER[campaignIdx]);
+}
+$('btnStartCampaign').addEventListener('click', startCampaign);
+$('btnExitCampaign').addEventListener('click', ()=>{ exitCampaign(); showView('view-home'); });
+
+/* ================= 虚拟键盘 ================= */
+// finger: lp,lr,lm,li, ri,rm,rr,rp, thumb
+const FINGER_NAME = {
+  lp:'左手小指', lr:'左手无名指', lm:'左手中指', li:'左手食指',
+  ri:'右手食指', rm:'右手中指', rr:'右手无名指', rp:'右手小指', thumb:'拇指'
+};
+const FINGER_COLOR = {
+  lp:'var(--fL1)', lr:'var(--fL2)', lm:'var(--fL3)', li:'var(--fL4)',
+  ri:'var(--fR1)', rm:'var(--fR2)', rr:'var(--fR3)', rp:'var(--fR4)', thumb:'var(--fThumb)'
+};
+// 每一行： [code, 主字符, shift字符(可选), 宽度class(可选), finger]
+const KEYBOARD_ROWS = [
+  [['Backquote','`','~','w1','lp'],['Digit1','1','!','w1','lp'],['Digit2','2','@','w1','lr'],['Digit3','3','#','w1','lm'],
+   ['Digit4','4','$','w1','li'],['Digit5','5','%','w1','li'],['Digit6','6','^','w1','ri'],['Digit7','7','&','w1','ri'],
+   ['Digit8','8','*','w1','rm'],['Digit9','9','(','w1','rr'],['Digit0','0',')','w1','rp'],
+   ['Minus','-','_','w1','rp'],['Equal','=','+','w1','rp'],['Backspace','⌫','','w2','rp']],
+  [['Tab','Tab','','w15','lp'],['KeyQ','Q','','w1','lp'],['KeyW','W','','w1','lr'],['KeyE','E','','w1','lm'],
+   ['KeyR','R','','w1','li'],['KeyT','T','','w1','li'],['KeyY','Y','','w1','ri'],['KeyU','U','','w1','ri'],
+   ['KeyI','I','','w1','rm'],['KeyO','O','','w1','rr'],['KeyP','P','','w1','rp'],
+   ['BracketLeft','[','{','w1','rp'],['BracketRight',']','}','w1','rp'],['Backslash','\\\\','|','w18','rp']],
+  [['CapsLock','Caps','','w18','lp'],['KeyA','A','','w1','lp'],['KeyS','S','','w1','lr'],['KeyD','D','','w1','lm'],
+   ['KeyF','F','','w1','li'],['KeyG','G','','w1','li'],['KeyH','H','','w1','ri'],['KeyJ','J','','w1','ri'],
+   ['KeyK','K','','w1','rm'],['KeyL','L','','w1','rr'],['Semicolon',';',':','w1','rp'],
+   ['Quote',"'",'"','w1','rp'],['Enter','Enter','','w225','rp']],
+  [['ShiftLeft','Shift','','w225','lp'],['KeyZ','Z','','w1','lp'],['KeyX','X','','w1','lr'],['KeyC','C','','w1','lm'],
+   ['KeyV','V','','w1','li'],['KeyB','B','','w1','li'],['KeyN','N','','w1','ri'],['KeyM','M','','w1','ri'],
+   ['Comma',',','<','w1','rm'],['Period','.','>','w1','rr'],['Slash','/','?','w1','rp'],
+   ['ShiftRight','Shift','','w275','rp']],
+  [['ControlLeft','Ctrl','','w18','lp'],['Space','','','w625','thumb'],['ControlRight','Ctrl','','w18','rp']]
+];
+function renderKeyboard(containerEl, opts){
+  opts = opts || {};
+  containerEl.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'kbd';
+  KEYBOARD_ROWS.forEach(row=>{
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kbd-row';
+    row.forEach(([code,label,shiftLabel,wcls,finger])=>{
+      const k = document.createElement('div');
+      k.className = 'key ' + wcls;
+      k.dataset.code = code;
+      k.style.background = opts.colorByFinger ? (finger?FINGER_COLOR[finger]+'33':'') : '';
+      k.innerHTML = (shiftLabel? `<span class="shiftc">${shiftLabel}</span>`:'') + `<span>${label}</span>`;
+      if(opts.highlightCode && code === opts.highlightCode){
+        k.classList.add('target');
+        k.style.background = finger ? FINGER_COLOR[finger] : var_primary_soft();
+        k.style.borderColor = 'var(--primary)';
+      }
+      rowEl.appendChild(k);
+    });
+    wrap.appendChild(rowEl);
+  });
+  containerEl.appendChild(wrap);
+  if(opts.legend){
+    const lg = opts.legend;
+    lg.innerHTML = Object.keys(FINGER_NAME).filter(f=>f!=='thumb').map(f=>
+      `<span class="lg"><span class="sw" style="background:${FINGER_COLOR[f]}"></span>${FINGER_NAME[f]}</span>`
+    ).join('') + `<span class="lg"><span class="sw" style="background:var(--fThumb)"></span>拇指（空格）</span>`;
+  }
+}
+function var_primary_soft(){ return '#e6e6fd'; }
+function flashKeyResult(containerEl, code, ok){
+  const el = containerEl.querySelector(`.key[data-code="${code}"]`);
+  if(!el) return;
+  el.classList.remove('ok','bad');
+  void el.offsetWidth;
+  el.classList.add(ok?'ok':'bad');
+  setTimeout(()=>el.classList.remove('ok','bad'), 260);
+}
+
+/* ================= 模块 1：指法认知 ================= */
+const M1_GROUPS = [
+  {key:'home', label:'主键区', chars:'asdfghjkl;'.split('')},
+  {key:'top',  label:'上排',   chars:'qwertyuiop'.split('')},
+  {key:'bottom', label:'下排', chars:'zxcvbnm,./'.split('')},
+  {key:'digit', label:'数字排', chars:'1234567890'.split('')},
+];
+const CHAR_TO_CODE = {};
+KEYBOARD_ROWS.forEach(row=>row.forEach(([code,label])=>{
+  if(label.length===1) CHAR_TO_CODE[label.toLowerCase()] = code;
+}));
+CHAR_TO_CODE[';']='Semicolon'; CHAR_TO_CODE[',']='Comma'; CHAR_TO_CODE['.']='Period'; CHAR_TO_CODE['/']='Slash';
+const CODE_TO_FINGER = {};
+KEYBOARD_ROWS.forEach(row=>row.forEach(([code,,,,finger])=>{ CODE_TO_FINGER[code]=finger; }));
+
+/* ---- 指法示意手：直接叠在键盘的真实像素坐标上 ----
+   等键盘的按键真正渲染出来后，量出每个"手指的家"（主键区 A S D F / J K L ;）
+   那颗键的真实中心位置，手指静止时指尖精确落在那颗键上；换目标键时，量出目标键的
+   真实中心位置，按真实像素差直接平移过去，指尖会准确落在目标键上——不再是抽象挪一下，
+   而是跟真实键盘对得上的移动。 */
+const HOME_KEY_OF  = { lp:'KeyA', lr:'KeyS', lm:'KeyD', li:'KeyF', ri:'KeyJ', rm:'KeyK', rr:'KeyL', rp:'Semicolon' };
+const FINGER_H     = { lp:50, lr:78, lm:90, li:72, rp:50, rr:78, rm:90, ri:72 };
+const FINGER_ANGLE = { lp:-11, lr:-3, lm:3, li:10, ri:-10, rm:-3, rr:3, rp:11 }; // 手指相对竖直方向张开的角度
+
+function fingerPath(h, bw, tw){
+  const r = tw, topY = -(h - r);
+  return `M ${-bw} 0 C ${-bw} ${topY*0.5} ${-tw} ${topY*0.88} ${-tw} ${topY} `+
+         `A ${r} ${r} 0 0 1 ${tw} ${topY} `+
+         `C ${tw} ${topY*0.88} ${bw} ${topY*0.5} ${bw} 0 Z`;
+}
+// 手指整根是绕"根部"旋转的；已知希望指尖（旋转后）精确落在 (tipX,tipY)，
+// 反推根部锚点该摆在哪——要把旋转和长度的影响提前抵消掉。
+function anchorForTip(tipX, tipY, height, angleDeg){
+  const rad = angleDeg * Math.PI/180;
+  return { x: tipX - height*Math.sin(rad), y: tipY + height*Math.cos(rad) };
+}
+
+let HAND_STATE = null; // 缓存本次量出来的键位坐标，换目标键时不用重新量整个键盘
+function computeReach(finger, targetCode){
+  if(!HAND_STATE) return {dx:0, dy:0};
+  const homeCode = HOME_KEY_OF[finger];
+  const hp = homeCode && HAND_STATE.pos[homeCode], tp = HAND_STATE.pos[targetCode];
+  if(!hp || !tp) return {dx:0, dy:0};
+  return { dx: tp.x - hp.x, dy: tp.y - hp.y };
+}
+
+function buildHandsOverlay(stageEl, kbdEl){
+  const kbdRect = kbdEl.getBoundingClientRect();
+  const W = kbdRect.width, H = kbdRect.height;
+  if(W < 10 || H < 10) return; // 键盘还没真正渲染出尺寸，先不画，避免量出 0
+  const pos = {};
+  kbdEl.querySelectorAll('[data-code]').forEach(el=>{
+    const r = el.getBoundingClientRect();
+    pos[el.dataset.code] = { x: r.left - kbdRect.left + r.width/2, y: r.top - kbdRect.top + r.height/2 };
+  });
+  HAND_STATE = { W, H, pos };
+
+  const bw = 15, tw = 10;
+  let fingersSvg = '';
+  const homeAnchor = {};
+  Object.keys(HOME_KEY_OF).forEach(fk=>{
+    const home = pos[HOME_KEY_OF[fk]];
+    if(!home) return;
+    const h = FINGER_H[fk], ang = FINGER_ANGLE[fk];
+    const anchor = anchorForTip(home.x, home.y, h, ang);
+    homeAnchor[fk] = anchor;
+    const topY = -(h - tw);
+    fingersSvg += `<g class="finger-pos" transform="translate(${anchor.x} ${anchor.y}) rotate(${ang})">`+
+                    `<g class="finger-reach" data-reach="${fk}"><g class="finger-g">`+
+                    `<path class="finger" data-finger="${fk}" d="${fingerPath(h,bw,tw)}"></path>`+
+                    `<path class="finger-sheen" d="${fingerPath(h,bw,tw)}" fill="url(#fingerSheen)"></path>`+
+                    `<ellipse class="nail" cx="0" cy="${topY+10}" rx="${tw*0.55}" ry="${tw*0.42}"></ellipse>`+
+                  `</g></g></g>`;
+  });
+
+  // 掌心：粗略摆在四指根部锚点下方，示意性的，不用像解剖图一样严丝合缝
+  function palmFor(fks){
+    const anchors = fks.map(fk=>homeAnchor[fk]).filter(Boolean);
+    const cx = anchors.reduce((s,a)=>s+a.x,0)/anchors.length;
+    const topY = Math.min(...anchors.map(a=>a.y)) - 4;
+    const spread = Math.max(...anchors.map(a=>a.x)) - Math.min(...anchors.map(a=>a.x));
+    return { cx, topY, palmW: spread + 66 };
+  }
+  const lp = palmFor(['lp','lr','lm','li']), rp = palmFor(['ri','rm','rr','rp']);
+  const palmH = 70;
+  const palmsSvg = `<g class="palm-group" filter="url(#handShadow)">
+      <rect class="palm" x="${lp.cx-lp.palmW/2}" y="${lp.topY}" width="${lp.palmW}" height="${palmH}" rx="26" fill="url(#palmGrad)"></rect>
+      <g transform="translate(${lp.cx+lp.palmW/2-8} ${lp.topY+36}) rotate(58)">
+        <path class="thumb" d="${fingerPath(58,17,11)}" fill="url(#palmGrad)"></path></g>
+      <rect class="palm" x="${rp.cx-rp.palmW/2}" y="${rp.topY}" width="${rp.palmW}" height="${palmH}" rx="26" fill="url(#palmGrad)"></rect>
+      <g transform="translate(${rp.cx-rp.palmW/2+8} ${rp.topY+36}) rotate(-58)">
+        <path class="thumb" d="${fingerPath(58,17,11)}" fill="url(#palmGrad)"></path></g>
+    </g>`;
+
+  stageEl.innerHTML = `<svg class="hand-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fingerSheen" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".55"></stop>
+          <stop offset=".5" stop-color="#fff" stop-opacity="0"></stop>
+        </linearGradient>
+        <linearGradient id="palmGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#eef0fb"></stop><stop offset="1" stop-color="#dfe1f2"></stop>
+        </linearGradient>
+        <filter id="handShadow" x="-30%" y="-20%" width="160%" height="150%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#312e5c" flood-opacity=".18"></feDropShadow>
+        </filter>
+      </defs>
+      ${palmsSvg}${fingersSvg}
+    </svg>`;
+}
+// 手指的"上色"（在 .finger 路径上，靠 data-finger 选颜色）和"动一下"（在
+// 外层 .finger-g 分组上，让高光和指甲跟着一起移动）分开处理，避免贝塞尔手指
+// 动画时高光叠层和指甲脱节。
+function setHandFinger(containerEl, finger, mode){
+  containerEl.querySelectorAll('[data-finger]').forEach(el=>{
+    el.classList.remove('active','press','bad');
+    if(el.parentElement && el.parentElement.classList.contains('finger-g')){
+      el.parentElement.classList.remove('active','press','bad');
+    }
+  });
+  if(!finger) return;
+  containerEl.querySelectorAll(`[data-finger="${finger}"]`).forEach(el=>{
+    el.classList.add('active');
+    const grp = el.parentElement;
+    if(grp && grp.classList.contains('finger-g')) grp.classList.add('active');
+    if(mode==='press'){
+      grp && grp.classList.add('press');
+      setTimeout(()=>{ grp && grp.classList.remove('press'); }, 220);
+    }
+  });
+}
+function flashHandBad(containerEl, finger){
+  containerEl.querySelectorAll(`[data-finger="${finger}"]`).forEach(el=>{
+    const grp = el.parentElement;
+    if(!grp) return;
+    grp.classList.remove('bad'); void grp.offsetWidth; grp.classList.add('bad');
+    setTimeout(()=>grp.classList.remove('bad'), 320);
+  });
+}
+// 让目标手指真的"伸"向要按的键：其余手指收回主键区，只有当前要用的那根移动。
+const BOTTOM_ROW_CODES = new Set(KEYBOARD_ROWS[3].map(k=>k[0]));
+function reachHandTo(containerEl, finger, targetCode){
+  // 目标键在下排时淡化手掌和没动的手指，避免盖住要按的键
+  containerEl.classList.toggle('low-row', !!finger && BOTTOM_ROW_CODES.has(targetCode));
+  containerEl.querySelectorAll('.finger-reach').forEach(el=>{
+    if(el.parentElement) el.parentElement.classList.toggle('is-target', el.dataset.reach === finger);
+    if(el.dataset.reach === finger){
+      const {dx,dy} = computeReach(finger, targetCode);
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+    }else{
+      el.style.transform = '';
+    }
+  });
+}
+
+const M1 = (function(){
+  let groupIdx = 0, queue = [], qi = 0, total = 0, correct = 0, startTs = 0, timer = null,
+      onKeyHandler = null, advancing = false, onResizeHandler = null, resizeT = null;
+
+  function buildQueue(){
+    queue = shuffle(M1_GROUPS[groupIdx].chars.concat(M1_GROUPS[groupIdx].chars)); // 每个字母练两遍
+    qi = 0; total = 0; correct = 0; startTs = Date.now();
+  }
+  function renderTabs(){
+    if(campaignMode){
+      // 闯关模式下按顺序自动切组，不给手动跳组，跟别的关卡一样必须按顺序过
+      $('m1Tabs').innerHTML = M1_GROUPS.map((g,i)=>
+        `<span class="gtab ${i===groupIdx?'active':''}" style="cursor:default">${g.label}</span>`
+      ).join('');
+      return;
+    }
+    $('m1Tabs').innerHTML = M1_GROUPS.map((g,i)=>
+      `<button class="gtab ${i===groupIdx?'active':''}" data-i="${i}">${g.label}</button>`
+    ).join('');
+    $('m1Tabs').querySelectorAll('[data-i]').forEach(b=>{
+      b.addEventListener('click', ()=>{ groupIdx = Number(b.dataset.i); renderTabs(); buildQueue(); showCurrent(); });
+    });
+  }
+  function showCurrent(){
+    if(qi >= queue.length){
+      renderKeyboard($('m1Kbd'), {colorByFinger:true, legend:$('m1Legend')});
+      setHandFinger($('m1Hands'), null);
+      reachHandTo($('m1Hands'), null, null);
+      const acc = total? Math.round(correct/total*100):100;
+      setModuleBest('m1', {label:M1_GROUPS[groupIdx].label+' 已完成', acc});
+      clearInterval(timer);
+      if(campaignMode){
+        if(groupIdx < M1_GROUPS.length-1){
+          $('m1Char').textContent = '✅';
+          $('m1Hint').textContent = M1_GROUPS[groupIdx].label+' 练完啦，自动进入下一组…';
+          setTimeout(()=>{
+            groupIdx++;
+            renderTabs(); buildQueue(); rebuildHandsOverlay(); showCurrent();
+            clearInterval(timer); timer = setInterval(tick, 500);
+          }, 900);
+        }else{
+          $('m1Char').textContent = '🎉';
+          $('m1Hint').textContent = '指法认知全部练完啦！进入下一关…';
+          setTimeout(()=>campaignNext(), 900);
+        }
+        return;
+      }
+      $('m1Char').textContent = '🎉';
+      $('m1Hint').textContent = '这组练完啦！可以点上面切换下一组，或者重新练一遍。';
+      return;
+    }
+    const ch = queue[qi];
+    const code = CHAR_TO_CODE[ch];
+    const finger = CODE_TO_FINGER[code];
+    $('m1Char').textContent = ch;
+    $('m1Hint').textContent = '用 ' + (FINGER_NAME[finger]||'') + ' 按这个键';
+    $('m1Tag').textContent = M1_GROUPS[groupIdx].label + '　' + (qi+1) + ' / ' + queue.length;
+    renderKeyboard($('m1Kbd'), {highlightCode:code, colorByFinger:true, legend:$('m1Legend')});
+    setHandFinger($('m1Hands'), finger);
+    reachHandTo($('m1Hands'), finger, code);
+  }
+  function tick(){
+    $('m1Time').textContent = mmss((Date.now()-startTs)/1000);
+    $('m1Total').textContent = total;
+    $('m1Acc').textContent = (total? Math.round(correct/total*100):100) + '%';
+  }
+  function onKey(e){
+    if(!document.getElementById('view-m1').classList.contains('active')) return;
+    if(qi >= queue.length || advancing) return;
+    const target = queue[qi];
+    const targetCode = CHAR_TO_CODE[target];
+    const finger = CODE_TO_FINGER[targetCode];
+    total++;
+    if(e.code === targetCode){
+      correct++;
+      flashKeyResult($('m1Kbd'), targetCode, true);
+      setHandFinger($('m1Hands'), finger, 'press');
+      advancing = true;
+      setTimeout(()=>{ advancing = false; qi++; showCurrent(); }, 220);
+    }else{
+      flashKeyResult($('m1Kbd'), targetCode, false);
+      flashHandBad($('m1Hands'), finger);
+    }
+    tick();
+    e.preventDefault();
+  }
+  function rebuildHandsOverlay(){
+    // 先把键盘真正渲染一次拿到每颗键的真实像素位置，再叠手；随后 showCurrent()
+    // 会再画一次键盘高亮，顺带把手指摆到当前目标键上。
+    renderKeyboard($('m1Kbd'), {colorByFinger:true, legend:$('m1Legend')});
+    buildHandsOverlay($('m1Hands'), $('m1Kbd'));
+  }
+  return {
+    enter(){
+      if(campaignMode) groupIdx = 0; // 闯关模式每次都从第一组开始，保证按顺序过
+      renderTabs();
+      buildQueue();
+      rebuildHandsOverlay();
+      showCurrent();
+      clearInterval(timer); timer = setInterval(tick, 500);
+      if(onKeyHandler) document.removeEventListener('keydown', onKeyHandler);
+      onKeyHandler = onKey;
+      document.addEventListener('keydown', onKeyHandler);
+      if(onResizeHandler) window.removeEventListener('resize', onResizeHandler);
+      onResizeHandler = ()=>{
+        clearTimeout(resizeT);
+        resizeT = setTimeout(()=>{
+          if(!document.getElementById('view-m1').classList.contains('active')) return;
+          rebuildHandsOverlay();
+          showCurrent();
+        }, 200);
+      };
+      window.addEventListener('resize', onResizeHandler);
+    }
+  };
+})();
+
+/* ================= 模块 2：中英文切换 ================= */
+const M2_ITEMS = [
+  {lang:'en', text:'hello'}, {lang:'zh', text:'你好'},
+  {lang:'en', text:'computer'}, {lang:'zh', text:'电脑'},
+  {lang:'en', text:'keyboard'}, {lang:'zh', text:'键盘'},
+  {lang:'en', text:'school'}, {lang:'zh', text:'学校'},
+  {lang:'en', text:'friend'}, {lang:'zh', text:'朋友'},
+];
+const M2 = (function(){
+  let idx = 0, order = [];
+  function next(){
+    if(idx >= order.length){
+      $('m2Prompt').innerHTML = campaignMode ? '🎉 全部完成！进入下一关…' : '🎉 全部完成！';
+      $('m2Target').textContent = '';
+      $('m2Input').disabled = true;
+      setModuleBest('m2', {label:'已完成 '+order.length+' 题'});
+      if(campaignMode) setTimeout(()=>campaignNext(), 900);
+      return;
+    }
+    const item = order[idx];
+    $('m2Prompt').innerHTML = '请切换到<b>' + (item.lang==='en'?'英文':'中文') + '</b>输入，打出：';
+    $('m2Target').textContent = item.text;
+    $('m2Tag').textContent = '第 ' + (idx+1) + ' / ' + order.length + ' 题';
+    $('m2Done').textContent = idx;
+    $('m2Input').value = '';
+    $('m2Input').disabled = false;
+    const fb = $('m2FB'); fb.className = 'feedback'; fb.textContent = '';
+  }
+  function onInput(){
+    const item = order[idx];
+    const v = $('m2Input').value.trim();
+    const fb = $('m2FB');
+    if(!v){ fb.className='feedback'; return; }
+    if(v === item.text){
+      fb.className = 'feedback show info'; fb.textContent = '✓ 输入正确！';
+      $('m2Input').classList.add('ok');
+      setTimeout(()=>{ $('m2Input').classList.remove('ok'); idx++; next(); }, 500);
+    }else if(item.lang==='zh' && isAsciiLetters(v)){
+      fb.className = 'feedback show warn'; fb.textContent = '你好像还没切换输入法，现在打出来的是英文字母，试试切换到中文输入法再打一次。';
+    }else if(item.lang==='en' && isCJK(v)){
+      fb.className = 'feedback show warn'; fb.textContent = '现在打出来的是中文，题目要求打英文，试试切换回英文输入法。';
+    }else{
+      fb.className = 'feedback show'; fb.textContent = '';
+    }
+  }
+  return {
+    enter(){
+      order = shuffle(M2_ITEMS);
+      idx = 0;
+      $('m2TotalN').textContent = order.length;
+      $('m2Input').disabled = false;
+      $('m2Input').oninput = onInput;
+      next();
+    }
+  };
+})();
+
+/* ================= 模块 3：大小写切换 ================= */
+const M3_ITEMS = [
+  {text:'Hello', hint:'首字母大写，其余小写'},
+  {text:'WORLD', hint:'全部大写'},
+  {text:'python', hint:'全部小写'},
+  {text:'IPad', hint:'前两个字母大写，其余小写'},
+  {text:'Study', hint:'首字母大写，其余小写'},
+  {text:'CHINA', hint:'全部大写'},
+  {text:'teacher', hint:'全部小写'},
+  {text:'MiXeD', hint:'严格按这个大小写打（提示可以用 Shift 临时切换）'},
+];
+const M3 = (function(){
+  let idx = 0, order = [], capsOn = false;
+  function updateCapsPill(e){
+    if(e && e.getModifierState){
+      capsOn = e.getModifierState('CapsLock');
+      const p = $('m3CapsPill');
+      p.className = 'status-pill ' + (capsOn?'on':'off');
+      p.innerHTML = '<span class="dot"></span>Caps Lock：' + (capsOn?'已开启（打字母默认大写）':'关闭（打字母默认小写）');
+    }
+  }
+  function next(){
+    if(idx >= order.length){
+      $('m3Hint').textContent = campaignMode ? '🎉 全部完成！进入下一关…' : '🎉 全部完成！';
+      $('m3Target').textContent = '';
+      $('m3Input').disabled = true;
+      setModuleBest('m3', {label:'已完成 '+order.length+' 题'});
+      if(campaignMode) setTimeout(()=>campaignNext(), 900);
+      return;
+    }
+    const item = order[idx];
+    $('m3Hint').innerHTML = '请输入（' + item.hint + '）：';
+    $('m3Target').textContent = item.text;
+    $('m3Tag').textContent = '第 ' + (idx+1) + ' / ' + order.length + ' 题';
+    $('m3Done').textContent = idx;
+    $('m3Input').value = '';
+    $('m3Input').disabled = false;
+    const fb = $('m3FB'); fb.className = 'feedback'; fb.textContent = '';
+  }
+  function onInput(){
+    const item = order[idx];
+    const v = $('m3Input').value;
+    const fb = $('m3FB');
+    if(!v){ fb.className='feedback'; return; }
+    if(v === item.text){
+      fb.className = 'feedback show info'; fb.textContent = '✓ 大小写完全正确！';
+      $('m3Input').classList.add('ok');
+      setTimeout(()=>{ $('m3Input').classList.remove('ok'); idx++; next(); }, 500);
+    }else if(v.toLowerCase() === item.text.toLowerCase()){
+      fb.className = 'feedback show warn';
+      fb.textContent = '字母是对的，但大小写不对。当前 Caps Lock 是' + (capsOn?'开启':'关闭') + '状态，注意区分 Shift（按住临时切换）和 Caps Lock（锁定切换）。';
+    }else{
+      fb.className = 'feedback show'; fb.textContent='';
+    }
+  }
+  return {
+    enter(){
+      order = shuffle(M3_ITEMS);
+      idx = 0;
+      $('m3TotalN').textContent = order.length;
+      $('m3Input').disabled = false;
+      $('m3Input').oninput = onInput;
+      $('m3Input').onkeydown = updateCapsPill;
+      next();
+      // 初始状态：等用户第一次按键才能拿到 getModifierState，先给个提示态
+      $('m3CapsPill').innerHTML = '<span class="dot"></span>Caps Lock：请按任意键检测状态';
+    }
+  };
+})();
+
+/* ================= 模块 4：小键盘 NumLock ================= */
+const NUMPAD_OFF_MEANING = {
+  Numpad0:'Insert（插入）', Numpad1:'End（跳到行尾）', Numpad2:'↓（向下）', Numpad3:'PageDown（下一页）',
+  Numpad4:'←（向左）', Numpad5:'（无功能，居中键）', Numpad6:'→（向右）', Numpad7:'Home（跳到行首）',
+  Numpad8:'↑（向上）', Numpad9:'PageUp（上一页）', NumpadDecimal:'Delete（删除）'
+};
+const M4_DRILL = ['483','710','256','999','120','365'];
+const M4 = (function(){
+  let numOn = false, drillIdx = 0, drillOrder = [], onKeyHandler=null;
+  function updatePill(e){
+    if(e && e.getModifierState){
+      numOn = e.getModifierState('NumLock');
+      const p = $('m4NumPill');
+      p.className = 'status-pill ' + (numOn?'on':'off');
+      p.innerHTML = '<span class="dot"></span>Num Lock：' + (numOn?'已开启（小键盘能打数字）':'关闭（小键盘现在是方向/翻页键）');
+      $('m4DrillInput').disabled = !numOn;
+      $('m4DrillHint').innerHTML = numOn ? '请用<b>小键盘</b>输入：' : '请先按 <b>Num Lock</b> 键把它打开，再来做这个练习';
+    }
+  }
+  function onExperimentKey(e){
+    if(!document.getElementById('view-m4').classList.contains('active')) return;
+    updatePill(e);
+    if(e.code.startsWith('Numpad')){
+      if(numOn){
+        $('m4Display').textContent = e.key;
+        $('m4FB').className='feedback show info';
+        $('m4FB').textContent = '✓ Num Lock 开启中，小键盘上的这个键打出的是数字「'+e.key+'」。';
+      }else{
+        const meaning = NUMPAD_OFF_MEANING[e.code] || e.key;
+        $('m4Display').textContent = e.key;
+        $('m4FB').className='feedback show warn';
+        $('m4FB').textContent = '你按的是小键盘上的这个键，但 Num Lock 关闭，它现在的作用是「'+meaning+'」，不是数字。试着按一下 Num Lock 键再试试。';
+      }
+      e.preventDefault();
+    }
+  }
+  function nextDrill(){
+    if(drillIdx >= drillOrder.length){
+      $('m4DrillHint').textContent = campaignMode ? '🎉 小键盘练习完成！进入下一关…' : '🎉 小键盘练习完成！';
+      $('m4DrillTarget').textContent = '';
+      $('m4DrillInput').value=''; $('m4DrillInput').disabled = true;
+      setModuleBest('m4', {label:'已完成'});
+      if(campaignMode) setTimeout(()=>campaignNext(), 900);
+      return;
+    }
+    $('m4DrillTarget').textContent = drillOrder[drillIdx];
+    $('m4Done').textContent = drillIdx;
+    $('m4DrillInput').value = '';
+    const fb = $('m4DrillFB'); fb.className='feedback'; fb.textContent='';
+  }
+  function onDrillKey(e){
+    if(!document.getElementById('view-m4').classList.contains('active')) return;
+    if(drillIdx >= drillOrder.length) return;
+    if(!e.code.startsWith('Numpad') && e.key !== 'Backspace'){
+      e.preventDefault();
+      $('m4DrillFB').className='feedback show warn';
+      $('m4DrillFB').textContent = '请用小键盘按键输入，不要用顶排数字键。';
+      return;
+    }
+  }
+  function onDrillInput(){
+    const target = drillOrder[drillIdx];
+    const v = $('m4DrillInput').value;
+    if(v === target){
+      $('m4DrillFB').className='feedback show info'; $('m4DrillFB').textContent='✓ 正确！';
+      $('m4DrillInput').classList.add('ok');
+      setTimeout(()=>{ $('m4DrillInput').classList.remove('ok'); drillIdx++; nextDrill(); }, 450);
+    }
+  }
+  return {
+    enter(){
+      drillOrder = shuffle(M4_DRILL); drillIdx = 0;
+      $('m4TotalN').textContent = drillOrder.length;
+      $('m4Input').value=''; $('m4Display').textContent='—';
+      $('m4FB').className='feedback show info';
+      $('m4FB').textContent='还没检测到按键，请用鼠标点一下上面的输入框，再用小键盘按键试试。';
+      nextDrill();
+      $('m4DrillInput').disabled = true;
+      $('m4DrillInput').oninput = onDrillInput;
+      $('m4DrillInput').onkeydown = onDrillKey;
+      if(onKeyHandler) document.removeEventListener('keydown', onKeyHandler);
+      onKeyHandler = onExperimentKey;
+      $('m4Input').addEventListener('keydown', onKeyHandler);
+      document.addEventListener('keydown', updatePill);
+    }
+  };
+})();
+
+/* ================= 模块 5：特殊字符 ================= */
+const M5_ITEMS = [
+  ['!','Digit1'], ['@','Digit2'], ['#','Digit3'], ['$','Digit4'], ['%','Digit5'],
+  ['^','Digit6'], ['&','Digit7'], ['*','Digit8'], ['(','Digit9'], [')','Digit0'],
+  ['_','Minus'], ['+','Equal'],
+];
+const M5 = (function(){
+  let idx = 0, order = [], onKeyHandler=null;
+  function showCurrent(){
+    if(idx >= order.length){
+      $('m5Hint').textContent = campaignMode ? '🎉 全部完成！进入下一关…' : '🎉 全部完成！';
+      $('m5Target').textContent = '';
+      $('m5Input').disabled = true;
+      renderKeyboard($('m5Kbd'), {});
+      setModuleBest('m5', {label:'已完成 '+order.length+' 题'});
+      if(campaignMode) setTimeout(()=>campaignNext(), 900);
+      return;
+    }
+    const [ch, code] = order[idx];
+    $('m5Target').textContent = ch;
+    $('m5Tag').textContent = '第 ' + (idx+1) + ' / ' + order.length + ' 题';
+    $('m5Done').textContent = idx;
+    $('m5Input').value = '';
+    const fb = $('m5FB'); fb.className='feedback'; fb.textContent='';
+    renderKeyboard($('m5Kbd'), {highlightCode:code});
+  }
+  function onInput(){
+    const [ch] = order[idx];
+    const v = $('m5Input').value;
+    if(!v) return;
+    const fb = $('m5FB');
+    if(v === ch){
+      fb.className='feedback show info'; fb.textContent='✓ 正确！';
+      $('m5Input').classList.add('ok');
+      setTimeout(()=>{ $('m5Input').classList.remove('ok'); idx++; showCurrent(); }, 450);
+    }else{
+      fb.className='feedback show bad'; fb.textContent='再试试，注意要按住 Shift 再按对应的键。';
+    }
+  }
+  return {
+    enter(){
+      order = shuffle(M5_ITEMS); idx = 0;
+      $('m5TotalN').textContent = order.length;
+      $('m5Input').disabled = false;
+      $('m5Input').oninput = onInput;
+      showCurrent();
+    }
+  };
+})();
+
+/* ================= 模块 6：终极测试 ================= */
+const T6_ZH = ['你好','谢谢','再见','加油','学习','电脑','键盘','鼠标','文件','网络','密码','安全','老师','同学','早上好'];
+const T6_EN = ['Hello','World','Computer','Keyboard','Mouse','File','Safety','Study','Friend','School','Practice','Number'];
+const T6_PUNCT = ['，','。','！','？','、'];
+const T6_SPECIAL = ['@','#','$','%','&','*','(',')','-','_','+','='];
+
+function genRandomText(){
+  const segs = [];
+  const n = 10 + Math.floor(Math.random()*4); // 10~13 段
+  for(let i=0;i<n;i++){
+    const r = Math.random();
+    if(r < 0.28) segs.push(pick(T6_ZH));
+    else if(r < 0.56){
+      let w = pick(T6_EN);
+      const style = Math.random();
+      if(style < 0.34) w = w.toUpperCase();
+      else if(style < 0.5) w = w.toLowerCase();
+      segs.push(w);
+    }
+    else if(r < 0.72) segs.push(String(Math.floor(Math.random()*900)+10));
+    else if(r < 0.88) segs.push(pick(T6_SPECIAL));
+    else segs.push(pick(T6_PUNCT));
+  }
+  return segs.join(' ');
+}
+
+// 中英文标点常常因输入法状态不同长得不一样但意思一样，判定时放宽，不算错
+// 判定放宽：①全角/半角标点统一——中文输入法几乎都会把 !?,.;:'"()<>$^ 等自动转成全角，
+// Unicode 全角块 FF01~FF5E 正好比对应半角字符大 0xFEE0，整体归一化一次性覆盖，不用逐个列举；
+// 。和、是中文专属标点（不在那个全角块里），单独处理。
+// ②大小写不敏感兜底——中文输入法叠加 Shift 键有时打不出正确大小写，这是输入法行为，不该扣学生的分。
+function m6NormChar(ch){
+  if(ch===undefined) return ch;
+  const code = ch.charCodeAt(0);
+  if(code>=0xFF01 && code<=0xFF5E) return String.fromCharCode(code-0xFEE0);
+  if(ch==='。') return '.';
+  if(ch==='、') return '\\';
+  return ch;
+}
+function m6Match(typedCh, targetCh){
+  if(typedCh === targetCh) return true;
+  if(typedCh===undefined || targetCh===undefined) return false;
+  const a = m6NormChar(typedCh), b = m6NormChar(targetCh);
+  return a===b || a.toLowerCase()===b.toLowerCase();
+}
+function makeUltimate(p, getText, opts){
+  opts = opts || {};
+  let target = '', startTs = 0, timer = null, finished = false;
+  function renderTarget(typed){
+    let html = '';
+    for(let i=0;i<target.length;i++){
+      const ch = target[i]==='<'?'&lt;':target[i]==='>'?'&gt;':target[i];
+      if(i < typed.length){
+        html += `<span class="ch ${m6Match(typed[i],target[i])?'done-ok':'done-bad'}">${ch}</span>`;
+      }else if(i === typed.length){
+        html += `<span class="ch cur">${ch}</span>`;
+      }else{
+        html += `<span class="ch">${ch}</span>`;
+      }
+    }
+    $(p+'Target').innerHTML = html;
+  }
+  function tick(){
+    if(finished) return;
+    $(p+'Time').textContent = mmss((Date.now()-startTs)/1000);
+  }
+  function finish(typed, early){
+    finished = true;
+    clearInterval(timer);
+    const used = Math.max(1,(Date.now()-startTs)/1000);
+    let ok = 0;
+    for(let i=0;i<target.length;i++){ if(m6Match(typed[i],target[i])) ok++; }
+    const acc = Math.round(ok/target.length*100);
+    const speed = Math.round(target.length/used*60);
+    $(p+'Acc').textContent = acc+'%';
+    $(p+'Speed').textContent = speed;
+    $(p+'ResultSpeed').textContent = speed;
+    $(p+'ResultAcc').textContent = acc+'%';
+    $(p+'ResultTime').textContent = mmss(used);
+    const s = loadStore();
+    const prevBest = (s[p] && s[p].bestSpeed) || 0;
+    const bestSpeed = Math.max(prevBest, speed);
+    $(p+'ResultBest').textContent = bestSpeed + ' 字符/分钟';
+    setModuleBest(p, {label:'最佳 '+bestSpeed+' 字符/分钟', bestSpeed});
+    $(p+'Result').classList.add('show');
+    $(p+'Input').disabled = true;
+    $(p+'SubmitBtn').classList.add('hidden');
+    $(p+'Regen').classList.toggle('hidden', campaignMode);
+    $(p+'CampaignDone').classList.toggle('hidden', !(campaignMode || opts.alwaysNext));
+  }
+  function onInput(){
+    const typed = $(p+'Input').value;
+    if(!startTs){ startTs = Date.now(); timer = setInterval(tick, 400); }
+    renderTarget(typed);
+    let acc = 100, ok=0;
+    for(let i=0;i<typed.length;i++){ if(m6Match(typed[i],target[i])) ok++; }
+    if(typed.length) acc = Math.round(ok/typed.length*100);
+    $(p+'Acc').textContent = acc+'%';
+    $(p+'SubmitBtn').classList.toggle('hidden', typed.length===0);
+    if(typed.length >= target.length){ finish(typed); }
+  }
+  function start(){
+    target = getText();
+    startTs = 0; finished = false; clearInterval(timer);
+    $(p+'Input').value=''; $(p+'Input').disabled=false;
+    $(p+'Time').textContent='00:00'; $(p+'Acc').textContent='100%'; $(p+'Speed').textContent='0';
+    $(p+'Result').classList.remove('show');
+    $(p+'SubmitBtn').classList.add('hidden');
+    $(p+'CampaignDone').classList.add('hidden');
+    $(p+'Regen').classList.toggle('hidden', campaignMode);
+    renderTarget('');
+    $(p+'Input').focus();
+  }
+  $(p+'Regen').addEventListener('click', start);
+  $(p+'SubmitBtn').addEventListener('click', ()=>{
+    if(finished) return;
+    finish($(p+'Input').value, true);
+  });
+  $(p+'CampaignDone').addEventListener('click', ()=>{ if(opts.next) opts.next(); else campaignNext(); });
+  return { enter(){ $(p+'Input').oninput = onInput; start(); } };
+}
+const M6 = makeUltimate('m6', genRandomText, {alwaysNext:true, next:()=>enterModule('m7')});
+const M7 = makeUltimate('m7', ()=>'我爱信息老师，我爱上信息课。');
+
+/* ================= 启动 ================= */
+renderHub();
+})();
+</script>
+</body>
+</html>

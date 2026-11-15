@@ -138,6 +138,7 @@ public class ActivityService {
             item.put("qtype", qtype);
             item.put("stem", stem);
             if (!opts.isEmpty()) item.put("options", opts);
+            if ("FILL".equals(qtype) && Boolean.TRUE.equals(m.get("numeric"))) item.put("numeric", true);
             out.add(item);
         }
         for (String a : answered) if (!seen.contains(a)) throw new IllegalArgumentException("已有学生作答的题目不能删除");
@@ -216,6 +217,9 @@ public class ActivityService {
                     String txt = a == null ? "" : String.valueOf(a).trim();
                     if (txt.isEmpty()) throw new IllegalArgumentException("请完成第 " + (its.indexOf(it) + 1) + " 题");
                     if (txt.length() > 500) throw new IllegalArgumentException("填空内容不超过 500 字");
+                    if (Boolean.TRUE.equals(it.get("numeric")) && !txt.matches("\\d+(\\.\\d+)?")) {
+                        throw new IllegalArgumentException("第 " + (its.indexOf(it) + 1) + " 题只能填数字");
+                    }
                     norm = txt;
             }
             try {

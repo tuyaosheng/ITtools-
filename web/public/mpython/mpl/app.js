@@ -46,6 +46,16 @@
   var VIEW = !EDIT && params.get("from") ? String(params.get("from")) : null;
   var LOCAL = EDIT || !!VIEW;   // 不属于任何一组：不上传、不记通关
   var group = EDIT ? "老师" : VIEW ? "看" + VIEW : (params.get("group") || store("mpl_group"));
+  // 从 ittools 课堂里打开时组号是按这台电脑的机号算好带进来的（相邻两台一组），学生不能改——
+  // 改了的话他的积木和通关会记到别的组头上，闯关解锁那边也就对不上人。坐错位子让老师处理。
+  var GROUP_LOCKED = !EDIT && !VIEW && !!params.get("group");
+  // 从 ittools 课堂里打开时网址带 ?run=场次号：通关记录、拼到一半的积木、汉堡店进度都按场次分开存。
+  // 同一批机器一天要上好几个班，不分开的话后一个班一打开就看到前一个班拼好的答案，
+  // 而且「这关已经通过了」不会再报一次，ittools 闯关解锁那边就算不上分。
+  // 不带 run（双击 bat 打开的老路子）照旧按组存，什么都不变。
+  var RUN = (params.get("run") || "").replace(/[^0-9A-Za-z]/g, "").slice(0, 12);
+  var RUN_SUFFIX = RUN ? "_r" + RUN : "";
+  window.MPL_RUNTIME.run = RUN_SUFFIX;
   // 老师存过的初始积木（服务器上），按关卡缓存；没有就用 demo 文件里写死的那份
   var serverStarters = {};
   var serverStarter = null;
@@ -67,13 +77,13 @@
   function askGroup() {
     var grid = $("groupGrid");
     grid.innerHTML = "";
-    // 5 列，每列从下往上数：第1列最下面是1、最上面是(行数)，第2列接着往上数，以此类推——
-    // 对应老师现场喊号的习惯（从教室第一列最后一排开始数）。
+    // 5 列，1 组在右下角，每列从下往上、列从右往左——和机号（PC-01 在右下角）的走法、
+    // 老师看板上组卡片的摆法一致，学生对着教室就找得到自己那一格。
     var cols = 5;
     var rows = Math.ceil(cfg.groups / cols);
     for (var r = 1; r <= rows; r++) {
       for (var c = 1; c <= cols; c++) {
-        var i = c * rows - r + 1;
+        var i = (cols - c) * rows + (rows - r + 1);
         if (i < 1 || i > cfg.groups) continue;
         var b = document.createElement("button");
         b.textContent = i;
@@ -83,10 +93,17 @@
     }
     $("groupModal").hidden = false;
   }
-  $("groupBtn").addEventListener("click", askGroup);
+  $("groupBtn").addEventListener("click", function () { if (!GROUP_LOCKED) askGroup(); });
+  if (GROUP_LOCKED) {
+    $("groupBtn").disabled = true;
+    $("groupBtn").title = "组号按你坐的电脑自动定，不能改。坐错位子了请举手告诉老师";
+    // 锁死时不能靠 opacity 变淡表示"点不动"——组号是这页最该让学生一眼看清的东西，
+    // 样式上保持清楚（见 style.css 的 #groupBtn:disabled），用一个小锁图标说明"点不动"这件事
+    $("groupBtn").insertAdjacentHTML("afterbegin", "🔒 ");
+  }
 
   // ---------------- 积木区 ----------------
-  function wsKey() { return "mpl_ws_" + DEMO.id + "_g" + group; }
+  function wsKey() { return "mpl_ws_" + DEMO.id + "_g" + group + RUN_SUFFIX; }
   // ---------------- AI 写代码（只有带 ai 配置的关卡） ----------------
   // 学生在“🤖 AI 写代码”页签里粘了代码，这一关就以那段代码为准：检查、刷入、传给老师看板都用它。
   // 默认切回“积木”页签就回到积木——两种做法各存各的，切来切去谁也不会盖掉谁，适合积木和 AI
@@ -94,7 +111,7 @@
   // 这条规矩反而让人困惑：刷完 AI 代码，切到“看代码”却看见不相关的样例。这种关卡在 register() 里
   // 加 aiSticky:true，一旦粘过 AI 代码就不管停在哪个页签，“看代码”“检查清单”“刷入”全部认它
   var tab = "blocks";
-  function aiKey() { return "mpl_ai_" + DEMO.id + "_g" + group; }
+  function aiKey() { return "mpl_ai_" + DEMO.id + "_g" + group + RUN_SUFFIX; }
   // AI 回答常常把代码包在 ```python … ``` 里，学生整段复制过来连带着那两行，板子第一行就报语法错
   function aiText() {
     var t = $("aiCode").value, m = /```[a-zA-Z]*[ \t]*\r?\n([\s\S]*?)```/.exec(t);
@@ -163,14 +180,14 @@
   }
 
   // ---------------- 关卡 ----------------
-  function levelKey() { return "mpl_level_g" + group; }
+  function levelKey() { return "mpl_level_g" + group + RUN_SUFFIX; }
   function savedLevel() {
     var q = parseInt(params.get("level"), 10);
     if (q >= 1 && q <= DEMOS.length) return q - 1;
     var n = parseInt(store(levelKey()), 10);
     return n >= 0 && n < DEMOS.length ? n : 0;
   }
-  function passKey() { return "mpl_pass_g" + group; }
+  function passKey() { return "mpl_pass_g" + group + RUN_SUFFIX; }
   function passedIds() {
     if (LOCAL) return [];
     try { return JSON.parse(store(passKey()) || "[]"); } catch (e) { return []; }
@@ -188,11 +205,30 @@
       if (ok && ids.indexOf(DEMO.id) < 0) {
         ids.push(DEMO.id);
         store(passKey(), JSON.stringify(ids));
-        toast("🎉 第 " + (DEMOS.indexOf(DEMO) + 1) + " 关通关！", 4000);
         pushCode("pass");
+        autoNext();
       }
     }
     renderLevels();
+  }
+
+  // 第一次通关后自己进下一关：学生过了关常常就停在那儿玩场景，不知道该点“下一关”。
+  // 留 3 秒倒数——场景里刚亮的灯、开的门得让他看见，一过关就切走等于没看到成果。
+  // 倒数期间学生自己换了关就不再跳；正在刷入就等刷完再跳，别把刷到一半的板子晾在那儿。
+  var nextTimer = null;
+  function autoNext() {
+    var from = DEMO, i = DEMOS.indexOf(DEMO), next = DEMOS[i + 1];
+    clearTimeout(nextTimer);
+    if (!next) { toast("🎉 第 " + (i + 1) + " 关通关！全部关卡都完成了！", 5000); return; }
+    var left = 3;
+    (function tick() {
+      if (DEMO !== from) return;
+      if (busy) { nextTimer = setTimeout(tick, 500); return; }
+      if (left <= 0) { setLevel(i + 1); return; }
+      toast("🎉 第 " + (i + 1) + " 关通关！" + left + " 秒后进入下一关：" + next.title, 1100);
+      left--;
+      nextTimer = setTimeout(tick, 1000);
+    })();
   }
 
   function renderLevels() {
@@ -240,6 +276,57 @@
     if (DEMOS[i + 1]) setLevel(i + 1);
   });
 
+  // ---- 任务卡文字（要求 / 步骤 / 提示）：老师在编辑模式里改过的优先 ----
+  // 改过的存在服务器 data/texts.json，全班共用；没改过的关照用 demos/*.js 里写的。
+  var texts = null;
+  async function fetchTexts() {
+    if (texts) return;
+    try { texts = await (await fetch(API + "/api/text")).json(); } catch (e) { texts = {}; }
+  }
+  function taskText(k) {
+    var t = texts && texts[DEMO.id];
+    return t ? t[k] || "" : DEMO[k] || "";
+  }
+  function showTaskText() {
+    $("taskBrief").textContent = taskText("brief");
+    // 步骤可以不写全；具体操作放进提示，换关时提示重新收起
+    $("taskSteps").textContent = taskText("steps");
+    $("taskStepsBox").hidden = !taskText("steps");
+    $("taskHint").textContent = taskText("hint");
+    $("taskHint").hidden = true;
+    $("hintBtn").hidden = !taskText("hint");
+    $("hintBtn").textContent = "💡 看提示";
+    $("taskEditor").hidden = true;
+    $("taskEditBtn").hidden = !EDIT;
+  }
+  async function saveTaskText(text) {
+    var r = await fetch(API + "/api/text", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ demo: DEMO.id, text: text }) });
+    var d = await r.json();
+    if (!d.ok) throw new Error(d.error || r.status);
+    if (text) texts[DEMO.id] = text; else delete texts[DEMO.id];
+    showTaskText();
+  }
+  $("taskEditBtn").addEventListener("click", function () {
+    $("teBrief").value = taskText("brief");
+    $("teSteps").value = taskText("steps");
+    $("teHint").value = taskText("hint");
+    $("taskEditor").hidden = false;
+    $("taskEditBtn").hidden = true;
+    $("teBrief").focus();
+  });
+  $("teCancel").addEventListener("click", showTaskText);
+  $("teSave").addEventListener("click", async function () {
+    try {
+      await saveTaskText({ brief: $("teBrief").value.trim(), steps: $("teSteps").value.trim(), hint: $("teHint").value.trim() });
+      toast("已保存。学生刷新页面就能看到新的说明。", 3500);
+    } catch (e) { toast("保存失败：" + e.message, 5000); }
+  });
+  $("teReset").addEventListener("click", async function () {
+    try { await saveTaskText(null); toast("已换回原来的说明", 3000); }
+    catch (e) { toast("恢复失败：" + e.message, 5000); }
+  });
+
   async function fetchStarter(id) {
     if (id in serverStarters) return serverStarters[id];
     try {
@@ -271,14 +358,8 @@
     $("left").style.setProperty("--lc", DEMO.color || "#1E88E5");
     $("demoTitle").textContent = "· 第 " + (i + 1) + " 关 " + DEMO.title;
     $("taskTitle").textContent = (DEMO.icon ? DEMO.icon + " " : "") + "第 " + (i + 1) + " 关 · " + DEMO.title;
-    $("taskBrief").textContent = DEMO.brief;
-    // 步骤可以不写全；具体操作放进提示，换关时提示重新收起
-    $("taskSteps").textContent = DEMO.steps || "";
-    $("taskStepsBox").hidden = !DEMO.steps;
-    $("taskHint").textContent = DEMO.hint || "";
-    $("taskHint").hidden = true;
-    $("hintBtn").hidden = !DEMO.hint;
-    $("hintBtn").textContent = "💡 看提示";
+    await fetchTexts();
+    showTaskText();
     $("doneHint").textContent = DEMO.doneHint || "都放对了！点上面的“刷入”试试。";
     var old = $("scene"), scene = document.createElement("div");
     scene.id = "scene"; scene.className = "scene s-" + DEMO.id; scene.setAttribute("aria-live", "polite");
@@ -621,8 +702,15 @@
   // 反方向：网页经 USB 线给正在跑的程序发一行字（汉堡店第⑤级发订单 ORDER:芝士堡）。
   // 板子上的程序用 select.poll + sys.stdin.readline 收。正在刷入时不发——会混进写 main.py 的那段代码里。
   // 只发普通文字，绝不带 Ctrl-C（\x03）：那会把学生的程序直接停掉
+  //
+  // 板子上跑的程序不读输入（别的关的程序、或者学生的⑤级还没写 stdin 那段）时绝对不能发：
+  // 发过去的字在板子里没人取，攒到两百来个字节，板子的 USB 接收就整个堵死——之后连 Ctrl-C、
+  // 连刷入都发不进去，按复位也不好，只能拔线或者进一次下载模式（serial.js 的 recover）。
+  // 2026-10-17 真机上就是这么卡死的：板子里是温室关的程序，页面停在汉堡店第⑤级一直在发订单。
+  // 所以只在“最后一次刷进去的程序里有 sys.stdin”时才发；这个记在本机（板子插在这台机器上），
+  // 刷新页面也还记得。板子刚复位、还在开机的那几秒也不发，那时候进去的字同样会把它堵死。
   window.MPL_TO_BOARD = function (text) {
-    if (!serial.connected() || busy) return false;
+    if (!serial.connected() || busy || !boardReadsInput() || serial.booting()) return false;
     serial._write(String(text).replace(/[\x00-\x1f]/g, "") + "\r\n").catch(function () {});
     return true;
   };
@@ -781,13 +869,18 @@
   function showFailure(what, step, e) {
     var w = $("boardWarn");
     w.hidden = false; w.className = "board-warn";
-    var stuck = e && e.code === "WRITE_TIMEOUT";
-    w.innerHTML = "<b>" + what + "失败</b>（卡在：" + step + "）：" + (e && e.message ? e.message : e) + "。" +
-      (stuck ? "板子那头没在收数据。点“↻ 重启板子”，还不行就点“断开掌控板”再“连接掌控板”。"
-             : "点“↻ 重启板子”后再试一次。");
+    // 走到这里时已经自动修过一轮了，再让学生点这点那没有用；拔插是最后一招，
+    // 而且拔插后浏览器会自己连回来，学生只要再点一次刷入
+    w.innerHTML = "<b>" + what + "没成功，板子卡住了。</b>请<b>拔掉板子的 USB 线，等 3 秒再插回去</b>，" +
+      "等左上角显示“掌控板已连接”，再点一次刷入。还不行就举手叫老师。" +
+      "<br><small>（卡在：" + step + "，" + (e && e.message ? e.message : e) + "）</small>";
     boardIsPython = null;
     pushCode(what + "-fail:" + step + ":" + (e && e.code ? e.code : (e && e.message) || e));
   }
+
+  var READS_KEY = "mpl_board_reads_input";
+  function boardReadsInput() { try { return localStorage.getItem(READS_KEY) === "1"; } catch (e) { return false; } }
+  function setBoardReadsInput(code) { try { localStorage.setItem(READS_KEY, /sys\.stdin/.test(code) ? "1" : "0"); } catch (e) {} }
 
   var busy = false;
   var userDisconnected = false;   // 学生自己点了“断开掌控板”：自动连接就别再把它连回去
@@ -796,24 +889,68 @@
     $("saveBtn").disabled = on || !serial.connected();
   }
 
-  // 刷入 = 写进 main.py 再软重启：写完马上就在跑，拔掉电脑线也照跑
+  // ---- 刷入时整页锁住 ----
+  // 卡死的板子几乎都是“刷到一半又被别的操作插进来”弄出来的：狂点刷入、刷的时候点停止/重启/
+  // 断开、切关卡（切关会换积木、会往板子发东西）。只禁一颗按钮挡不住这些，
+  // 所以刷入期间盖一层罩子把整页挡住，键盘也吞掉（Blockly 的删除、撤销快捷键照样会改积木）。
+  var flashMask = null;
+  function flashLock(on, text) {
+    if (!flashMask) {
+      flashMask = document.createElement("div");
+      flashMask.className = "flash-mask";
+      flashMask.innerHTML = '<div class="flash-box"><div class="flash-spin"></div><b>正在刷入，请不要动鼠标和键盘</b><p></p></div>';
+      document.body.appendChild(flashMask);
+    }
+    flashMask.hidden = !on;
+    if (text) flashMask.querySelector("p").textContent = text;
+  }
+  document.addEventListener("keydown", function (ev) {
+    if (flashMask && !flashMask.hidden) { ev.preventDefault(); ev.stopPropagation(); }
+  }, true);
+
+  // 刷入 = 写进 main.py 再软重启：写完马上就在跑，拔掉电脑线也照跑。
+  // 卡住了（写不进去 / 板子没确认）不把问题丢给学生：自动修一次再重刷一次，
+  // 两次都不行才请他拔插 USB 线——拔插后浏览器会自己连回来，不用重新选设备。
   $("saveBtn").addEventListener("click", async function () {
     if (busy) return;
     setBusy(true);
     var step = "检查板子";
-    toast("正在刷入……", 8000);
+    var code = currentCode();   // 点下去那一刻的积木，刷的过程中不会再变
+    var unfinished = currentItems().some(function (i) { return !i.ok; });
+    var say = function (s) { step = s; flashLock(true, s + "……"); };
+    say("检查板子");
     try {
-      if (!(await ensurePython())) { notReadyToast(); return; }
-      var unfinished = currentItems().some(function (i) { return !i.ok; });
-      await serial.saveMain(currentCode(), function (s) { step = s; toast("正在刷入：" + s + "……", 8000); });
+      // 写通道堵死时检查这一步本身就会写入超时抛错——那也是“没回应”，交给下面去修
+      var ready = await ensurePython().catch(function () { return null; });
+      if (!ready && boardIsPython !== false) {
+        // 板子不出声：先修再说，别直接让学生去点“重启板子”
+        say("板子没回应，正在自动修复");
+        ready = await serial.recover(function (s) { say("自动修复：" + s); });
+        if (ready) boardIsPython = true;
+      }
+      if (!ready) { notReadyToast(); return; }
+      try {
+        await serial.saveMain(code, say);
+      } catch (e) {
+        pushCode("刷入-retry:" + step + ":" + (e && e.code ? e.code : (e && e.message) || e));
+        say("板子卡住了，正在自动修复");
+        if (!(await serial.recover(function (s) { say("自动修复：" + s); }))) throw e;
+        say("修好了，重新刷入");
+        await serial.saveMain(code, say);
+      }
+      setBoardReadsInput(code);
       pushCode("save");
+      $("boardWarn").hidden = true;
       // 汉堡店 AI 升级要数“改了几次程序”，⑤ 还要在板子重启后把订单重发一遍
       window.dispatchEvent(new Event("mpl-flashed"));
+      // 板子软重启要一两秒，这段时间里再刷一次会把刚开机的板子又打断——罩子多留一会儿
+      say("板子正在重启，马上就好");
+      await new Promise(function (r) { setTimeout(r, 1500); });
       toast(unfinished ? "程序已写入并重启。还有积木没放对——试一试，看看会发生什么。" : "程序已写入并重启。", 4200);
     } catch (e) {
       toast("刷入失败，看左下角", 3000);
       showFailure("刷入", step, e);
-    } finally { setBusy(false); }
+    } finally { flashLock(false); setBusy(false); }
   });
   $("stopBtn").addEventListener("click", function () { serial.stop().catch(function () {}); });
 

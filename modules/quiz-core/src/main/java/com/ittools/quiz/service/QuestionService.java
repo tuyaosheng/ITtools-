@@ -4,18 +4,26 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ittools.platform.service.SpreadsheetReader;
 import com.ittools.platform.service.dto.ImportResult;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.ittools.platform.db.Sql.p;
 
@@ -120,6 +128,11 @@ public class QuestionService {
         if (stars < 0 || stars > 5) throw new IllegalArgumentException("星级为 0~5");
         List<String> options = toStrList(f.get("options"));
         String answer = normalizeAnswer(qtype, f.get("answer"), options);
+        if (!hasImage && !Boolean.TRUE.equals(f.get("force"))) {
+            List<Map<String, Object>> same = findSame(teacherId, "dup_key", keysOf(qtype, stem, options)[1], id);
+            if (!same.isEmpty()) throw new IllegalArgumentException("题库里已有相同的题目（#" + same.get(0).get("id")
+                    + (same.get(0).get("deletedAt") != null ? "，在回收站" : "") + "）");
+        }
         Object sc = f.get("score");
         MapSqlParameterSource ps = p("t", teacherId, "c", str(f.get("category")), "qt", qtype, "s", stem,
                 "o", ("SINGLE".equals(qtype) || "MULTI".equals(qtype)) ? toJson(options) : null, "a", answer,
@@ -135,8 +148,97 @@ public class QuestionService {
             jdbc.update("UPDATE question SET category = :c, qtype = :qt, stem = :s, options = :o, answer = :a, analysis = :an, "
                     + "score = :sc, shared = :sh, stars = :st, needs_answer = FALSE WHERE id = :id", ps);
         }
+        refreshKeys(id);
         if (f.containsKey("tags")) setTags(id, toStrList(f.get("tags")));
         return get(id);
+    }
+
+    // ---- 防重复：题目指纹 ----
+
+    private static final Pattern TAG = Pattern.compile("<[^>]+>");
+    private static final Pattern BLANK = Pattern.compile("_+|\\(\\)|\\[\\]|【】");
+
+    /**
+     * 规范化题干/选项文字：去 HTML 标签与常见实体、去空白和中文标点、全角转半角、转小写，
+     * 填空处（____、（ ）、【】）统一成一个 _。英文 / * % 等代码里有意义的符号保留，只去 , ; : ? ! 和引号、末尾句点。
+     */
+    public static String normalize(String s) {
+        if (s == null) return "";
+        String v = TAG.matcher(s).replaceAll("")
+                .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&amp;", "&");
+        v = v.replaceAll("[\\s\\u00A0\\u3000，。、；：？！“”‘’…·]", "");
+        v = Normalizer.normalize(v, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT);
+        v = v.replaceAll("[,;:?!\"'`]", "").replaceAll("\\.+$", "");
+        return BLANK.matcher(v).replaceAll("_");
+    }
+
+    /** 返回 {stemKey, dupKey}：stemKey = 题型+题干；dupKey 再加排序后的选项（单选/多选），题干与选项都相同才算重复。 */
+    public static String[] keysOf(String qtype, String stem, List<String> options) {
+        String base = qtype + "|" + normalize(stem);
+        StringBuilder full = new StringBuilder(base);
+        if ("SINGLE".equals(qtype) || "MULTI".equals(qtype)) {
+            List<String> opts = new ArrayList<>();
+            for (String o : options) opts.add(normalize(o));
+            Collections.sort(opts);
+            for (String o : opts) full.append('\u0001').append(o);
+        }
+        return new String[]{sha256(base), sha256(full.toString())};
+    }
+
+    /** 按题目当前内容重算指纹；图片题清空（图片题按 image_hash 去重）。 */
+    public void refreshKeys(Long id) {
+        Map<String, Object> q = jdbc.queryForMap("SELECT qtype, stem, options, image_path FROM question WHERE id = :id", p("id", id));
+        String[] k = q.get("image_path") != null ? new String[]{null, null}
+                : keysOf((String) q.get("qtype"), (String) q.get("stem"), fromJsonList((String) q.get("options")));
+        jdbc.update("UPDATE question SET stem_key = :sk, dup_key = :dk WHERE id = :id", p("sk", k[0], "dk", k[1], "id", id));
+    }
+
+    /** 本人题库（含回收站）中指纹相同的题；col 为 dup_key 或 stem_key。 */
+    public List<Map<String, Object>> findSame(Long teacherId, String col, String key, Long excludeId) {
+        if (!"dup_key".equals(col) && !"stem_key".equals(col)) throw new IllegalArgumentException(col);
+        return decorate(jdbc.queryForList("SELECT " + COLS + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE q.teacher_id = :t AND q." + col
+                + " = :k AND q.id <> :x ORDER BY q.deleted_at IS NOT NULL, q.id LIMIT 5", p("t", teacherId, "k", key, "x", excludeId == null ? -1L : excludeId)));
+    }
+
+    /** 保存前查重（手动新增/编辑用）：same 为题干和选项都相同的题，similar 为仅题干相同（选项不同）的题，仅作提示。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> checkDuplicate(Long teacherId, Long id, Map<String, Object> f) {
+        String qtype = (String) f.get("qtype");
+        if (!TYPES.contains(qtype)) throw new IllegalArgumentException("无效题型");
+        String[] k = keysOf(qtype, str(f.get("stem")), toStrList(f.get("options")));
+        List<Map<String, Object>> same = findSame(teacherId, "dup_key", k[1], id);
+        List<Map<String, Object>> similar = new ArrayList<>();
+        for (Map<String, Object> q : findSame(teacherId, "stem_key", k[0], id)) {
+            boolean dup = false;
+            for (Map<String, Object> s : same) dup |= s.get("id").equals(q.get("id"));
+            if (!dup) similar.add(q);
+        }
+        Map<String, Object> r = new HashMap<>();
+        r.put("same", same);
+        r.put("similar", similar);
+        return r;
+    }
+
+    /** 启动时为还没有指纹的文字题（升级前的旧题）补算。 */
+    @EventListener(ApplicationReadyEvent.class)
+    public void backfillKeys() {
+        while (true) {
+            List<Long> ids = jdbc.queryForList("SELECT id FROM question WHERE dup_key IS NULL AND image_path IS NULL ORDER BY id LIMIT 500",
+                    new MapSqlParameterSource(), Long.class);
+            if (ids.isEmpty()) return;
+            for (Long id : ids) refreshKeys(id);
+        }
+    }
+
+    private static String sha256(String s) {
+        try {
+            byte[] d = MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8));
+            StringBuilder b = new StringBuilder();
+            for (byte x : d) b.append(String.format("%02x", x));
+            return b.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Transactional
@@ -196,6 +298,11 @@ public class QuestionService {
                     int idx = h.indexOf("选项" + c);
                     if (idx >= 0 && !cell(row, idx).isEmpty()) options.add(cell(row, idx));
                 }
+                // 与本人题库（含回收站、含本文件前面已导入的行）重复的跳过
+                if (TYPES.contains(qtype) && !findSame(teacherId, "dup_key", keysOf(qtype, stem, options)[1], null).isEmpty()) {
+                    r.incrementSkipped();
+                    continue;
+                }
                 Object answer = cell(row, cAns);
                 if ("FILL".equals(qtype)) answer = Arrays.asList(cell(row, cAns).split("##"));
                 Map<String, Object> f = new HashMap<>();
@@ -207,6 +314,7 @@ public class QuestionService {
                 String sc = cScore < 0 ? "" : cell(row, cScore);
                 f.put("score", sc.isEmpty() ? 5 : (int) Double.parseDouble(sc));
                 f.put("category", cCat < 0 ? null : cell(row, cCat));
+                f.put("force", true);
                 save(teacherId, null, f);
                 r.incrementImported();
             } catch (RuntimeException e) {

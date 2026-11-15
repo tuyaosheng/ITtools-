@@ -107,7 +107,7 @@ final class OfficeRules {
         c.put("PPTX_SLIDE_ANIMATION", new String[]{"PPT 幻灯片有动画", slide, "", "", "pptx"});
         c.put("PPTX_HYPERLINK", new String[]{"PPT 插入超链接", slide, "链接地址须包含（可空）", "", "pptx"});
         c.put("PPTX_SLIDE_IMAGES", new String[]{"PPT 幻灯片图片数", slide, "最少图片数", "", "pptx"});
-        c.put("TEXT_NOT_CONTAINS", new String[]{"文本不包含（查找替换）", "不应出现的文字（多个用 | 分隔）", "", "", "docx,pptx,xlsx,txt,html,htm,py,csv,md"});
+        c.put("TEXT_NOT_CONTAINS", new String[]{"文本不包含（查找替换）", "不应出现的文字（多个用 | 分隔）", "", "", "docx,pptx,xlsx,txt,html,htm,py,csv,md,mp"});
     }
 
     static GradingEngine.Check check(GradingEngine.Doc doc, GradingEngine.Rule r) throws Exception {

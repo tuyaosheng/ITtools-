@@ -99,6 +99,16 @@ public class AuthController {
         for (LoginPolicy p : policies) {
             p.check(ud, ip);
         }
+        boolean single = ud.role() == com.ittools.platform.domain.Role.STUDENT && settings.getBool(com.ittools.platform.settings.SystemSettingService.SINGLE_LOGIN);
+        // “先登录的占用”：账号在别的电脑（不同 IP）上还在线时拒绝；同一台电脑（关了浏览器、刷新、重启）可以重新登录
+        if (single && "KEEP_FIRST".equals(settings.get(com.ittools.platform.settings.SystemSettingService.SINGLE_LOGIN_MODE))) {
+            for (String other : sessions.liveIps(ud.userId())) {
+                if (!other.equals(ip)) {
+                    throw new com.ittools.platform.web.PolicyViolationException("这个账号已在 " + (other.isEmpty() ? "另一台电脑" : other)
+                            + " 上登录，不能在这台电脑登录。要换电脑，请找老师强制下线");
+                }
+            }
+        }
         // Session fixation: rotate the session id right after authentication
         // succeeds and before the SecurityContext is persisted, so a login
         // never reuses a pre-existing (potentially attacker-seeded) session.
@@ -110,8 +120,8 @@ public class AuthController {
         SecurityContextHolder.setContext(ctx);
         repo.saveContext(ctx, request, response);
         request.getSession().setAttribute(LOG_ATTR, loginLogs.recordLogin(ud.userId(), ip));
-        // 学生账号同一时间只允许一处登录：新登录让旧电脑下线（系统参数可关闭）
-        if (ud.role() == com.ittools.platform.domain.Role.STUDENT && settings.getBool(com.ittools.platform.settings.SystemSettingService.SINGLE_LOGIN)) {
+        // 学生账号同一时间只允许一处登录：新登录让旧电脑下线（“先登录的占用”时走到这里的只剩同一台电脑的旧会话；系统参数可关闭）
+        if (single) {
             for (HttpSession old : sessions.others(ud.userId(), request.getSession())) {
                 try {
                     Object logId = old.getAttribute(LOG_ATTR);
@@ -122,7 +132,7 @@ public class AuthController {
                 sessions.kick(old);
             }
         }
-        sessions.register(ud.userId(), request.getSession());
+        sessions.register(ud.userId(), request.getSession(), ip);
     }
 
     @PostMapping("/logout")
@@ -161,6 +171,7 @@ public class AuthController {
         m.put("classId", ud.classId());
         m.put("role", ud.role().name());
         m.put("permissions", lookups.permissionCodesForRole(ud.role()));
+        m.put("canAdmin", ud.canAdmin());   // 能进管理后台（管理员，或兼任管理员的教师）
         return m;
     }
 }

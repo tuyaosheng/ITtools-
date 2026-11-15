@@ -37,6 +37,10 @@ button:focus-visible{outline:2px solid var(--board);outline-offset:2px}
 .chip.bad::before{background:var(--warn)}
 button.chip::before{display:none}
 button.chip b{color:var(--ink);font-size:15px}
+/* 组号锁死时（从 ittools 课堂进来，见 app.js 的 GROUP_LOCKED）不能走 button:disabled 那条
+   opacity:.45 的通用样式——组号是这页最该让学生一眼看清的东西，淡成几乎看不见反而像坏了。
+   只改"看起来能不能点"，字看着照样清清楚楚；鼠标悬停有提示文字说明为什么点不动。 */
+#groupBtn:disabled{opacity:1;cursor:default;background:var(--bg)}
 
 .banner{background:#FFF7E6;border-bottom:1px solid #F5D9A0;color:#7A4B00;padding:10px 16px;font-size:13px}
 .banner code{font-family:var(--mono);background:#fff;border:1px solid #F0D7A6;border-radius:4px;padding:1px 5px;
@@ -100,6 +104,14 @@ button.chip b{color:var(--ink);font-size:15px}
   border-radius:12px;overflow:hidden}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .task{border-left:5px solid var(--lc)}
+.task{position:relative}
+.task .task-edit{position:absolute;top:10px;right:10px;padding:3px 10px;font-size:12.5px;border-radius:6px;
+  background:#fff;color:var(--ink);border:1px solid #d5dde6}
+.task .task-edit:hover{background:#eef3f8;color:var(--ink)}
+.task-editor{margin-top:8px;display:grid;gap:8px}
+.task-editor label{display:grid;gap:3px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.task-editor textarea{font:inherit;font-weight:400;font-size:13.5px;line-height:1.5;padding:6px 8px;border:1px solid #c9d3de;border-radius:6px;resize:vertical}
+.task-editor .te-btns{display:flex;gap:8px}
 .task h2{margin:0 0 4px;font-size:18px;color:color-mix(in srgb,var(--lc) 80%,#18222E)}
 .task p{margin:0;color:var(--dim);white-space:pre-line}
 .task .task-sec{margin-top:6px}
@@ -253,3 +265,12 @@ button.chip b{color:var(--ink);font-size:15px}
 
 @media (max-width:860px){.split,.split.folded{grid-template-columns:1fr;gap:12px}.split.folded .left{visibility:visible}
   .splitter{display:none}.right{min-height:520px}}
+
+/* 刷入时整页罩住：挡住狂点刷入、刷到一半点别的（见 app.js 的 flashLock） */
+.flash-mask{position:fixed;inset:0;background:rgba(15,23,32,.35);display:grid;place-items:center;z-index:1050;cursor:wait}
+.flash-mask[hidden]{display:none}
+.flash-box{background:#fff;border-radius:12px;padding:22px 30px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25);min-width:280px}
+.flash-box b{display:block;font-size:16px;color:#18222E}
+.flash-box p{margin:8px 0 0;color:#556;font-size:14px}
+.flash-spin{width:34px;height:34px;margin:0 auto 12px;border:4px solid #d6e6f7;border-top-color:var(--board);border-radius:50%;animation:flash-spin .8s linear infinite}
+@keyframes flash-spin{to{transform:rotate(360deg)}}

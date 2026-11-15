@@ -42,6 +42,8 @@ export interface UserItem {
   className: string | null
   graduated: boolean
   enabled: boolean
+  /** 教师兼任管理员 */
+  adminAccess?: boolean
   enrollYearId: number | null
 }
 
@@ -195,7 +197,9 @@ export const adminApi = {
     graduate: (id: number, value: boolean): Promise<void> =>
       unwrap(http.post(`/admin/users/${id}/graduate`, null, { params: { value } })),
     enabled: (id: number, value: boolean): Promise<void> =>
-      unwrap(http.post(`/admin/users/${id}/enabled`, null, { params: { value } }))
+      unwrap(http.post(`/admin/users/${id}/enabled`, null, { params: { value } })),
+    adminAccess: (id: number, value: boolean): Promise<UserItem> =>
+      unwrap(http.post(`/admin/users/${id}/admin-access`, null, { params: { value } }))
   },
   labWorkstations: {
     list: (): Promise<LabWorkstationItem[]> => unwrap(http.get('/admin/lab-workstations')),

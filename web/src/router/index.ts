@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useFeatureStore } from '../stores/features'
+import { ElMessage } from 'element-plus'
 
 
 const router = createRouter({
@@ -21,6 +23,7 @@ const router = createRouter({
         { path: 'class-seats', name: 'admin-class-seats', component: () => import('../views/admin/ClassSeatView.vue') },
         { path: 'teaching', name: 'admin-teaching', component: () => import('../views/admin/TeachingAdminView.vue') },
         { path: 'electives', name: 'admin-electives', component: () => import('../views/admin/ElectiveView.vue') },
+        { path: 'features', name: 'admin-features', component: () => import('../views/admin/FeatureView.vue') },
         { path: 'settings', name: 'admin-settings', component: () => import('../views/admin/SettingsView.vue') },
         { path: 'tools', name: 'admin-tools', component: () => import('../views/admin/EmergencyToolsView.vue') },
         { path: 'student-data', name: 'admin-student-data', component: () => import('../views/admin/StudentDataView.vue') },
@@ -41,21 +44,21 @@ const router = createRouter({
         { path: 'lessons', component: () => import('../views/teacher/LessonHistory.vue') },
         { path: 'lessons/:id', component: () => import('../views/teacher/LessonConsole.vue') },
         { path: 'classes', component: () => import('../views/teacher/MyClasses.vue') },
-        { path: 'timetable', component: () => import('../views/teacher/Timetable.vue') },
-        { path: 'homework', component: () => import('../views/homework/TeacherHomeworkIndex.vue') },
-        { path: 'quiz', component: () => import('../views/quiz/QuizBankView.vue') },
-        { path: 'tests', component: () => import('../views/quiz/TestManageView.vue') },
-        { path: 'rubrics', component: () => import('../views/teacher/RubricView.vue') },
-        { path: 'python', component: () => import('../views/python/ProblemBankView.vue') },
-        { path: 'resources', component: () => import('../views/teacher/ResourceView.vue') },
-        { path: 'lesson-plans', component: () => import('../views/teacher/LessonPlanView.vue') },
-        { path: 'reflections', component: () => import('../views/teacher/ReflectionView.vue') },
-        { path: 'disk', component: () => import('../views/common/DiskView.vue') },
+        { path: 'timetable', meta: { feature: 'timetable' }, component: () => import('../views/teacher/Timetable.vue') },
+        { path: 'homework', meta: { feature: 'homework' }, component: () => import('../views/homework/TeacherHomeworkIndex.vue') },
+        { path: 'quiz', meta: { feature: 'quiz' }, component: () => import('../views/quiz/QuizBankView.vue') },
+        { path: 'tests', meta: { feature: 'tests' }, component: () => import('../views/quiz/TestManageView.vue') },
+        { path: 'rubrics', meta: { feature: 'rubrics' }, component: () => import('../views/teacher/RubricView.vue') },
+        { path: 'python', meta: { feature: 'python' }, component: () => import('../views/python/ProblemBankView.vue') },
+        { path: 'resources', meta: { feature: 'resources' }, component: () => import('../views/teacher/ResourceView.vue') },
+        { path: 'lesson-plans', meta: { feature: 'lesson-plans' }, component: () => import('../views/teacher/LessonPlanView.vue') },
+        { path: 'reflections', meta: { feature: 'reflections' }, component: () => import('../views/teacher/ReflectionView.vue') },
+        { path: 'disk', meta: { feature: 'disk' }, component: () => import('../views/common/DiskView.vue') },
         { path: 'messages', component: () => import('../views/teacher/MessageView.vue') },
-        { path: 'qa', component: () => import('../views/teacher/TeacherQa.vue') },
-        { path: 'login-logs', component: () => import('../views/teacher/LoginLogs.vue') },
-        { path: 'reports', component: () => import('../views/teacher/ClassReport.vue') },
-        { path: 'student-space', component: () => import('../views/teacher/StudentSpace.vue') }
+        { path: 'qa', meta: { feature: 'qa' }, component: () => import('../views/teacher/TeacherQa.vue') },
+        { path: 'login-logs', meta: { feature: 'login-logs' }, component: () => import('../views/teacher/LoginLogs.vue') },
+        { path: 'reports', meta: { feature: 'reports' }, component: () => import('../views/teacher/ClassReport.vue') },
+        { path: 'student-space', meta: { feature: 'student-space' }, component: () => import('../views/teacher/StudentSpace.vue') }
       ]
     },
     {
@@ -67,21 +70,21 @@ const router = createRouter({
         { path: 'home', component: () => import('../views/student/StudentHome.vue') },
         { path: 'lessons/:id', component: () => import('../views/student/StudentLesson.vue') },
         { path: 'records', component: () => import('../views/student/StudentRecords.vue') },
-        { path: 'works', component: () => import('../views/student/MyWorks.vue') },
-        { path: 'showcase', component: () => import('../views/student/Showcase.vue') },
-        { path: 'tests', component: () => import('../views/student/StudentTests.vue') },
-        { path: 'practice', component: () => import('../views/student/PracticeView.vue') },
-        { path: 'python', component: () => import('../views/python/StudentPracticeView.vue') },
-        { path: 'resources', component: () => import('../views/student/StudentResources.vue') },
-        { path: 'disk', component: () => import('../views/common/DiskView.vue') },
-        { path: 'notes', component: () => import('../views/student/StudentNotes.vue') },
-        { path: 'electives', component: () => import('../views/student/StudentElectives.vue') },
+        { path: 'works', meta: { feature: 'works' }, component: () => import('../views/student/MyWorks.vue') },
+        { path: 'showcase', meta: { feature: 'showcase' }, component: () => import('../views/student/Showcase.vue') },
+        { path: 'tests', meta: { feature: 'tests' }, component: () => import('../views/student/StudentTests.vue') },
+        { path: 'practice', meta: { feature: 'practice' }, component: () => import('../views/student/PracticeView.vue') },
+        { path: 'python', meta: { feature: 'python' }, component: () => import('../views/python/StudentPracticeView.vue') },
+        { path: 'resources', meta: { feature: 'resources' }, component: () => import('../views/student/StudentResources.vue') },
+        { path: 'disk', meta: { feature: 'disk' }, component: () => import('../views/common/DiskView.vue') },
+        { path: 'notes', meta: { feature: 'notes' }, component: () => import('../views/student/StudentNotes.vue') },
+        { path: 'electives', meta: { feature: 'electives' }, component: () => import('../views/student/StudentElectives.vue') },
         { path: 'messages', component: () => import('../views/student/StudentMessages.vue') },
-        { path: 'qa', component: () => import('../views/student/StudentQa.vue') },
-        { path: 'report', component: () => import('../views/student/StudentReport.vue') },
-        { path: 'op-practice', component: () => import('../views/student/StudentOpPractice.vue') },
-        { path: 'typing', component: () => import('../views/student/StudentTyping.vue') },
-        { path: 'site', component: () => import('../views/student/StudentSite.vue') }
+        { path: 'qa', meta: { feature: 'qa' }, component: () => import('../views/student/StudentQa.vue') },
+        { path: 'report', meta: { feature: 'report' }, component: () => import('../views/student/StudentReport.vue') },
+        { path: 'op-practice', meta: { feature: 'op-practice' }, component: () => import('../views/student/StudentOpPractice.vue') },
+        { path: 'typing', meta: { feature: 'typing' }, component: () => import('../views/student/StudentTyping.vue') },
+        { path: 'site', meta: { feature: 'site' }, component: () => import('../views/student/StudentSite.vue') }
       ]
     }
   ]
@@ -101,8 +104,20 @@ router.beforeEach(async (to) => {
   }
   // 角色守卫：进入其他角色的区域时回到自己的首页
   const need = to.matched.find(r => r.meta.role)?.meta.role as string | undefined
-  if (need && auth.user && auth.user.role !== need) {
+  // 兼任管理员的教师可以进管理后台
+  const allowed = auth.user?.role === need || (need === 'ADMIN' && !!auth.user?.canAdmin)
+  if (need && auth.user && !allowed) {
     return home[auth.user.role] || { name: 'login' }
+  }
+  // 管理员关闭的功能：直接输入网址也进不去
+  const feature = to.meta.feature as string | undefined
+  if (feature) {
+    const features = useFeatureStore()
+    await features.load()
+    if (!features.isOpen(feature)) {
+      ElMessage.warning('该功能已被管理员关闭')
+      return home[auth.user?.role || ''] || { name: 'login' }
+    }
   }
   return true
 })

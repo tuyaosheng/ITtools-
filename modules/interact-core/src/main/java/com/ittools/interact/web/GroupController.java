@@ -41,7 +41,7 @@ public class GroupController {
     public ApiResponse<Map<String, Object>> settings(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
         return ApiResponse.ok(svc.updateSettings(CurrentUser.id(), id, b.intv("groupCount"),
-                b.has("joinOpen") ? b.bool("joinOpen", false) : null, b.has("voteOpen") ? b.bool("voteOpen", false) : null));
+                b.has("joinOpen") ? b.bool("joinOpen", false) : null, b.has("voteOpen") ? b.bool("voteOpen", false) : null, b.intv("maxSize")));
     }
 
     @PutMapping("/api/teacher/groups/lessons/{id}/members/{studentId}")

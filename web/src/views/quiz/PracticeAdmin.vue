@@ -68,13 +68,26 @@
     </el-tab-pane>
 
     <el-tab-pane label="题库查重" name="dups">
-      <div class="bar"></div>
+      <div class="bar">
+        <span class="muted">题型、题干、选项都相同的题
+          <Hint>比较时忽略空白、标点、全半角和大小写；选项顺序不同也算相同，只有题干相同而选项不同的不算重复。
+            合并时保留被试卷引用最多的那道（一样多看作答次数，再一样就保留最早的），其余题在试卷、作答、刷题记录里的引用改指向它，标签合并，然后移入回收站。
+            同一份试卷里同时有两道重复题的，这份试卷保持原样。</Hint></span>
+        <el-popconfirm v-if="dups.length" :title="`合并全部 ${dups.length} 组重复题？`" width="220" @confirm="merge()">
+          <template #reference><el-button type="primary" size="small">全部合并</el-button></template>
+        </el-popconfirm>
+      </div>
       <el-empty v-if="!dups.length" description="没有发现重复题目" />
-      <div v-for="(g, gi) in dups" :key="gi" class="dup">
-        <div class="muted">第 {{ gi + 1 }} 组 · {{ typeLabel[g.qtype] }} · {{ g.questions.length }} 题</div>
+      <div v-for="(g, gi) in dups" :key="g.questions[0].id" class="dup">
+        <div class="dup-h">
+          <span class="muted">第 {{ gi + 1 }} 组 · {{ typeLabel[g.qtype] }} · {{ g.questions.length }} 题</span>
+          <el-button link type="primary" size="small" @click="merge(g)">合并本组</el-button>
+        </div>
         <div v-for="x in g.questions" :key="x.id" class="dup-q">
+          <el-tag v-if="x.keep" size="small" type="success" effect="plain">保留</el-tag>
+          <span class="muted">#{{ x.id }}</span>
           <span v-html="safeHtml(x.stem)" class="stem" />
-          <span class="muted">答案 {{ Array.isArray(x.answer) ? x.answer.join('/') : x.answer }} · {{ fmtTime(x.createdAt) }}</span>
+          <span class="muted">答案 {{ Array.isArray(x.answer) ? x.answer.join('/') : x.answer }} · 试卷 {{ x.paperCount }} · 作答 {{ x.answerCount }} · {{ fmtTime(x.createdAt) }}</span>
           <el-popconfirm title="移入回收站？" @confirm="trash(x)">
             <template #reference><el-button link type="danger" size="small">删除</el-button></template>
           </el-popconfirm>
@@ -163,6 +176,16 @@ async function trash(x: any) {
   dups.value = await api.get('/teacher/quiz/duplicates')
 }
 
+async function merge(g?: any) {
+  try {
+    const r = await api.post('/teacher/quiz/duplicates/merge', { ids: g ? g.questions.map((x: any) => x.id) : [] })
+    ElMessage.success(`已合并 ${r.groups} 组，${r.merged} 道重复题移入回收站`)
+    dups.value = await api.get('/teacher/quiz/duplicates')
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
 onMounted(async () => {
   classes.value = await api.get('/teacher/classes')
   await load()
@@ -179,6 +202,7 @@ onMounted(async () => {
 .mr4 { margin-right: 4px; }
 .stem :deep(p) { display: inline; margin: 0; }
 .dup { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.dup-h { display: flex; align-items: center; justify-content: space-between; }
 .dup-q { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-top: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
 .dup-q .stem { flex: 1; }
 </style>

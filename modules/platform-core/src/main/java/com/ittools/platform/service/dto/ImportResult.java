@@ -25,14 +25,18 @@ public final class ImportResult {
 
     private int total;
     private int imported;
+    private int skipped;
     private final List<RowError> errors = new ArrayList<RowError>();
 
     public int getTotal() { return total; }
     public int getImported() { return imported; }
+    /** Rows skipped as duplicates of existing records (not counted as failures). */
+    public int getSkipped() { return skipped; }
     public int getFailed() { return errors.size(); }
     public List<RowError> getErrors() { return errors; }
 
     public void incrementTotal() { this.total++; }
     public void incrementImported() { this.imported++; }
+    public void incrementSkipped() { this.skipped++; }
     public void addError(int row, String message) { this.errors.add(new RowError(row, message)); }
 }

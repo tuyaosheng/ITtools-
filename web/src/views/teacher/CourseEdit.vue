@@ -74,8 +74,12 @@
               <el-option v-for="p in pyProblems" :key="p.id" :label="p.title + (p.mine ? '' : '（共享）')" :value="p.id" />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="['HOMEWORK', 'QUIZ'].includes(current.pageType)" label="分值">
+          <el-form-item v-if="current.pageType === 'HOMEWORK'" label="分值">
             <el-input-number v-model="current.score" :min="0" :max="1000" />
+          </el-form-item>
+          <el-form-item v-if="current.pageType === 'QUIZ'" label="满分">
+            <span v-if="currentPaper">{{ currentPaper.totalScore }} 分 <span class="muted">（来自试卷，要改请到“题库与试卷”改每题分值）</span></span>
+            <span v-else class="muted">选好试卷后显示</span>
           </el-form-item>
           <el-form-item label="学生可见">
             <el-switch v-model="current.studentVisible" />
@@ -115,6 +119,7 @@ const current = ref<any>(null)
 const saving = ref(false)
 const papers = ref<any[]>([])
 const pyProblems = ref<any[]>([])
+const currentPaper = computed(() => papers.value.find(p => p.id === current.value?.refId))
 const startVisible = ref(false)
 const isOwner = computed(() => course.value && course.value.teacherId === auth.user?.userId)
 

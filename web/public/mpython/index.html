@@ -39,11 +39,22 @@
     <!-- 任务卡：上面是要求，下面是大致步骤；具体怎么操作收在“看提示”里，卡住了自己点开。
          提示一上来就摊开，学生会跳过思考直接照抄，而且整张卡一屏字没人读 -->
     <div class="card task">
+      <button class="task-edit" id="taskEditBtn" hidden title="改这一关的要求、步骤和提示（全班学生刷新后看到新的）">✏️ 编辑</button>
       <h2 id="taskTitle">加载中…</h2>
       <div class="task-sec"><b>🎯 要求</b><p id="taskBrief"></p></div>
       <div class="task-sec" id="taskStepsBox" hidden><b>🛠 步骤</b><p id="taskSteps"></p></div>
       <button class="hint-btn" id="hintBtn" hidden>💡 看提示</button>
       <p class="hint" id="taskHint" hidden></p>
+      <div class="task-editor" id="taskEditor" hidden>
+        <label>🎯 要求<textarea id="teBrief" rows="4"></textarea></label>
+        <label>🛠 步骤（不填就不显示）<textarea id="teSteps" rows="3"></textarea></label>
+        <label>💡 提示（不填就没有“看提示”）<textarea id="teHint" rows="3"></textarea></label>
+        <div class="te-btns">
+          <button class="primary" id="teSave">保存</button>
+          <button id="teCancel">取消</button>
+          <button id="teReset" title="丢掉改过的文字，换回原来写好的那一版">恢复默认</button>
+        </div>
+      </div>
     </div>
 
     <div class="scene" id="scene" aria-live="polite"></div>

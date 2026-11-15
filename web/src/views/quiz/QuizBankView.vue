@@ -504,10 +504,36 @@ function removeOption(i: number) {
   qForm.answer = ''
 }
 
+/** 保存前查重：题干和选项都相同的提示“重复”，仅题干相同（选项不同）的提示“相似”，确认后带 force 保存。图片题按图片去重，不走这里。 */
+async function confirmDuplicate(body: any): Promise<boolean> {
+  const r = await api.post('/teacher/quiz/questions/check-duplicate', body)
+  if (!r.same.length && !r.similar.length) return true
+  const text = (s: string) => {
+    const d = document.createElement('div')
+    d.innerHTML = s || ''
+    const t = (d.textContent || '').trim()
+    d.textContent = t.length > 60 ? t.slice(0, 60) + '…' : t
+    return d.innerHTML
+  }
+  const line = (q: any) => `<li>#${q.id} ${text(q.stem)}${q.deletedAt ? '（在回收站）' : ''}</li>`
+  const html = (r.same.length ? `<p><b>题库里已有相同的题目</b>（题干和选项都一样）：</p><ul>${r.same.map(line).join('')}</ul>` : '')
+    + (r.similar.length ? `<p>题干相同、选项不同的题目（不算重复，仅供核对）：</p><ul>${r.similar.map(line).join('')}</ul>` : '')
+  try {
+    await ElMessageBox.confirm(html, r.same.length ? '发现重复题目' : '发现相似题目', {
+      dangerouslyUseHTMLString: true, confirmButtonText: '仍然保存', cancelButtonText: '返回修改', type: r.same.length ? 'warning' : 'info'
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function saveQuestion(next: boolean) {
-  const body = { ...qForm, answer: qForm.qtype === 'FILL' ? qForm.blanks : qForm.answer }
+  const body: any = { ...qForm, answer: qForm.qtype === 'FILL' ? qForm.blanks : qForm.answer }
   const needImageFirst = !qForm.id && pendingImage.value && !String(qForm.stem || '').trim()
   try {
+    if (!qForm.hasImage && !pendingImage.value && !(await confirmDuplicate(body))) return
+    body.force = true
     let saved
     if (qForm.id) {
       if (pendingImage.value) await uploadImage(qForm.id)
@@ -654,7 +680,10 @@ async function importExcel(e: Event) {
   if (!f) return
   try {
     const r = await api.upload('/teacher/quiz/questions/import', f)
-    ElMessage.success(`导入 ${r.imported}/${r.total} 题${r.failed ? '，失败 ' + r.failed + ' 题：' + r.errors.map((x: any) => `第${x.row}行 ${x.message}`).join('；') : ''}`)
+    ElMessage({
+      type: r.failed ? 'warning' : 'success', duration: r.failed || r.skipped ? 6000 : 3000,
+      message: `导入 ${r.imported}/${r.total} 题${r.skipped ? `，跳过重复 ${r.skipped} 题` : ''}${r.failed ? '，失败 ' + r.failed + ' 题：' + r.errors.map((x: any) => `第${x.row}行 ${x.message}`).join('；') : ''}`
+    })
     await reload()
   } catch (err) {
     ElMessage.error(errMsg(err))

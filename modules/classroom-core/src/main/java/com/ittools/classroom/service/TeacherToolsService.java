@@ -27,6 +27,11 @@ public class TeacherToolsService {
         this.encoder = encoder;
     }
 
+    /** 老师能管理该学生（学生所在班级是老师任教的班）才放行。 */
+    public void requireStudent(Long teacherId, Long studentId) {
+        requireClass(teacherId, classOf(studentId));
+    }
+
     private void requireClass(Long teacherId, Long classId) {
         if (!bindings.teacherCanUseClass(teacherId, classId)) throw new IllegalArgumentException("无权管理该班级");
     }

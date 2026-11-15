@@ -26,6 +26,8 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "enroll_year_id") private SchoolYear enrollYear;
     private boolean graduated = false;
     private boolean enabled = true;
+    /** 教师兼任管理员（登录后同时有管理后台权限） */
+    @Column(name = "admin_access") private boolean adminAccess = false;
     @Column(name = "created_at", updatable = false, insertable = false) private OffsetDateTime createdAt;
     @Column(name = "updated_at", insertable = false, updatable = false) private OffsetDateTime updatedAt;
 
@@ -40,6 +42,7 @@ public class User {
     public SchoolYear getEnrollYear() { return enrollYear; } public void setEnrollYear(SchoolYear v) { this.enrollYear = v; }
     public boolean isGraduated() { return graduated; } public void setGraduated(boolean v) { this.graduated = v; }
     public boolean isEnabled() { return enabled; } public void setEnabled(boolean v) { this.enabled = v; }
+    public boolean isAdminAccess() { return adminAccess; } public void setAdminAccess(boolean v) { this.adminAccess = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

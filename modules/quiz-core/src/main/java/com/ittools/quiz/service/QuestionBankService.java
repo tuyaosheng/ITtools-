@@ -84,6 +84,7 @@ public class QuestionBankService {
         String old = jdbc.queryForObject("SELECT image_path FROM question WHERE id = :id", p("id", questionId), String.class);
         StoredFile sf = storage.storeBytes(data, "qimg", file.getOriginalFilename());
         jdbc.update("UPDATE question SET image_path = :p, image_hash = :h WHERE id = :id", p("p", sf.getRelPath(), "h", sha256(data), "id", questionId));
+        questions.refreshKeys(questionId);
         deleteImageIfUnused(old);
         return questions.get(questionId);
     }
@@ -95,6 +96,7 @@ public class QuestionBankService {
         String stem = (String) q.get("stem");
         if (stem == null || stem.trim().isEmpty()) throw new IllegalArgumentException("题干文字为空时不能删除图片，请先填写题干");
         jdbc.update("UPDATE question SET image_path = NULL, image_hash = NULL WHERE id = :id", p("id", questionId));
+        questions.refreshKeys(questionId);
         deleteImageIfUnused((String) q.get("image_path"));
         return questions.get(questionId);
     }
@@ -282,7 +284,8 @@ public class QuestionBankService {
                 p("ids", ids, "t", teacherId))) {
             Long id = ((Number) q.get("id")).longValue();
             Long refs = jdbc.queryForObject("SELECT (SELECT COUNT(*) FROM paper_question WHERE question_id = :q) + (SELECT COUNT(*) FROM quiz_answer WHERE question_id = :q) "
-                    + "+ (SELECT COUNT(*) FROM practice_log WHERE question_id = :q)", p("q", id), Long.class);
+                    + "+ (SELECT COUNT(*) FROM practice_log WHERE question_id = :q) + (SELECT COUNT(*) FROM practice_session_item WHERE question_id = :q)",
+                    p("q", id), Long.class);
             if (refs != null && refs > 0) {
                 kept++;
                 continue;
@@ -355,7 +358,7 @@ public class QuestionBankService {
     }
 
     /**
-     * 导入题库包。去重：有图片按图片内容、无图片按 题型+题干，比对本人已有的题（含回收站）。
+     * 导入题库包。去重：有图片按图片内容、无图片按题目指纹（dup_key），比对本人已有的题（含回收站）。
      * 重复题只合并标签；overwrite = NONE / ANSWER / ANALYSIS / ALL 决定是否用包里的答案、解析覆盖。
      */
     @Transactional
@@ -389,8 +392,8 @@ public class QuestionBankService {
                 String analysis = q.get("analysis") == null ? null : String.valueOf(q.get("analysis"));
                 List<Long> existing = hash != null
                         ? jdbc.queryForList("SELECT id FROM question WHERE teacher_id = :t AND image_hash = :h", p("t", teacherId, "h", hash), Long.class)
-                        : jdbc.queryForList("SELECT id FROM question WHERE teacher_id = :t AND image_hash IS NULL AND qtype = :qt AND stem = :s",
-                        p("t", teacherId, "qt", qtype, "s", stem), Long.class);
+                        : jdbc.queryForList("SELECT id FROM question WHERE teacher_id = :t AND dup_key = :k",
+                        p("t", teacherId, "k", QuestionService.keysOf(qtype, stem, options)[1]), Long.class);
                 List<String> tags = strList(q.get("tags"));
                 if (!existing.isEmpty()) {
                     for (Long id : existing) {
@@ -398,6 +401,7 @@ public class QuestionBankService {
                         if (ovAnswer && !draft) {
                             jdbc.update("UPDATE question SET qtype = :qt, options = :o, answer = :a, needs_answer = FALSE WHERE id = :id",
                                     p("qt", qtype, "o", choiceJson(qtype, options), "a", answer, "id", id));
+                            questions.refreshKeys(id);
                         }
                         if (ovAnalysis && analysis != null) jdbc.update("UPDATE question SET analysis = :an WHERE id = :id", p("an", analysis, "id", id));
                     }
@@ -413,6 +417,7 @@ public class QuestionBankService {
                         "na", draft, "ip", path, "h", hash);
                 Long id = jdbc.queryForObject("INSERT INTO question(teacher_id, category, qtype, stem, options, answer, analysis, score, stars, needs_answer, image_path, image_hash) "
                         + "VALUES (:t, :c, :qt, :s, :o, :a, :an, :sc, :st, :na, :ip, :h) RETURNING id", ps, Long.class);
+                questions.refreshKeys(id);
                 addTags(id, tags);
                 added++;
             } catch (RuntimeException e) {

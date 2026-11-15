@@ -2,7 +2,10 @@
   <el-card shadow="never">
     <template #header>指法练习</template>
     <el-tabs v-model="tab">
-      <el-tab-pane label="开始练习" name="practice">
+      <el-tab-pane label="键盘与打字训练" name="trainer" lazy>
+        <iframe class="trainer" :src="`/typing/trainer.html?uid=${auth.user?.userId ?? ''}`" title="键盘操作与打字训练" />
+      </el-tab-pane>
+      <el-tab-pane label="限时练习" name="practice">
         <div class="bar">
           <el-radio-group v-model="level" :disabled="running">
             <el-radio-button v-for="l in typingLevels" :key="l.value" :value="l.value">{{ l.label }}</el-radio-button>
@@ -55,11 +58,13 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
+import { useAuthStore } from '../../stores/auth'
 import { fmtTime } from '../../utils/format'
 import { typingLevels, typingWords } from './typingWords'
 import TypingLeaderboard from './TypingLeaderboard.vue'
 
-const tab = ref('practice')
+const auth = useAuthStore()
+const tab = ref('trainer')
 const level = ref('PRIMARY')
 const duration = ref(60)
 const words = ref<string[]>([])
@@ -173,6 +178,7 @@ onBeforeUnmount(() => window.clearInterval(clock))
 </script>
 
 <style scoped>
+.trainer { width: 100%; height: calc(100vh - 230px); min-height: 560px; border: 1px solid var(--el-border-color); border-radius: 6px; background: #fff; }
 .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .w120 { width: 120px; }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 10px; margin-bottom: 14px; max-width: 640px; }
