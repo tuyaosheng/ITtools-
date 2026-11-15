@@ -40,8 +40,8 @@ public class StudentClassroomController {
     }
 
     @GetMapping("/lessons/{id}/pages/{pageId}")
-    public ApiResponse<Map<String, Object>> page(@PathVariable Long id, @PathVariable Long pageId) {
-        return ApiResponse.ok(lessons.studentPage(CurrentUser.id(), id, pageId));
+    public ApiResponse<Map<String, Object>> page(@PathVariable Long id, @PathVariable Long pageId, HttpServletRequest req) {
+        return ApiResponse.ok(lessons.studentPage(CurrentUser.id(), id, pageId, com.ittools.classroom.util.ServerAddress.forBoards(req.getServerName())));
     }
 
     @GetMapping("/records")

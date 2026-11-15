@@ -20,7 +20,8 @@ export const consoleTabs: ConsoleTab[] = [
   { name: 'forum', label: '课堂论坛', component: defineAsyncComponent(() => import('../views/interact/ForumPanel.vue')) },
   { name: 'dwell', label: '学情监控', component: defineAsyncComponent(() => import('../views/interact/DwellPanel.vue')) },
   { name: 'netgate', label: '成绩开网', component: defineAsyncComponent(() => import('../views/quiz/NetGatePanel.vue')) },
-  { name: 'rollcall', label: '随机点名', component: defineAsyncComponent(() => import('../views/activity/RollCallPanel.vue')) }
+  { name: 'rollcall', label: '随机点名', component: defineAsyncComponent(() => import('../views/activity/RollCallPanel.vue')) },
+  { name: 'mqtt', label: '物联网消息', component: defineAsyncComponent(() => import('../views/activity/MqttMessages.vue')) }
 ]
 
 export const studentTools: ConsoleTab[] = [

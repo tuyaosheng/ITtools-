@@ -95,6 +95,26 @@
         </span>
       </el-form-item>
 
+      <el-divider content-position="left">内置 MQTT 服务器（代替 SIoT）</el-divider>
+      <el-form-item label="启用">
+        <el-switch v-model="mqttEnabled" />
+        <span v-if="mqtt" class="tip inline" :class="mqtt.running ? 'ok' : 'bad'">
+          {{ mqtt.running ? `运行中，端口 ${mqtt.port}，在线设备 ${mqtt.clients} 个` : (mqtt.error || '未运行') }}
+        </span>
+        <Hint>掌控板在 Mind+ 里物联网平台选 SIoT，服务器地址填本机 IP，端口、账号、密码填下面的。每节课开课时自动生成一个项目名（如 B81_1115_2029），
+          课程页面里写 {{ '{' + '{MQTT项目}' + '}' }} 会显示成本节课的项目名；消息按课堂分开保存，不用下课清理。学生和老师在“物联网消息”页面、课堂控制台“物联网消息”里看。
+          本机还开着 SIoT 时会占用 1883 端口，先关掉 SIoT。</Hint>
+      </el-form-item>
+      <el-form-item label="端口">
+        <el-input v-model="form['mqtt.port']" class="w200" />
+      </el-form-item>
+      <el-form-item label="账号">
+        <el-input v-model="form['mqtt.username']" class="w200" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input v-model="form['mqtt.password']" class="w200" />
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" :loading="saving" @click="save">保存设置</el-button>
       </el-form-item>
@@ -130,6 +150,11 @@ const studentAvatar = bool('student.allowAvatarChange')
 const ssoEnabled = bool('sso.enabled')
 const origin = window.location.origin
 const netEnabled = bool('net.enabled')
+const mqttEnabled = bool('mqtt.enabled')
+const mqtt = ref<any>(null)
+async function loadMqtt() {
+  try { mqtt.value = await api.get('/admin/mqtt/status') } catch { mqtt.value = null }
+}
 const testing = ref(false)
 const netResult = ref<any>(null)
 
@@ -168,6 +193,7 @@ async function load() {
   } finally {
     loading.value = false
   }
+  loadMqtt()
 }
 
 async function save() {
@@ -175,6 +201,7 @@ async function save() {
   try {
     Object.assign(form, await api.put('/admin/settings', { ...form }))
     ElMessage.success('设置已保存')
+    loadMqtt()
   } catch (err) {
     ElMessage.error(errMsg(err))
   } finally {
@@ -190,6 +217,7 @@ onMounted(load)
 .tip { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; margin-top: 4px; }
 .tip.inline { margin: 0 0 0 10px; }
 .w420 { width: 420px; }
+.w200 { width: 200px; }
 .ok { color: var(--el-color-success); }
 .bad { color: var(--el-color-danger); }
 .doc { font-size: 12px; line-height: 1.8; color: var(--el-text-color-regular); }

@@ -11,6 +11,9 @@
     <dependency><groupId>com.ittools</groupId><artifactId>lab-core</artifactId><version>0.1.0-SNAPSHOT</version></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
+    <!-- 内置 MQTT 服务器（代替 SIoT）：netty 自带的 MQTT 3.1.1 编解码，版本跟随 Spring Boot 管理的 netty -->
+    <dependency><groupId>io.netty</groupId><artifactId>netty-codec-mqtt</artifactId></dependency>
+    <dependency><groupId>io.netty</groupId><artifactId>netty-handler</artifactId></dependency>
   </dependencies>
   <build>
     <plugins>

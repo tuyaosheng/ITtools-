@@ -58,6 +58,15 @@
                   <el-radio-button value="ABSENT">缺</el-radio-button>
                   <el-radio-button value="LEAVE">假</el-radio-button>
                 </el-radio-group>
+                <el-dropdown trigger="click" @command="(c: string) => c === 'pwd' ? resetPwd(row) : kickStudent(row)">
+                  <el-button text class="m-more">⋯</el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="pwd">重置密码</el-dropdown-item>
+                      <el-dropdown-item command="kick">强制下线</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
               <div class="m-score">
                 <el-input-number :model-value="row.score" :min="0" :max="100" :step="5" size="default" class="m-num" placeholder="得分"
@@ -113,8 +122,9 @@
                   @change="(v: string) => patch(row, { comment: v })" />
               </template>
             </el-table-column>
-            <el-table-column label="登录" width="90">
+            <el-table-column label="账号" width="150">
               <template #default="{ row }: { row: any }">
+                <el-button link type="primary" size="small" @click="resetPwd(row)">重置密码</el-button>
                 <el-button link type="warning" size="small" @click="kickStudent(row)">强制下线</el-button>
               </template>
             </el-table-column>
@@ -334,6 +344,18 @@ async function toggleAttention(a: any) {
   await patch(a, { attention: !a.attention })
 }
 
+// 手机上课时也能直接给学生重置密码（原来要切到电脑版“我的班级”）
+async function resetPwd(row: any) {
+  try {
+    const { value } = await ElMessageBox.prompt(`为 ${row.name} 设置新密码`, '重置密码',
+      { inputValue: '123456', confirmButtonText: '重置', inputValidator: (v: string) => !!v?.trim() || '密码不能为空' })
+    await api.post(`/teacher/students/${row.studentId}/reset-password`, { password: value })
+    ElMessage.success('密码已重置')
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
+}
+
 // 强制下线：学生要换电脑、或账号被别的电脑占住登不上时用
 async function kickStudent(row: any) {
   try {
@@ -367,8 +389,8 @@ async function togglePage(p: any, open: boolean) {
 }
 
 async function openPage(p: any) {
-  const full = await api.get(`/teacher/courses/${lesson.value.courseId}`)
-  currentPage.value = full.pages.find((x: any) => x.id === p.id)
+  // 走课堂接口：正文里的 {{MQTT项目}}、{{媒体:…}} 等占位符替换成本节课的值，和学生看到的一样
+  currentPage.value = await api.get(`/teacher/lessons/${id}/pages/${p.id}`)
 }
 
 async function endLesson() {

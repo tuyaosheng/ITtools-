@@ -38,7 +38,7 @@ public class LessonService {
             "l.id, l.course_id AS \"courseId\", c.name AS \"courseName\", l.class_id AS \"classId\", "
                     + "sy.label || k.name AS \"className\", l.teacher_id AS \"teacherId\", u.name AS \"teacherName\", "
                     + "l.status, l.started_at AS \"startedAt\", l.ended_at AS \"endedAt\", l.group_model_id AS \"groupModelId\", "
-                    + "gm.name AS \"groupModelName\", l.summary, l.term_id AS \"termId\", l.disabled_features AS \"disabledFeatures\", "
+                    + "gm.name AS \"groupModelName\", l.summary, l.term_id AS \"termId\", l.disabled_features AS \"disabledFeatures\", l.mqtt_project AS \"mqttProject\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'PRESENT') AS \"presentCount\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'ABSENT') AS \"absentCount\", "
                     + "(SELECT COUNT(*) FROM lesson_attendance a WHERE a.lesson_id = l.id AND a.status = 'LEAVE') AS \"leaveCount\", "
@@ -74,6 +74,7 @@ public class LessonService {
                 "INSERT INTO lesson(course_id, teacher_id, class_id, term_id, group_model_id) "
                         + "SELECT :c, :t, :k, COALESCE(c.term_id, :cur), :g FROM course c WHERE c.id = :c RETURNING id",
                 p("c", courseId, "t", teacherId, "k", classId, "cur", terms.currentTermId(), "g", groupModelId), Long.class);
+        assignMqttProject(id, classId);
         return get(id);
     }
 
@@ -305,10 +306,91 @@ public class LessonService {
         requireStudent(studentId, lessonId);
         for (Map<String, Object> pg : lessonPages(lessonId)) {
             if (((Number) pg.get("id")).longValue() == pageId && Boolean.TRUE.equals(pg.get("open"))) {
-                return courses.page(pageId);
+                return renderPage(lessonId, courses.page(pageId), null);
             }
         }
         throw new IllegalArgumentException("该页面未开放");
+    }
+
+    /** 学生打开页面（带上浏览器访问平台用的地址，{{服务器IP}} 替换成它）。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> studentPage(Long studentId, Long lessonId, Long pageId, String serverHost) {
+        Map<String, Object> pg = studentPage(studentId, lessonId, pageId);
+        return renderPage(lessonId, pg, serverHost);
+    }
+
+    /** 老师在课堂控制台看页面：和学生看到的一样替换占位符。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> teacherPage(Long teacherId, Long lessonId, Long pageId, String serverHost) {
+        requireTeacher(teacherId, lessonId);
+        return renderPage(lessonId, requirePageOfLesson(lessonId, pageId), serverHost);
+    }
+
+    // ================= MQTT 项目名与页面占位符 =================
+
+    private static final String CN_DIGITS = "〇一二三四五六七八九";
+
+    /** 班级号：年级汉字（一~九）加班名里的数字，如“八(1)班”→ 81、“七（12）班”→ 712；认不出时用 C+班级编号。 */
+    public static String classCode(String className, Long classId) {
+        StringBuilder sb = new StringBuilder();
+        if (className != null) {
+            for (char ch : className.toCharArray()) {
+                int i = CN_DIGITS.indexOf(ch);
+                if (i > 0) { sb.append(i); break; }
+            }
+            for (char ch : className.toCharArray()) if (ch >= '0' && ch <= '9') sb.append(ch);
+            if (sb.length() == 0) {
+                for (char ch : className.toCharArray()) if (ch >= '０' && ch <= '９') sb.append((char) (ch - '０' + '0'));
+            }
+        }
+        return sb.length() == 0 ? "C" + classId : sb.toString();
+    }
+
+    /** 本节课的 MQTT 项目名：B + 班级号 + _月日_时分，如 B81_1115_2029（八(1)班 11月15日 20:29 开课）；同一分钟重复开课加字母。 */
+    private void assignMqttProject(Long lessonId, Long classId) {
+        List<String> names = jdbc.queryForList("SELECT name FROM klass WHERE id = :k", p("k", classId), String.class);
+        String base = "B" + classCode(names.isEmpty() ? null : names.get(0), classId) + "_"
+                + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMdd_HHmm"));
+        String name = base;
+        for (char c = 'A'; c <= 'Z'; c++) {
+            Long used = jdbc.queryForObject("SELECT COUNT(*) FROM lesson WHERE mqtt_project = :p", p("p", name), Long.class);
+            if (used == null || used == 0) break;
+            name = base + c;
+        }
+        jdbc.update("UPDATE lesson SET mqtt_project = :p WHERE id = :l", p("p", name, "l", lessonId));
+    }
+
+    /**
+     * 页面正文里的占位符：
+     * {{MQTT项目}} 本节课的 MQTT 项目名；{{服务器IP}} 学生访问平台用的地址（就是内置 MQTT 服务器的地址）；
+     * {{媒体:文件名}} 课程包 media/ 里的文件（操作视频等）的下载地址。
+     */
+    public Map<String, Object> renderPage(Long lessonId, Map<String, Object> page, String serverHost) {
+        Object c = page.get("content");
+        if (!(c instanceof String) || !((String) c).contains("{{")) return page;
+        Map<String, Object> l = get(lessonId);
+        String content = (String) c;
+        Object proj = l.get("mqttProject");
+        content = content.replace("{{MQTT项目}}", proj == null ? "（本节课没有 MQTT 项目，请老师重新开课）" : proj.toString());
+        if (serverHost != null && !serverHost.isEmpty()) content = content.replace("{{服务器IP}}", serverHost);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[{][{]媒体:([^}]+)[}][}]").matcher(content);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String url = "/api/classroom/courses/" + l.get("courseId") + "/media/" + encode(m.group(1).trim());
+            m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(url));
+        }
+        m.appendTail(sb);
+        Map<String, Object> out = new HashMap<>(page);
+        out.put("content", sb.toString());
+        return out;
+    }
+
+    private static String encode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return s;
+        }
     }
 
     /** 学习记录（原 coursesturecord / LearningRecord）。 */

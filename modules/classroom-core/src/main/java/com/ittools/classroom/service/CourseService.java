@@ -21,7 +21,7 @@ import static com.ittools.platform.db.Sql.p;
 public class CourseService {
     public static final List<String> PAGE_TYPES = Arrays.asList(
             "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST", "PYTHON",
-            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH", "MPYTHON");
+            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH", "MPYTHON", "MQTT");
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;
@@ -218,5 +218,27 @@ public class CourseService {
 
     private static void requireName(String n) {
         if (n == null || n.trim().isEmpty()) throw new IllegalArgumentException("名称不能为空");
+    }
+
+    // ---- 课程媒体（课程包 media/） ----
+
+    @Transactional(readOnly = true)
+    public String mediaPath(Long courseId, String name) {
+        List<String> l = jdbc.queryForList("SELECT file_path FROM course_media WHERE course_id = :c AND name = :n",
+                p("c", courseId, "n", name), String.class);
+        return l.isEmpty() ? null : l.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> media(Long courseId) {
+        return jdbc.queryForList("SELECT name, file_path AS \"filePath\", size FROM course_media WHERE course_id = :c ORDER BY name",
+                p("c", courseId));
+    }
+
+    @Transactional
+    public void putMedia(Long courseId, String name, String filePath, long size) {
+        jdbc.update("INSERT INTO course_media(course_id, name, file_path, size) VALUES (:c, :n, :f, :s) "
+                + "ON CONFLICT (course_id, name) DO UPDATE SET file_path = EXCLUDED.file_path, size = EXCLUDED.size",
+                p("c", courseId, "n", name, "f", filePath, "s", size));
     }
 }

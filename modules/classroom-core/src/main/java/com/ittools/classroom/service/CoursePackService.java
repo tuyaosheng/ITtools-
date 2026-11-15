@@ -121,6 +121,11 @@ public class CoursePackService {
             outPages.add(m);
         }
         manifest.put("pages", outPages);
+        for (Map<String, Object> md : courses.media(courseId)) {
+            if (Files.isRegularFile(storage.resolve((String) md.get("filePath")))) {
+                files.add(new String[]{"media/" + md.get("name"), (String) md.get("filePath")});
+            }
+        }
 
         ZipOutputStream z = new ZipOutputStream(out, StandardCharsets.UTF_8);
         z.putNextEntry(new ZipEntry("course.json"));
@@ -275,9 +280,22 @@ public class CoursePackService {
                         }
                     }
                 }
+                // 课程媒体：media/ 下的文件（操作视频等），页面正文用 {{媒体:文件名}} 引用
+                int media = 0;
+                for (Map.Entry<String, ZipEntry> e : entries.entrySet()) {
+                    if (!e.getKey().startsWith("media/") || e.getValue().isDirectory()) continue;
+                    String mname = e.getKey().substring(e.getKey().lastIndexOf('/') + 1);
+                    if (mname.isEmpty() || mname.length() > 200) continue;
+                    try (InputStream in = zf.getInputStream(e.getValue())) {
+                        StoredFile sf = storage.store(in, e.getValue().getSize(), "course", mname);
+                        courses.putMedia(courseId, mname, sf.getRelPath(), sf.getSize());
+                        media++;
+                    }
+                }
                 Map<String, Object> out = new LinkedHashMap<>();
                 out.put("course", courses.get(courseId));
                 out.put("pages", seq);
+                out.put("media", media);
                 out.put("warnings", warnings);
                 createdDirs.clear();
                 return out;

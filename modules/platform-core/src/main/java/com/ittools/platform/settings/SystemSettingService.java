@@ -44,6 +44,11 @@ public class SystemSettingService {
     public static final String NET_ENABLED = "net.enabled";
     public static final String NET_CTR_URL = "net.ctrUrl";
     public static final String NET_CTR_TOKEN = "net.ctrToken";
+    /** 内置 MQTT 服务器（代替单独运行的 SIoT）：开关、端口、账号、密码 */
+    public static final String MQTT_ENABLED = "mqtt.enabled";
+    public static final String MQTT_PORT = "mqtt.port";
+    public static final String MQTT_USERNAME = "mqtt.username";
+    public static final String MQTT_PASSWORD = "mqtt.password";
 
     public static final List<String> LOGIN_MODES = Arrays.asList("NORMAL", "OPEN_CLASS", "XJH", "FIXED_SEAT");
 
@@ -67,15 +72,21 @@ public class SystemSettingService {
         DEFAULTS.put(NET_ENABLED, "false");
         DEFAULTS.put(NET_CTR_URL, "http://127.0.0.1:8770");
         DEFAULTS.put(NET_CTR_TOKEN, "");
+        DEFAULTS.put(MQTT_ENABLED, "true");
+        DEFAULTS.put(MQTT_PORT, "1883");
+        DEFAULTS.put(MQTT_USERNAME, "siot");
+        DEFAULTS.put(MQTT_PASSWORD, "dfrobot");
         // 管理员关闭的功能（逗号分隔，见 FeatureCatalog），空 = 全部开放
         DEFAULTS.put("features.disabled.student", "");
         DEFAULTS.put("features.disabled.teacher", "");
     }
 
     private final SystemSettingRepository repo;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
-    public SystemSettingService(SystemSettingRepository repo) {
+    public SystemSettingService(SystemSettingRepository repo, org.springframework.context.ApplicationEventPublisher events) {
         this.repo = repo;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -117,6 +128,12 @@ public class SystemSettingService {
             if (SINGLE_LOGIN_MODE.equals(e.getKey()) && !SINGLE_LOGIN_MODES.contains(v)) {
                 throw new IllegalArgumentException("无效的单处登录方式：" + v);
             }
+            if (MQTT_PORT.equals(e.getKey()) && !(v.matches("[0-9]{1,5}") && Integer.parseInt(v) >= 1 && Integer.parseInt(v) <= 65535)) {
+                throw new IllegalArgumentException("MQTT 端口应为 1~65535");
+            }
+            if ((MQTT_USERNAME.equals(e.getKey()) || MQTT_PASSWORD.equals(e.getKey())) && (v.isEmpty() || v.length() > 64)) {
+                throw new IllegalArgumentException("MQTT 账号和密码不能为空，不超过 64 个字符");
+            }
             if (SITE_NOTICE.equals(e.getKey()) && v.length() > 1000) throw new IllegalArgumentException("公告不超过 1000 字");
             if (SSO_SECRET.equals(e.getKey()) && !v.isEmpty() && v.length() < 16) throw new IllegalArgumentException("密钥至少 16 位");
             if (NET_CTR_URL.equals(e.getKey()) && !v.matches("https?://[^\\s/]+(:\\d+)?/?")) throw new IllegalArgumentException("网络控制器地址格式应为 http://IP:端口");
@@ -128,6 +145,7 @@ public class SystemSettingService {
             s.setValue(v);
             repo.save(s);
         }
+        events.publishEvent(new SettingsChangedEvent(changes.keySet()));
         return all();
     }
 

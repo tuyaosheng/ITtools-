@@ -276,6 +276,13 @@ public class TeacherClassroomController {
         return ApiResponse.ok(null);
     }
 
+    /** 课堂控制台看页面：正文里的 {{MQTT项目}} 等占位符替换成本节课的值，和学生看到的一样。 */
+    @GetMapping("/lessons/{lessonId}/pages/{pageId}")
+    public ApiResponse<Map<String, Object>> lessonPage(@PathVariable Long lessonId, @PathVariable Long pageId,
+                                                       javax.servlet.http.HttpServletRequest req) {
+        return ApiResponse.ok(lessons.teacherPage(CurrentUser.id(), lessonId, pageId, com.ittools.classroom.util.ServerAddress.forBoards(req.getServerName())));
+    }
+
     /** 强制下线：学生换电脑、或“先登录的占用”模式下账号被占住时，老师让该学生的所有登录下线。返回下线的会话数。 */
     @PostMapping("/students/{studentId}/kick")
     public ApiResponse<Integer> kick(@PathVariable Long studentId) {
