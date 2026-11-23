@@ -17,8 +17,23 @@
 
 ---
 
+## 直接下载使用
+
+不需要编译源码：到 [**Releases**](https://github.com/tuyaosheng/ITtools-/releases/latest) 下载最新的 `ITtools.zip`，
+解压后按里面的 `部署说明.txt` 操作即可（装好 Java 8+ 和 PostgreSQL 14+，改好 `start.bat` 里的数据库密码，双击启动）。
+
+| 文件 | 用途 |
+| --- | --- |
+| `ITtools.zip` | 完整交付包：程序、启动脚本、防火墙脚本、备份脚本、使用说明书（Word）、学生机脚本与掌控板助手 |
+| `ittools.jar` | 只有程序本身，已部署过的学校升级时用：关掉 `start.bat` 窗口，覆盖 `ittools.jar`，再启动 |
+
+升级前先备份数据库和 `data/storage`，数据库结构会在启动时自动升级。
+
+---
+
 ## 目录
 
+- [直接下载使用](#直接下载使用)
 - [项目背景](#项目背景)
 - [功能一览](#功能一览)
   - [管理员端](#管理员端)
@@ -353,6 +368,7 @@ mvn package -DskipTests -Dskip.frontend.build=true
 ### 方式一：Windows 服务器直接运行（推荐）
 
 适用于学校机房常见的 Windows 10 / Windows Server 2016，不依赖 Docker。
+[Releases](https://github.com/tuyaosheng/ITtools-/releases/latest) 里的 `ITtools.zip` 已经按下面的结构准备好，可以跳过第 2、3 步。
 
 1. 安装 **JRE/JDK 8+** 与 **PostgreSQL 14+**（PostgreSQL 设为开机自启），建库 `ittools`、用户 `ittools`。
 2. 准备部署目录：
