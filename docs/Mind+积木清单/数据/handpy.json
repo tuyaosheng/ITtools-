@@ -1,0 +1,2537 @@
+{
+ "name": "掌控",
+ "color": [
+  "#87C482",
+  "#7FB57B",
+  "#559E4F"
+ ],
+ "blocks": [
+  {
+   "id": "boardSensor",
+   "blockType": "submenu",
+   "text": "板载传感器"
+  },
+  {
+   "id": "screen",
+   "blockType": "submenu",
+   "text": "屏幕显示"
+  },
+  {
+   "id": "led",
+   "blockType": "submenu",
+   "text": "LED控制"
+  },
+  {
+   "id": "music",
+   "blockType": "submenu",
+   "text": "音乐"
+  },
+  {
+   "opcode": "start",
+   "blockType": "hat",
+   "text": "ESP32 主程序",
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_buttonPress",
+   "blockType": "hat",
+   "text": "当 [REFERENCE] 按钮 [BUTTONSTATE]",
+   "arguments": {
+    "REFERENCE": {
+     "type": "string",
+     "menu": "buttonNumber",
+     "defaultValue": "A"
+    },
+    "BUTTONSTATE": {
+     "type": "string",
+     "menu": "buttonStateMenu",
+     "defaultValue": "Pressed"
+    }
+   },
+   "code": "void onButtonAPressed()",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();",
+     "buttonA.setPressedCallback => buttonA.setPressedCallback(onButtonAPressed);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_padConnected",
+   "blockType": "hat",
+   "text": "当触摸按键 [REFERENCE] 被 [TOUCHSTATE]",
+   "arguments": {
+    "REFERENCE": {
+     "type": "string",
+     "menu": "pythonPinMenu",
+     "defaultValue": "27"
+    },
+    "TOUCHSTATE": {
+     "type": "string",
+     "menu": "touchStateMenu",
+     "defaultValue": "Connected"
+    }
+   },
+   "code": "void pin27TouchCallback()",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();",
+     "touchPadPpin27TouchCallback => touchPadP.setTouchedCallback(pin27TouchCallback);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "onGesture",
+   "blockType": "hat",
+   "text": "当 [GESTURE]",
+   "arguments": {
+    "GESTURE": {
+     "type": "string",
+     "menu": "gestureMeun",
+     "defaultValue": "TiltForward"
+    }
+   },
+   "code": "void TiltForwardEvent()",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();",
+     "accelerometer.onGestureTiltForwardTiltForwardEvent => accelerometer.onGesture(accelerometer.TiltForward, TiltForwardEvent);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_btnIsPressed",
+   "blockType": "Boolean",
+   "text": "按钮 [BUTTON] 被 [BUTTONSTATE]？",
+   "submenu": "boardSensor",
+   "arguments": {
+    "BUTTON": {
+     "type": "string",
+     "menu": "buttonNumber",
+     "defaultValue": "A"
+    },
+    "BUTTONSTATE": {
+     "type": "string",
+     "menu": "buttonStateMenu",
+     "defaultValue": "Pressed"
+    }
+   },
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "buttonA.isPressed()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_pinIsConnected",
+   "blockType": "Boolean",
+   "text": "触摸按键 [PIN] 被 [TOUCHSTATE]？",
+   "submenu": "boardSensor",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "pythonPinMenu",
+     "defaultValue": "27"
+    },
+    "TOUCHSTATE": {
+     "type": "string",
+     "menu": "touchStateMenu",
+     "defaultValue": "Connected"
+    }
+   },
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "touchPadP.isTouched()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_setTouchThreshold",
+   "blockType": "command",
+   "text": "设置按键 [PIN] 触摸阈值为 [THRESHOLD]",
+   "submenu": "boardSensor",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "pythonTouchPinMenu",
+     "defaultValue": "ALL"
+    },
+    "THRESHOLD": {
+     "type": "slider",
+     "defaultValue": 35,
+     "inputParams": {
+      "rangeMax": 80,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "mPython.setTouchThreshold(35);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_readTouchValue",
+   "blockType": "reporter",
+   "text": "读取按键 [PIN] 触摸值",
+   "submenu": "boardSensor",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "pythonPinMenu",
+     "defaultValue": "27"
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "touchPadP.read()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "isGesture",
+   "blockType": "Boolean",
+   "text": "当前姿态为 [GESTURE]?",
+   "submenu": "boardSensor",
+   "arguments": {
+    "GESTURE": {
+     "type": "string",
+     "menu": "gestureMeun",
+     "defaultValue": "TiltForward"
+    }
+   },
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "accelerometer.isGesture(accelerometer.TiltForward)",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_getSoundIntensity",
+   "blockType": "reporter",
+   "text": "读取麦克风声音强度",
+   "submenu": "boardSensor",
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "sound.read()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_readBrightness",
+   "blockType": "reporter",
+   "text": "读取环境光强度",
+   "submenu": "boardSensor",
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "light.read()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_accelerationCalibration",
+   "blockType": "command",
+   "text": "加速度校准 X轴偏移 [XOFFSET] Y轴偏移 [YOFFSET] Z轴偏移 [ZOFFSET] (m-g)",
+   "submenu": "boardSensor",
+   "arguments": {
+    "XOFFSET": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 1000,
+      "rangeMin": -1000
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "YOFFSET": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 1000,
+      "rangeMin": -1000
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "ZOFFSET": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 1000,
+      "rangeMin": -1000
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "accelerometer.setOffset(0, 0, 0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_acceleration",
+   "blockType": "reporter",
+   "text": "读取加速度的值(m-g) [TYPE]",
+   "submenu": "boardSensor",
+   "arguments": {
+    "TYPE": {
+     "type": "string",
+     "menu": "AccelerationTypeMenu",
+     "defaultValue": "X"
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "accelerometer.getX()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_displayInLine",
+   "blockType": "command",
+   "text": "屏幕显示文字 [TEXT] 在第 [LINE] 行",
+   "submenu": "screen",
+   "arguments": {
+    "TEXT": {
+     "type": "string",
+     "defaultValue": "Mind+",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    },
+    "LINE": {
+     "type": "string",
+     "menu": "oledLineMenu",
+     "defaultValue": "1",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.setCursorLine(1);\n\tdisplay.printLine(Mind+);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_displayClearInLine",
+   "blockType": "command",
+   "text": "屏幕显示清除第 [LINE] 行",
+   "submenu": "screen",
+   "arguments": {
+    "LINE": {
+     "type": "string",
+     "menu": "oledLineMenu",
+     "defaultValue": "1",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.fillInLine(1, 0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_displayInXY",
+   "blockType": "command",
+   "text": "屏幕显示文字 [TEXT] 在坐标 X: [X] Y: [Y] 预览 [PREVIEW]",
+   "submenu": "screen",
+   "arguments": {
+    "TEXT": {
+     "type": "string",
+     "defaultValue": "Mind+",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    },
+    "X": {
+     "type": "slider",
+     "defaultValue": 42,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 22,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "PREVIEW": {
+     "type": "text_preview",
+     "inputTypes": [
+      "void"
+     ]
+    }
+   },
+   "code": "display.setCursor(42, 22);\n\tdisplay.print(Mind+);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_imageDrawing",
+   "blockType": "command",
+   "text": "屏幕显示图片 [IMAGE] 在坐标 x:[X] y:[Y]",
+   "submenu": "screen",
+   "arguments": {
+    "IMAGE": {
+     "type": "img_preview",
+     "inputParams": {
+      "color": "#87C482"
+     },
+     "inputTypes": [
+      "setting"
+     ]
+    },
+    "X": {
+     "type": "slider",
+     "defaultValue": 39,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 7,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.drawImage(39, 7, 0, 0, );",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_fillScreen",
+   "blockType": "command",
+   "text": "屏幕显示为 [COLOR] (清屏)",
+   "submenu": "screen",
+   "arguments": {
+    "COLOR": {
+     "type": "string",
+     "menu": "colorMenu",
+     "defaultValue": "Black"
+    }
+   },
+   "code": "display.fillScreen(0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_screenRotation",
+   "blockType": "command",
+   "text": "屏幕旋转到[ROTATION]度",
+   "submenu": "screen",
+   "arguments": {
+    "ROTATION": {
+     "type": "string",
+     "menu": "rotationMenu",
+     "defaultValue": "180"
+    }
+   },
+   "code": "display.setRotaion(eROTATION_180);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_pointDrawing",
+   "blockType": "command",
+   "text": "画点 x:[X] y:[Y]",
+   "submenu": "screen",
+   "arguments": {
+    "X": {
+     "type": "slider",
+     "defaultValue": 0,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.point(0, 0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_setLineWidth",
+   "blockType": "command",
+   "text": "设置线宽为 [LINEWIDTH]",
+   "submenu": "screen",
+   "arguments": {
+    "LINEWIDTH": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 128,
+      "rangeMin": 1
+     },
+     "defaultValue": 1,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.lineWidth(1);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_lineDrawing",
+   "blockType": "command",
+   "text": "画线 起点x1:[X1] y1:[Y1] 终点x2:[X2] y2:[Y2]",
+   "submenu": "screen",
+   "arguments": {
+    "X1": {
+     "type": "slider",
+     "defaultValue": 0,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y1": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "X2": {
+     "type": "slider",
+     "defaultValue": 0,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y2": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.line(0, 0, 0, 0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_circleDrawing",
+   "blockType": "command",
+   "text": "画圆[FILL] 圆心 x:[X] y:[Y] 半径:[RADIUS]",
+   "submenu": "screen",
+   "arguments": {
+    "FILL": {
+     "type": "string",
+     "menu": "fillMenu",
+     "defaultValue": "FILL"
+    },
+    "X": {
+     "type": "slider",
+     "defaultValue": 0,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "RADIUS": {
+     "type": "number",
+     "defaultValue": 20,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.fillCircle(0, 0, 20);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_rectangleDrawing",
+   "blockType": "command",
+   "text": "画矩形[FILL] 起点 x:[X] y:[Y] 宽:[WIDTH] 高:[HEIGHT]",
+   "submenu": "screen",
+   "arguments": {
+    "FILL": {
+     "type": "string",
+     "menu": "fillMenu",
+     "defaultValue": "FILL"
+    },
+    "X": {
+     "type": "slider",
+     "defaultValue": 0,
+     "inputParams": {
+      "rangeMax": 127,
+      "rangeMin": 0
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "Y": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 63,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "WIDTH": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 128,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "HEIGHT": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 64,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "display.rect(0, 0, 0, 0, true);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_setLightsColor",
+   "blockType": "command",
+   "text": "灯号 [LIGHTS] 显示颜色 [COLOR]",
+   "submenu": "led",
+   "arguments": {
+    "LIGHTS": {
+     "type": "string",
+     "menu": "lightsMenu",
+     "defaultValue": "0",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "COLOR": {
+     "type": "colour_palette",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "rgb.write(0, );",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_rgbDisable",
+   "blockType": "command",
+   "text": "关闭 [INDEX] LED",
+   "submenu": "led",
+   "arguments": {
+    "INDEX": {
+     "type": "string",
+     "menu": "rgbDisableMenu",
+     "defaultValue": "all"
+    }
+   },
+   "code": "rgb.write(-1, 0x000000);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_rgbToColor",
+   "blockType": "reporter",
+   "text": "红 [RED] 绿 [GREEN] 蓝 [BLUE]",
+   "submenu": "led",
+   "arguments": {
+    "RED": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 255,
+      "rangeMin": 0
+     },
+     "defaultValue": 255,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "GREEN": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 255,
+      "rangeMin": 0
+     },
+     "defaultValue": 255,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "BLUE": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 255,
+      "rangeMin": 0
+     },
+     "defaultValue": 255,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "rgbToColor(round(255), round(255), round(255))",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": [
+     "addFunction(uint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b)\n{\n\treturn (uint32_t)((((uint32_t)r<<16) | ((uint32_t)g<<8)) | (uint32_t)b);\n})"
+    ]
+   }
+  },
+  {
+   "opcode": "esp32_setBrightness",
+   "blockType": "command",
+   "text": "设置LED灯亮度为 [BRIGHTVALUE]",
+   "submenu": "led",
+   "arguments": {
+    "BRIGHTVALUE": {
+     "type": "string",
+     "menu": "brightnessMenu",
+     "defaultValue": "9",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "rgb.brightness(round(9));",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_getBrightness",
+   "blockType": "reporter",
+   "text": "读取LED灯亮度",
+   "submenu": "led",
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "rgb.brightness()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_playMusic",
+   "blockType": "command",
+   "text": "播放音乐 [MUSIC] 重复 [REPEAT]",
+   "submenu": "music",
+   "arguments": {
+    "MUSIC": {
+     "type": "string",
+     "menu": "playMenu",
+     "defaultValue": "DADADADUM"
+    },
+    "REPEAT": {
+     "type": "string",
+     "menu": "repeatMenu",
+     "defaultValue": "Once"
+    }
+   },
+   "code": "buzz.play(DADADADUM, Once);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_musicSetTempo",
+   "blockType": "command",
+   "text": "设置每一拍等同 [TICKS] 分音符，每分钟节拍数 [TEMPO]",
+   "submenu": "music",
+   "arguments": {
+    "TICKS": {
+     "type": "number",
+     "defaultValue": 4,
+     "inputParams": {},
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "TEMPO": {
+     "type": "number",
+     "defaultValue": 60,
+     "inputParams": {},
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "buzz.setTicksTempo(4, 60);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_setBuzzerFreq",
+   "blockType": "command",
+   "text": "播放音符 [NOTE] [BEAT] 拍",
+   "submenu": "music",
+   "arguments": {
+    "NOTE": {
+     "type": "piano",
+     "defaultValue": 131,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "BEAT": {
+     "type": "string",
+     "menu": "beatMenu",
+     "defaultValue": "1",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "buzz.freq(131, 1);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_backgroundSetBuzzerFreq",
+   "blockType": "command",
+   "text": "后台播放音符 [NOTE]",
+   "submenu": "music",
+   "arguments": {
+    "NOTE": {
+     "type": "piano",
+     "defaultValue": 131,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "buzz.freq(131);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_buzzerSwitch",
+   "blockType": "command",
+   "text": "停止后台播放",
+   "submenu": "music",
+   "code": "buzz.stop();",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_buzzerRedirect",
+   "blockType": "command",
+   "text": "蜂鸣器重定向到引脚 [PIN]",
+   "submenu": "music",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "buzzPinMenu",
+     "defaultValue": "P0"
+    }
+   },
+   "code": "buzz.redirect(P0);",
+   "gen": {
+    "inc": [
+     "MPython.h"
+    ],
+    "setup": [
+     "mPython.begin => mPython.begin();"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_serialSend",
+   "blockType": "command",
+   "text": "[SERIAL] [WAY] [STRING] [LINE]",
+   "arguments": {
+    "SERIAL": {
+     "type": "string",
+     "menu": "serialMenu",
+     "defaultValue": "SerialPort0"
+    },
+    "WAY": {
+     "type": "string",
+     "menu": "printWayMenu",
+     "defaultValue": "string output"
+    },
+    "STRING": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "LINE": {
+     "type": "string",
+     "menu": "lineMenu",
+     "defaultValue": "Wrap"
+    }
+   },
+   "code": "Serial.println(hello);",
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial => Serial.begin(9600);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_havenumberread",
+   "blockType": "Boolean",
+   "text": "[SERIAL] 有数据可读？",
+   "arguments": {
+    "SERIAL": {
+     "type": "string",
+     "menu": "serialMenu",
+     "defaultValue": "SerialPort0"
+    }
+   },
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "Serial.available()",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial => Serial.begin(9600);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_readserialdata",
+   "blockType": "reporter",
+   "text": "读取 [SERIAL] 数据",
+   "arguments": {
+    "SERIAL": {
+     "type": "string",
+     "menu": "serialMenu",
+     "defaultValue": "SerialPort0"
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "Serial.read()",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial => Serial.begin(9600);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_readserialIntfloat",
+   "blockType": "reporter",
+   "text": "从 [SERIAL] 读取一个 [READTYPE]",
+   "arguments": {
+    "SERIAL": {
+     "type": "string",
+     "menu": "serialMenu",
+     "defaultValue": "SerialPort0"
+    },
+    "READTYPE": {
+     "type": "string",
+     "menu": "typeMenu",
+     "defaultValue": "int"
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "Serial.parseInt()",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial => Serial.begin(9600);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_getNumOfFloat",
+   "blockType": "reporter",
+   "text": "[TARGET] 保留 [NNUMS] 位小数",
+   "arguments": {
+    "TARGET": {
+     "type": "number",
+     "defaultValue": 123.123,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    },
+    "NNUMS": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 8,
+      "rangeMin": 0
+     },
+     "defaultValue": 0,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "outputTypes": [
+    "string"
+   ],
+   "code": [
+    "numberRetain(123.123,0)",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addFunction(String numberRetain(float t, uint8_t n)\n{\n\tString str=t<0 ? \"-\" : \"\"; int8_t _n=n; t=abs(t);\n\tfor(; _n>=0; --_n){\n\t\tuint32_t integer = floor(t);\n\t\tfloat decimal = t - integer;\n\t\tstr += _n == n ? (String(integer) + (n ? \".\" : \"\")) : integer;\n\t\tt = decimal*10;\n\t}\n\treturn str;\n})"
+    ]
+   }
+  },
+  {
+   "opcode": "esp32_setSerial",
+   "blockType": "command",
+   "text": "设置 串口0 波特率[BAUD]",
+   "arguments": {
+    "BAUD": {
+     "type": "string",
+     "menu": "baudMenu",
+     "defaultValue": "9600"
+    }
+   },
+   "code": "Serial.begin(9600);",
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial => "
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_seriaRemapping",
+   "blockType": "command",
+   "text": "设置 [SERIAL] Rx [RX] Tx [TX] 波特率为 [BAUD]",
+   "arguments": {
+    "SERIAL": {
+     "type": "string",
+     "menu": "serialRemappingMenu",
+     "defaultValue": "SerialPort1"
+    },
+    "RX": {
+     "type": "string",
+     "menu": "serialRxPinMenu",
+     "defaultValue": "P0"
+    },
+    "TX": {
+     "type": "string",
+     "menu": "serialTxPinMenu",
+     "defaultValue": "P1"
+    },
+    "BAUD": {
+     "type": "string",
+     "menu": "baudMenu",
+     "defaultValue": "9600"
+    }
+   },
+   "code": "Serial1.begin(9600, P0, P1);",
+   "gen": {
+    "inc": [],
+    "setup": [
+     "Serial1 => "
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_set_pinMode",
+   "blockType": "command",
+   "text": "设置引脚 [PIN] 模式 [PINMODE]",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "digitalInputPinMenu",
+     "defaultValue": "P0"
+    },
+    "PINMODE": {
+     "type": "string",
+     "menu": "pinModeCppMenu",
+     "defaultValue": "OUTPUT"
+    }
+   },
+   "code": "pinMode(P0, OUTPUT);",
+   "gen": {
+    "inc": [],
+    "setup": [
+     "set_pinMode_P0 => "
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_digitalRead",
+   "blockType": "Boolean",
+   "text": "读取数字引脚 [PIN]",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "digitalInputPinMenu",
+     "defaultValue": "P0"
+    }
+   },
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "digitalRead(P0)",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [
+     "set_pinMode_P0 => pinMode(P0, INPUT);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_analogRead",
+   "blockType": "reporter",
+   "text": "读取模拟引脚 [PIN]",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "analogInputPinMenu",
+     "defaultValue": "P0"
+    }
+   },
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "analogRead(P0)",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_digitalWrite",
+   "blockType": "command",
+   "text": "设置数字引脚 [PIN] 输出 [VALUE]",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "digitalOutputPinMenu",
+     "defaultValue": "P0"
+    },
+    "VALUE": {
+     "type": "string",
+     "menu": "levelMenu",
+     "defaultValue": "LOW"
+    }
+   },
+   "code": "digitalWrite(P0, LOW);",
+   "gen": {
+    "inc": [],
+    "setup": [
+     "set_pinMode_P0 => pinMode(P0, OUTPUT);"
+    ],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_analogWrite",
+   "blockType": "command",
+   "text": "设置模拟引脚 [PIN] 输出(PWM) [VALUE]",
+   "arguments": {
+    "PIN": {
+     "type": "string",
+     "menu": "analogOutputPinMenu",
+     "defaultValue": "P0"
+    },
+    "VALUE": {
+     "type": "slider",
+     "inputParams": {
+      "rangeMax": 1023,
+      "rangeMin": 0
+     },
+     "defaultValue": 512,
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool"
+     ]
+    }
+   },
+   "code": "analogWrite(P0, 512);",
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "esp32_timer",
+   "blockType": "reporter",
+   "text": "系统运行时间(ms)",
+   "outputTypes": [
+    "uint32_t"
+   ],
+   "code": [
+    "millis()",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  }
+ ],
+ "menus": {
+  "buttonStateMenu": [
+   {
+    "text": "按下",
+    "value": "Pressed"
+   },
+   {
+    "text": "松开",
+    "value": "Loosened"
+   }
+  ],
+  "touchStateMenu": [
+   {
+    "text": "接通",
+    "value": "Connected"
+   },
+   {
+    "text": "断开",
+    "value": "Disconnected"
+   }
+  ],
+  "gestureMeun": [
+   {
+    "text": "向前倾斜",
+    "value": "TiltForward"
+   },
+   {
+    "text": "向后倾斜",
+    "value": "TiltBack"
+   },
+   {
+    "text": "向左倾斜",
+    "value": "TiltLeft"
+   },
+   {
+    "text": "向右倾斜",
+    "value": "TiltRight"
+   },
+   {
+    "text": "屏幕朝上",
+    "value": "ScreenUp"
+   },
+   {
+    "text": "屏幕朝下",
+    "value": "ScreenDown"
+   },
+   {
+    "text": "摇一摇",
+    "value": "Shake"
+   }
+  ],
+  "pythonTouchPinMenu": [
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   },
+   {
+    "text": "全部",
+    "value": "ALL"
+   }
+  ],
+  "AccelerationTypeMenu": [
+   {
+    "text": "X",
+    "value": "X"
+   },
+   {
+    "text": "Y",
+    "value": "Y"
+   },
+   {
+    "text": "Z",
+    "value": "Z"
+   },
+   {
+    "text": "强度",
+    "value": "strength"
+   }
+  ],
+  "colorMenu": [
+   {
+    "text": "全黑",
+    "value": "Black"
+   },
+   {
+    "text": "全白",
+    "value": "White"
+   }
+  ],
+  "fillMenu": [
+   {
+    "text": "填充",
+    "value": "FILL"
+   },
+   {
+    "text": "不填充",
+    "value": "NOTFILL"
+   }
+  ],
+  "serialMenu": [
+   {
+    "text": "串口0",
+    "value": "SerialPort0"
+   },
+   {
+    "text": "串口1",
+    "value": "SerialPort1"
+   },
+   {
+    "text": "串口2",
+    "value": "SerialPort2"
+   }
+  ],
+  "rgbDisableMenu": [
+   {
+    "text": "全部",
+    "value": "all"
+   },
+   {
+    "text": "0号",
+    "value": "No.0"
+   },
+   {
+    "text": "1号",
+    "value": "No.1"
+   },
+   {
+    "text": "2号",
+    "value": "No.2"
+   }
+  ],
+  "printWayMenu": [
+   {
+    "text": "字符串输出",
+    "value": "string output"
+   },
+   {
+    "text": "原始输出",
+    "value": "original output"
+   },
+   {
+    "text": "十六进制输出",
+    "value": "HEX output"
+   }
+  ],
+  "repeatMenu": [
+   {
+    "text": "播放一次",
+    "value": "Once"
+   },
+   {
+    "text": "无限循环",
+    "value": "Forever"
+   },
+   {
+    "text": "在后台播放一次",
+    "value": "OnceInBackground"
+   },
+   {
+    "text": "在后台无限循环",
+    "value": "ForeverInBackground"
+   }
+  ],
+  "buzzPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   },
+   {
+    "text": "P19",
+    "value": "P19"
+   },
+   {
+    "text": "P20",
+    "value": "P20"
+   },
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   }
+  ],
+  "serialRemappingMenu": [
+   {
+    "text": "串口1",
+    "value": "SerialPort1"
+   },
+   {
+    "text": "串口2",
+    "value": "SerialPort2"
+   }
+  ],
+  "lineMenu": [
+   {
+    "text": "换行",
+    "value": "Wrap"
+   },
+   {
+    "text": "不换行",
+    "value": "No-Wrap"
+   }
+  ],
+  "typeMenu": [
+   {
+    "text": "整数",
+    "value": "int"
+   },
+   {
+    "text": "小数",
+    "value": "float"
+   },
+   {
+    "text": "字符串",
+    "value": "string"
+   }
+  ],
+  "levelMenu": [
+   {
+    "text": "低电平",
+    "value": "LOW"
+   },
+   {
+    "text": "高电平",
+    "value": "HIGH"
+   }
+  ],
+  "buttonNumber": [
+   "A",
+   "B",
+   "A+B"
+  ],
+  "pythonPinMenu": [
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   }
+  ],
+  "rotationMenu": [
+   "0",
+   "180"
+  ],
+  "playMenu": [
+   "DADADADUM",
+   "ENTERTAINER",
+   "PRELUDE",
+   "ODE",
+   "NYAN",
+   "RINGTONE",
+   "FUNK",
+   "BLUES",
+   "BIRTHDAY",
+   "WEDDING",
+   "FUNERAL",
+   "PUNCHLINE",
+   "BADDY",
+   "CHASE",
+   "BA_DING",
+   "WAWAWAWAA",
+   "JUMP_UP",
+   "JUMP_DOWN",
+   "POWER_UP",
+   "POWER_DOWN"
+  ],
+  "baudMenu": [
+   "1200",
+   "2400",
+   "4800",
+   "9600",
+   "19200",
+   "38400",
+   "57600",
+   "76800",
+   "115200"
+  ],
+  "serialTxPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P5",
+    "value": "P5"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P9",
+    "value": "P9"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   }
+  ],
+  "serialRxPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P2",
+    "value": "P2"
+   },
+   {
+    "text": "P3",
+    "value": "P3"
+   },
+   {
+    "text": "P4",
+    "value": "P4"
+   },
+   {
+    "text": "P5",
+    "value": "P5"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P9",
+    "value": "P9"
+   },
+   {
+    "text": "P10",
+    "value": "P10"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   }
+  ],
+  "digitalInputPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P2",
+    "value": "P2"
+   },
+   {
+    "text": "P5",
+    "value": "P5"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P9",
+    "value": "P9"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   },
+   {
+    "text": "P19",
+    "value": "P19"
+   },
+   {
+    "text": "P20",
+    "value": "P20"
+   },
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   }
+  ],
+  "pinModeCppMenu": [
+   "OUTPUT",
+   "INPUT",
+   "INPUT_PULLUP"
+  ],
+  "analogInputPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P2",
+    "value": "P2"
+   },
+   {
+    "text": "P3",
+    "value": "P3"
+   },
+   {
+    "text": "P4",
+    "value": "P4"
+   },
+   {
+    "text": "P10",
+    "value": "P10"
+   }
+  ],
+  "digitalOutputPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P5",
+    "value": "P5"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P9",
+    "value": "P9"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   },
+   {
+    "text": "P19",
+    "value": "P19"
+   },
+   {
+    "text": "P20",
+    "value": "P20"
+   },
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   }
+  ],
+  "analogOutputPinMenu": [
+   {
+    "text": "P0",
+    "value": "P0"
+   },
+   {
+    "text": "P1",
+    "value": "P1"
+   },
+   {
+    "text": "P5",
+    "value": "P5"
+   },
+   {
+    "text": "P6  (板载蜂鸣器)",
+    "value": "P6"
+   },
+   {
+    "text": "P7",
+    "value": "P7"
+   },
+   {
+    "text": "P8",
+    "value": "P8"
+   },
+   {
+    "text": "P9",
+    "value": "P9"
+   },
+   {
+    "text": "P11",
+    "value": "P11"
+   },
+   {
+    "text": "P13",
+    "value": "P13"
+   },
+   {
+    "text": "P14",
+    "value": "P14"
+   },
+   {
+    "text": "P15",
+    "value": "P15"
+   },
+   {
+    "text": "P16",
+    "value": "P16"
+   },
+   {
+    "text": "P19",
+    "value": "P19"
+   },
+   {
+    "text": "P20",
+    "value": "P20"
+   },
+   {
+    "text": "P",
+    "value": "27"
+   },
+   {
+    "text": "Y",
+    "value": "14"
+   },
+   {
+    "text": "T",
+    "value": "12"
+   },
+   {
+    "text": "H",
+    "value": "13"
+   },
+   {
+    "text": "O",
+    "value": "15"
+   },
+   {
+    "text": "N",
+    "value": "4"
+   }
+  ],
+  "oledLineMenu": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "brightnessMenu": [
+   "9",
+   "8",
+   "7",
+   "6",
+   "5",
+   "4",
+   "3",
+   "2",
+   "1",
+   "0"
+  ],
+  "beatMenu": [
+   "1/4",
+   "1/2",
+   "3/4",
+   "1",
+   "1.5",
+   "2",
+   "3",
+   "4"
+  ],
+  "lightsMenu": [
+   {
+    "text": "0",
+    "value": "0"
+   },
+   {
+    "text": "1",
+    "value": "1"
+   },
+   {
+    "text": "2",
+    "value": "2"
+   },
+   {
+    "text": "全部(-1)",
+    "value": "ALL"
+   }
+  ]
+ },
+ "extraPrims": [
+  "runtime"
+ ]
+}

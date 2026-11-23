@@ -44,6 +44,7 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="autoLeaders">按票数设组长</el-dropdown-item>
+            <el-dropdown-item command="byNumber">按学号分组…</el-dropdown-item>
             <el-dropdown-item command="random">随机分组</el-dropdown-item>
             <el-dropdown-item command="history">加载历史分组</el-dropdown-item>
             <el-dropdown-item command="clear" divided><span class="danger">清空全部分组</span></el-dropdown-item>
@@ -52,15 +53,51 @@
       </el-dropdown>
     </div>
 
+    <!-- 角色与配对：门铃1组 ↔ 显示1组 -->
+    <div class="roles">
+      <div class="r-row">
+        <span class="lbl">小组角色 <Hint>填几个角色（用逗号隔开），点“一键生成”按组号排成 门铃1~N组、显示1~N组；同一配对号的组是一对。组数凑不成对时，多出来的组并进前面的对（几组共用一个主题）。课程页可以设成只给某个角色看。</Hint></span>
+        <el-input v-model="rolesText" placeholder="如：门铃,显示" class="roles-input" :size="isMobile ? 'large' : 'default'" />
+        <el-button type="primary" plain @click="autoRoles">一键生成</el-button>
+        <el-button v-if="hasRoles" @click="clearRoles">清除角色</el-button>
+        <el-tag v-else type="warning" effect="plain">未生成</el-tag>
+        <span class="grow" />
+        <span class="vote">学生整组选角色 <el-switch :model-value="data.roleOpen" size="small" :disabled="!data.roles.length" @change="(v: any) => settings({ roleOpen: v })" /></span>
+        <el-radio-group v-if="hasRoles" v-model="view" size="small">
+          <el-radio-button value="groups">按组</el-radio-button>
+          <el-radio-button value="pairs">按对</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div v-if="data.roleOpen" class="muted">学生在“选择小组”页里整组选角色和配对号（1~{{ data.pairCount }}），同一角色同一个号只能一个组选；你在组卡片上点“角色”可以随意调。</div>
+    </div>
+
+    <!-- 按对查看 -->
+    <div v-if="view === 'pairs' && hasRoles" class="pairs">
+      <div v-for="p in pairList" :key="p.pairNo" class="pair">
+        <div class="p-head">第 {{ p.pairNo }} 对</div>
+        <div class="p-groups">
+          <div v-for="g in p.groups" :key="g.groupNo" class="p-group" :style="{ '--gc': groupColor(g.groupNo) }">
+            <b>{{ g.label }}</b>
+            <div class="chips"><span v-for="m in g.members" :key="m.studentId" class="chip" :class="{ absent: !m.joined }">{{ m.name }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div v-if="noPair.length" class="pair">
+        <div class="p-head muted">没有配对号的组</div>
+        <div class="p-groups"><div v-for="g in noPair" :key="g.groupNo" class="p-group"><b>{{ g.label }}</b></div></div>
+      </div>
+    </div>
+
     <el-alert v-if="tooFew" type="warning" :closable="false" show-icon class="mb"
       :title="`全班 ${total} 人，每组最多 ${data.maxSize} 人，至少要设 ${Math.ceil(total / data.maxSize)} 组`" />
     <el-empty v-if="!data.groups.length" description="先设置组数，再开放自由选组" :image-size="80" />
 
-    <div class="board">
+    <div v-show="view === 'groups' || !hasRoles" class="board">
       <div v-for="g in data.groups" :key="g.groupNo" class="group" :style="{ '--gc': groupColor(g.groupNo) }">
         <div class="g-head">
           <span class="g-no">{{ g.groupNo }}</span>
-          <b>第 {{ g.groupNo }} 组</b>
+          <b>{{ g.label }}</b>
+          <el-button link size="small" class="g-role" @click="openRole(g)">{{ g.role || g.name ? '改' : '角色' }}</el-button>
           <span class="grow" />
           <span class="g-count" :class="{ full: g.full }">{{ g.members.length }}{{ data.maxSize ? ` / ${data.maxSize}` : '' }} 人</span>
         </div>
@@ -79,7 +116,7 @@
                 <el-dropdown-item disabled>{{ m.name }}{{ m.task ? ' · ' + m.task : '' }}</el-dropdown-item>
                 <el-dropdown-item v-if="m.studentId !== g.leaderId" command="leader" divided>设为组长</el-dropdown-item>
                 <el-dropdown-item v-else command="unleader" divided>取消组长</el-dropdown-item>
-                <el-dropdown-item v-for="n in moveTargets(g.groupNo)" :key="n" :command="'move:' + n">移到第 {{ n }} 组</el-dropdown-item>
+                <el-dropdown-item v-for="n in moveTargets(g.groupNo)" :key="n" :command="'move:' + n">移到{{ labelOf(n) }}</el-dropdown-item>
                 <el-dropdown-item command="move:0" divided>移出小组</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -95,13 +132,46 @@
           <span class="chip loose" :class="{ absent: !m.joined }">{{ m.name }}<small v-if="!m.joined" class="tag">未进课</small></span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item v-for="n in moveTargets(0)" :key="n" :command="'move:' + n">加入第 {{ n }} 组</el-dropdown-item>
+              <el-dropdown-item v-for="n in moveTargets(0)" :key="n" :command="'move:' + n">加入{{ labelOf(n) }}</el-dropdown-item>
               <el-dropdown-item v-if="!moveTargets(0).length" disabled>请先设置组数</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </div>
     </div>
+
+    <el-dialog v-model="byNumVisible" title="按学号分组" :width="isMobile ? '94%' : '460px'" append-to-body>
+      <el-form label-width="90px">
+        <el-form-item label="每组人数"><el-input-number v-model="byNum.size" :min="1" :max="20" /></el-form-item>
+        <el-form-item label="排法">
+          <el-radio-group v-model="byNum.mode">
+            <el-radio value="CONSECUTIVE">挨着排（1-2-3、4-5-6）</el-radio>
+            <el-radio value="INTERLEAVED">间隔排（{{ byNumExample }}）</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <div class="muted">全班 {{ total }} 人（含还没进课的）按学号排好，分成 {{ byNumGroups }} 组；除不尽时前几组多一人。还没进课的学生进课后自动在组里。现有分组、组长和角色会被清掉。</div>
+      <template #footer>
+        <el-button @click="byNumVisible = false">取消</el-button>
+        <el-button type="primary" @click="doByNumber">分组</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="roleVisible" :title="`设置第 ${roleForm.groupNo} 组`" :width="isMobile ? '94%' : '420px'" append-to-body>
+      <el-form label-width="80px">
+        <el-form-item label="角色">
+          <el-select v-model="roleForm.role" clearable allow-create filterable placeholder="不设角色" class="full">
+            <el-option v-for="r in data.roles" :key="r" :label="r" :value="r" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="配对号"><el-input-number v-model="roleForm.pairNo" :min="1" :max="30" :disabled="!roleForm.role" /></el-form-item>
+        <el-form-item label="组名"><el-input v-model="roleForm.name" maxlength="40" placeholder="不填则显示成 角色+配对号+组" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="roleVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveRole">保存</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="historyVisible" title="加载历史分组" :width="isMobile ? '94%' : '560px'" append-to-body>
       <el-table :data="history" size="small" empty-text="本班还没有分组记录" highlight-current-row @current-change="(r: any) => (historyPick = r?.id)">
@@ -139,6 +209,22 @@ const tooFew = computed(() => data.value?.maxSize > 0 && total.value > data.valu
 const historyVisible = ref(false)
 const history = ref<any[]>([])
 const historyPick = ref<number>()
+const rolesText = ref('')
+const view = ref<'groups' | 'pairs'>('groups')
+const hasRoles = computed(() => (data.value?.groups || []).some((g: any) => g.role))
+const labelOf = (n: number) => data.value?.groups.find((g: any) => g.groupNo === n)?.label || `第${n}组`
+const pairList = computed(() => {
+  const m = new Map<number, any[]>()
+  for (const g of data.value?.groups || []) if (g.pairNo) m.set(g.pairNo, [...(m.get(g.pairNo) || []), g])
+  return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([pairNo, groups]) => ({ pairNo, groups }))
+})
+const noPair = computed(() => (data.value?.groups || []).filter((g: any) => !g.pairNo))
+const byNumVisible = ref(false)
+const byNum = ref({ size: 3, mode: 'CONSECUTIVE' })
+const byNumGroups = computed(() => Math.max(1, Math.floor(total.value / (byNum.value.size || 1))))
+const byNumExample = computed(() => { const n = byNumGroups.value; return `1、${1 + n}、${1 + 2 * n}` })
+const roleVisible = ref(false)
+const roleForm = ref<any>({})
 let timer: number | undefined
 let poll: number | undefined
 
@@ -150,6 +236,33 @@ function apply(d: any, force = false) {
     count.value = d.groupCount
     maxSize.value = d.maxSize
   }
+  if (!rolesText.value || force) rolesText.value = (d.roles || []).join(',') || rolesText.value
+}
+
+async function autoRoles() {
+  if (!rolesText.value.trim()) { ElMessage.warning('先填写角色，如：门铃,显示'); return }
+  if (hasRoles.value && !(await confirm('重新按组号生成角色和配对号？现在的角色和手改的组名会被替换'))) return
+  await run(api.post(`${base}/auto-roles`, { roles: rolesText.value }), '已生成角色')
+}
+
+async function clearRoles() {
+  if (await confirm('清除所有组的角色、配对号和手改的组名？组员不变')) run(api.post(`${base}/clear-roles`), '已清除角色')
+}
+
+function openRole(g: any) {
+  roleForm.value = { groupNo: g.groupNo, role: g.role || '', pairNo: g.pairNo || 1, name: g.name || '' }
+  roleVisible.value = true
+}
+
+async function saveRole() {
+  const f = roleForm.value
+  await run(api.put(`${base}/groups/${f.groupNo}/role`, { role: f.role || null, pairNo: f.role ? f.pairNo : null, name: f.name || null }), '已保存')
+  roleVisible.value = false
+}
+
+async function doByNumber() {
+  await run(api.post(`${base}/by-number`, byNum.value), '已按学号分组')
+  byNumVisible.value = false
 }
 
 async function load() {
@@ -193,6 +306,7 @@ async function confirm(msg: string) {
 async function moreCmd(c: string) {
   if (c === 'autoLeaders') run(api.post(`${base}/auto-leaders`), '已按票数确定组长')
   else if (c === 'history') openHistory()
+  else if (c === 'byNumber') byNumVisible.value = true
   else if (c === 'random') {
     if (!count.value) { ElMessage.warning('请先填写组数'); return }
     if (await confirm(`把已进课的学生随机均分到 ${count.value} 个组？现有分组和组长会被清空`)) {
@@ -288,6 +402,16 @@ onBeforeUnmount(() => window.clearInterval(poll))
 .votes { color: var(--el-color-warning-dark-2); font-size: 11px; }
 .tag { font-size: 11px; color: var(--el-text-color-placeholder); }
 
+.full { width: 100%; }
+.roles { border: 1.5px solid var(--hb-line); border-radius: 12px; background: var(--hb-paper); padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+.r-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.roles-input { width: 200px; }
+.g-role { margin-left: 2px; }
+.pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.pair { border: 1.5px solid var(--hb-line); border-radius: 12px; padding: 10px 12px; background: var(--hb-paper); }
+.p-head { font-family: var(--hb-title-font); font-size: 18px; color: var(--hb-ink-deep); margin-bottom: 6px; }
+.p-groups { display: flex; gap: 8px; flex-wrap: wrap; }
+.p-group { flex: 1 1 130px; border-top: 4px solid var(--gc, var(--hb-line)); border-radius: 8px; background: var(--el-fill-color-lighter); padding: 6px 8px; }
 .ungrouped { border: 1.5px dashed var(--hb-line); border-radius: 12px; padding: 10px 12px; }
 .u-title { font-weight: 700; color: var(--hb-ink-deep); display: flex; gap: 8px; align-items: baseline; }
 

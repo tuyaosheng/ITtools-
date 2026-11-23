@@ -80,8 +80,15 @@ public class TeacherClassroomController {
 
     // ---- 课程 ----
     @GetMapping("/courses")
-    public ApiResponse<List<Map<String, Object>>> courses(@RequestParam(required = false) Long termId) {
-        return ApiResponse.ok(courses.myCourses(CurrentUser.id(), termId));
+    public ApiResponse<List<Map<String, Object>>> courses(@RequestParam(required = false) Long termId,
+                                                          @RequestParam(defaultValue = "false") boolean includeArchived) {
+        return ApiResponse.ok(courses.myCourses(CurrentUser.id(), termId, includeArchived));
+    }
+
+    /** 归档 / 取消归档课程：body {archived: true|false}。 */
+    @PostMapping("/courses/{id}/archive")
+    public ApiResponse<Map<String, Object>> archiveCourse(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(courses.setArchived(CurrentUser.id(), id, Body.of(body).bool("archived", true)));
     }
 
     @GetMapping("/courses/shared")
@@ -171,6 +178,12 @@ public class TeacherClassroomController {
     @PostMapping("/lessons/{id}/end")
     public ApiResponse<Map<String, Object>> end(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
         return ApiResponse.ok(lessons.end(CurrentUser.id(), id, Body.of(body).str("summary")));
+    }
+
+    /** 重新开课：已下课的课堂还原到上课中。 */
+    @PostMapping("/lessons/{id}/reopen")
+    public ApiResponse<Map<String, Object>> reopen(@PathVariable Long id) {
+        return ApiResponse.ok(lessons.reopen(CurrentUser.id(), id));
     }
 
     @PutMapping("/lessons/{id}/pages/{pageId}")

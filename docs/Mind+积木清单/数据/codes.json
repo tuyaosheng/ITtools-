@@ -1,0 +1,1724 @@
+[
+ {
+  "i": 0,
+  "type": "control_wait",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_wait\" id=\"T1_ns8xz\"><value name=\"DURATION\"><shadow type=\"math_positive_number\" id=\"T2_y03s8\"><field name=\"NUM\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tdelay(1000);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 89.10000610351562,
+   "h": 37.800018310546875
+  },
+  "img": "000.png"
+ },
+ {
+  "i": 1,
+  "type": "control_repeat",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_repeat\" id=\"T1_yfcd3\"><value name=\"TIMES\"><shadow type=\"math_whole_number\" id=\"T2_cu9fd\"><field name=\"NUM\">10</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tfor (int index = 0; index < 10; index++) {\n\t\tyield();\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 119.34317016601562,
+   "h": 78.30000305175781
+  },
+  "img": "001.png"
+ },
+ {
+  "i": 2,
+  "type": "control_forever",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_forever\" id=\"T1_l39jm\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 107.99996948242188,
+   "h": 72.90000915527344
+  },
+  "img": "002.png"
+ },
+ {
+  "i": 3,
+  "type": "control_if",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T1_l53sh\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (false) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 134.99996948242188,
+   "h": 75.60000610351562
+  },
+  "img": "003.png"
+ },
+ {
+  "i": 4,
+  "type": "control_if_else",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if_else\" id=\"T1_acov2\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (false) {\n\t}\n\telse {\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 134.99996948242188,
+   "h": 113.39999389648438
+  },
+  "img": "004.png"
+ },
+ {
+  "i": 5,
+  "type": "control_if_else_special",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if_else_special\" id=\"T1_7iw79\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (false) {\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 107.99996948242188,
+   "h": 78.30000305175781
+  },
+  "img": "005.png"
+ },
+ {
+  "i": 6,
+  "type": "control_wait_until",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_wait_until\" id=\"T1_veo2y\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\twhile (!false) {yield();}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 102.60000610351562,
+   "h": 37.800018310546875
+  },
+  "img": "006.png"
+ },
+ {
+  "i": 7,
+  "type": "control_repeat_until",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_repeat_until\" id=\"T1_u37yr\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\twhile (!false) {\n\t\tyield();\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 129.60000610351562,
+   "h": 78.30000305175781
+  },
+  "img": "007.png"
+ },
+ {
+  "i": 8,
+  "type": "operator_add",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_e9jn2\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_add\" id=\"T1_bkqku\"><value name=\"NUM1\"><shadow type=\"math_number\" id=\"T2_nofn5\"><field name=\"NUM\"></field></shadow></value><value name=\"NUM2\"><shadow type=\"math_number\" id=\"T3_ut3dm\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (0 + 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 77.89532470703125,
+   "h": 27
+  },
+  "img": "008.png"
+ },
+ {
+  "i": 9,
+  "type": "operator_subtract",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_p1uoc\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_subtract\" id=\"T1_2s2kz\"><value name=\"NUM1\"><shadow type=\"math_number\" id=\"T2_qnnv8\"><field name=\"NUM\"></field></shadow></value><value name=\"NUM2\"><shadow type=\"math_number\" id=\"T3_dpff0\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (0 - 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 75.02032470703125,
+   "h": 27
+  },
+  "img": "009.png"
+ },
+ {
+  "i": 10,
+  "type": "operator_multiply",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_ywqei\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_multiply\" id=\"T1_yu26s\"><value name=\"NUM1\"><shadow type=\"math_number\" id=\"T2_zxhue\"><field name=\"NUM\"></field></shadow></value><value name=\"NUM2\"><shadow type=\"math_number\" id=\"T3_kkpk8\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (0 * 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 76.73907470703125,
+   "h": 27
+  },
+  "img": "010.png"
+ },
+ {
+  "i": 11,
+  "type": "operator_divide",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_mjrca\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_divide\" id=\"T1_orrp8\"><value name=\"NUM1\"><shadow type=\"math_number\" id=\"T2_qjlen\"><field name=\"NUM\"></field></shadow></value><value name=\"NUM2\"><shadow type=\"math_number\" id=\"T3_irurt\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (0 / 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 75.46563720703125,
+   "h": 27
+  },
+  "img": "011.png"
+ },
+ {
+  "i": 12,
+  "type": "operator_random",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_gfoce\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_random\" id=\"T1_sd9ot\"><value name=\"FROM\"><shadow type=\"math_number\" id=\"T2_wa572\"><field name=\"NUM\">1</field></shadow></value><value name=\"TO\"><shadow type=\"math_number\" id=\"T3_221o2\"><field name=\"NUM\">10</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tdfrobotRandomSeed();\n\tmind_s_my_string_variable = (random(1, 10+1));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 203.043212890625,
+   "h": 27
+  },
+  "img": "012.png"
+ },
+ {
+  "i": 13,
+  "type": "operator_gt",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_qtqyx\"><value name=\"CONDITION\"><block type=\"operator_gt\" id=\"T1_gcawy\"><value name=\"OPERAND1\"><shadow type=\"text\" id=\"T2_o0g07\"><field name=\"TEXT\"></field></shadow></value><value name=\"OPERAND2\"><shadow type=\"text\" id=\"T3_gliex\"><field name=\"TEXT\">50</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((0>50)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 102.73593139648438,
+   "h": 27
+  },
+  "img": "013.png"
+ },
+ {
+  "i": 14,
+  "type": "operator_gt_equals",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_fyne7\"><value name=\"CONDITION\"><block type=\"operator_gt_equals\" id=\"T1_1shuy\"><value name=\"OPERAND1\"><shadow type=\"text\" id=\"T2_9aiid\"><field name=\"TEXT\"></field></shadow></value><value name=\"OPERAND2\"><shadow type=\"text\" id=\"T3_0b3rh\"><field name=\"TEXT\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((0>=0)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 107.19064331054688,
+   "h": 27
+  },
+  "img": "014.png"
+ },
+ {
+  "i": 15,
+  "type": "operator_lt",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_eq7ag\"><value name=\"CONDITION\"><block type=\"operator_lt\" id=\"T1_vm4j0\"><value name=\"OPERAND1\"><shadow type=\"text\" id=\"T2_n8qyd\"><field name=\"TEXT\"></field></shadow></value><value name=\"OPERAND2\"><shadow type=\"text\" id=\"T3_vketu\"><field name=\"TEXT\">50</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((0<50)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 102.73593139648438,
+   "h": 27
+  },
+  "img": "015.png"
+ },
+ {
+  "i": 16,
+  "type": "operator_lt_equals",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_lo88n\"><value name=\"CONDITION\"><block type=\"operator_lt_equals\" id=\"T1_oyis1\"><value name=\"OPERAND1\"><shadow type=\"text\" id=\"T2_fc5sh\"><field name=\"TEXT\"></field></shadow></value><value name=\"OPERAND2\"><shadow type=\"text\" id=\"T3_2hoin\"><field name=\"TEXT\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((0<=0)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 107.19064331054688,
+   "h": 27
+  },
+  "img": "016.png"
+ },
+ {
+  "i": 17,
+  "type": "operator_equals",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_88wiw\"><value name=\"CONDITION\"><block type=\"operator_equals\" id=\"T1_m7l57\"><value name=\"OPERAND1\"><shadow type=\"text\" id=\"T2_ifm94\"><field name=\"TEXT\"></field></shadow></value><value name=\"OPERAND2\"><shadow type=\"text\" id=\"T3_7mjk5\"><field name=\"TEXT\">50</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((0==50)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 102.73593139648438,
+   "h": 27
+  },
+  "img": "017.png"
+ },
+ {
+  "i": 18,
+  "type": "operator_and",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_xpuo5\"><value name=\"CONDITION\"><block type=\"operator_and\" id=\"T1_azqzj\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((false && false)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 99.89999389648438,
+   "h": 27
+  },
+  "img": "018.png"
+ },
+ {
+  "i": 19,
+  "type": "operator_or",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_hm9a9\"><value name=\"CONDITION\"><block type=\"operator_or\" id=\"T1_gh4fw\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((false || false)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 99.89999389648438,
+   "h": 27
+  },
+  "img": "019.png"
+ },
+ {
+  "i": 20,
+  "type": "operator_not",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_fyv6o\"><value name=\"CONDITION\"><block type=\"operator_not\" id=\"T1_i5avh\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif ((!false)) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 70.19998168945312,
+   "h": 27
+  },
+  "img": "020.png"
+ },
+ {
+  "i": 21,
+  "type": "operator_join",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_s0aqc\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_join\" id=\"T1_xabeo\"><value name=\"STRING1\"><shadow type=\"text\" id=\"T2_ycols\"><field name=\"TEXT\">苹果 </field></shadow></value><value name=\"STRING2\"><shadow type=\"text\" id=\"T3_9he4h\"><field name=\"TEXT\">香蕉</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(\"苹果 \") + String(\"香蕉\"));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 175.839111328125,
+   "h": 27
+  },
+  "img": "021.png"
+ },
+ {
+  "i": 22,
+  "type": "operator_letter_of",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_7ztn2\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_letter_of\" id=\"T1_wypa2\"><value name=\"STRING\"><shadow type=\"text\" id=\"T2_ir199\"><field name=\"TEXT\">苹果</field></shadow></value><value name=\"LETTER\"><shadow type=\"math_whole_number\" id=\"T3_htxv5\"><field name=\"NUM\">1</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(String(\"苹果\").charAt(1-1)));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 183.60003662109375,
+   "h": 27
+  },
+  "img": "022.png"
+ },
+ {
+  "i": 23,
+  "type": "operator_length",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_vo5c0\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_length\" id=\"T1_4aitg\"><value name=\"STRING\"><shadow type=\"text\" id=\"T2_uwtda\"><field name=\"TEXT\">苹果</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(\"苹果\").length());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 132.300048828125,
+   "h": 27
+  },
+  "img": "023.png"
+ },
+ {
+  "i": 24,
+  "type": "operator_contains",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T4_4g4ml\"><value name=\"CONDITION\"><block type=\"operator_contains\" id=\"T1_981by\"><value name=\"STRING1\"><shadow type=\"text\" id=\"T2_kzzuj\"><field name=\"TEXT\">苹果</field></shadow></value><value name=\"STRING2\"><shadow type=\"text\" id=\"T3_74a7s\"><field name=\"TEXT\">果</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (((String(\"苹果\").indexOf(String(\"果\")) != -1))) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 187.54843139648438,
+   "h": 27
+  },
+  "img": "024.png"
+ },
+ {
+  "i": 25,
+  "type": "operator_textsrobotseven",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T5_596hj\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_textsrobotseven\" id=\"T1_u4z6p\"><value name=\"STRING1\"><shadow type=\"text\" id=\"T2_9nthw\"><field name=\"TEXT\">apple</field></shadow></value><field name=\"LIST1\">first</field><value name=\"STRING2\"><shadow type=\"math_number\" id=\"T3_qoljr\"><field name=\"NUM\">1</field></shadow></value><field name=\"LIST2\">first</field><value name=\"STRING3\"><shadow type=\"math_number\" id=\"T4_kezlf\"><field name=\"NUM\">2</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFString.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (dfstring.substring(\"apple\",0,1,0,2));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 379.3375244140625,
+   "h": 27
+  },
+  "img": "025.png"
+ },
+ {
+  "i": 26,
+  "type": "operator_textsrobotsevenNew",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_94x50\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_textsrobotsevenNew\" id=\"T1_a5ph7\"><value name=\"STRING1\"><shadow type=\"text\" id=\"T2_ixvg8\"><field name=\"TEXT\">ap</field></shadow></value><value name=\"STRING2\"><shadow type=\"text\" id=\"T3_v8vk2\"><field name=\"TEXT\">apple</field></shadow></value><field name=\"LIST1\">first</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFString.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (dfstring.indexOf(String(\"ap\"), String(\"apple\")));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 334.8609619140625,
+   "h": 27
+  },
+  "img": "026.png"
+ },
+ {
+  "i": 27,
+  "type": "operator_mod",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_9fmts\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_mod\" id=\"T1_t22ga\"><value name=\"NUM1\"><shadow type=\"math_number\" id=\"T2_h4lw5\"><field name=\"NUM\"></field></shadow></value><value name=\"NUM2\"><shadow type=\"math_number\" id=\"T3_iw9k0\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = ((int32_t(0)) % (int32_t(0)));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 148.50006103515625,
+   "h": 27
+  },
+  "img": "027.png"
+ },
+ {
+  "i": 28,
+  "type": "operator_round",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_otwh6\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_round\" id=\"T1_grltu\"><value name=\"NUM\"><shadow type=\"math_number\" id=\"T2_g62pn\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (round(0));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 97.20001220703125,
+   "h": 27
+  },
+  "img": "028.png"
+ },
+ {
+  "i": 29,
+  "type": "operator_stringToNum",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_cz20h\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_stringToNum\" id=\"T1_l2t55\"><value name=\"STRING\"><shadow type=\"text\" id=\"T2_5r3rm\"><field name=\"TEXT\">123</field></shadow></value><field name=\"TYPE\">Integer</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(\"123\").toInt());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 240.43597412109375,
+   "h": 27
+  },
+  "img": "029.png"
+ },
+ {
+  "i": 30,
+  "type": "operator_mathop",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_zg4l5\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_mathop\" id=\"T1_ovuy5\"><field name=\"OPERATOR\">abs</field><value name=\"NUM\"><shadow type=\"math_number\" id=\"T2_alj8w\"><field name=\"NUM\"></field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (abs(0));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 112.050048828125,
+   "h": 27
+  },
+  "img": "030.png"
+ },
+ {
+  "i": 31,
+  "type": "operator_numToASCII",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_mn9eq\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_numToASCII\" id=\"T1_gfsq9\"><value name=\"NUM\"><shadow type=\"math_number\" id=\"T2_kxfyx\"><field name=\"NUM\">0</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(char(0)));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 212.2109375,
+   "h": 27
+  },
+  "img": "031.png"
+ },
+ {
+  "i": 32,
+  "type": "operator_stringToASCII",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_3rudy\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_stringToASCII\" id=\"T1_2kmg9\"><value name=\"STRING\"><shadow type=\"text\" id=\"T2_vxr1b\"><field name=\"TEXT\">a</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (toascii('a'));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 214.57659912109375,
+   "h": 27
+  },
+  "img": "032.png"
+ },
+ {
+  "i": 33,
+  "type": "operator_numToString",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_ia5ui\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_numToString\" id=\"T1_hvqeo\"><value name=\"NUM\"><shadow type=\"math_number\" id=\"T2_r7b0x\"><field name=\"NUM\">132</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (String(132));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 186.43597412109375,
+   "h": 27
+  },
+  "img": "033.png"
+ },
+ {
+  "i": 34,
+  "type": "operator_map",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T7_harpw\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_map\" id=\"T1_fdrhe\"><value name=\"VALUE\"><shadow type=\"math_number\" id=\"T2_2gce2\"><field name=\"NUM\">0</field></shadow></value><value name=\"FROMLOW\"><shadow type=\"math_number\" id=\"T3_cf5xm\"><field name=\"NUM\">0</field></shadow></value><value name=\"FROMHIGH\"><shadow type=\"math_number\" id=\"T4_3ufug\"><field name=\"NUM\">1023</field></shadow></value><value name=\"TOLOW\"><shadow type=\"math_number\" id=\"T5_vscxg\"><field name=\"NUM\">0</field></shadow></value><value name=\"TOHIGH\"><shadow type=\"math_number\" id=\"T6_hieid\"><field name=\"NUM\">255</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (map(0, 0, 1023, 0, 255));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 319.0953369140625,
+   "h": 27
+  },
+  "img": "034.png"
+ },
+ {
+  "i": 35,
+  "type": "operator_constrain",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T5_ky5r5\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"operator_constrain\" id=\"T1_ojvlj\"><value name=\"VALUE\"><shadow type=\"math_number\" id=\"T2_i39iz\"><field name=\"NUM\">0</field></shadow></value><value name=\"MIN\"><shadow type=\"math_number\" id=\"T3_w9qe3\"><field name=\"NUM\">0</field></shadow></value><value name=\"MAX\"><shadow type=\"math_number\" id=\"T4_kb2of\"><field name=\"NUM\">100</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (constrain(0, 0, 100));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 335.27032470703125,
+   "h": 27
+  },
+  "img": "035.png"
+ },
+ {
+  "i": 36,
+  "type": "data_variable",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_yztry\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_variable\" id=\"T1_8l2rj\"><field name=\"VARIABLE\" id=\"`jEk@4|i[#Fk?(8x)AV.-my variable\" variabletype=\"\">my variable</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString         mind_s_my_string_variable;\nvolatile float mind_n_my_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_n_my_variable;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 123.80316162109375,
+   "h": 27
+  },
+  "img": "036.png"
+ },
+ {
+  "i": 37,
+  "type": "data_setvariableto",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setvariableto\" id=\"T1_pbaf9\"><field name=\"VARIABLE\" id=\"`jEk@4|i[#Fk?(8x)AV.-my variable\" variabletype=\"\">my variable</field><value name=\"VALUE\"><shadow type=\"math_number\" id=\"T2_qom4v\"><field name=\"NUM\">0</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nvolatile float mind_n_my_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_n_my_variable = 0;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 225.05313110351562,
+   "h": 37.800018310546875
+  },
+  "img": "037.png"
+ },
+ {
+  "i": 38,
+  "type": "data_changevariableby",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_changevariableby\" id=\"T1_t0s0l\"><field name=\"VARIABLE\" id=\"`jEk@4|i[#Fk?(8x)AV.-my variable\" variabletype=\"\">my variable</field><value name=\"VALUE\"><shadow type=\"math_number\" id=\"T2_c7qw5\"><field name=\"NUM\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nvolatile float mind_n_my_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_n_my_variable += 1;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 206.15310668945312,
+   "h": 37.800018310546875
+  },
+  "img": "038.png"
+ },
+ {
+  "i": 39,
+  "type": "data_string",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_ml5ei\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_string\" id=\"T1_cekd4\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_s_my_string_variable;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 163.95159912109375,
+   "h": 27
+  },
+  "img": "039.png"
+ },
+ {
+  "i": 40,
+  "type": "data_setStringto",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T1_hr4lp\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><shadow type=\"text\" id=\"T2_gj7ot\"><field name=\"TEXT\">hello</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = \"hello\";\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 305.6765441894531,
+   "h": 37.800018310546875
+  },
+  "img": "040.png"
+ },
+ {
+  "i": 41,
+  "type": "data_stringStartWith",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T3_kaqr4\"><value name=\"CONDITION\"><block type=\"data_stringStartWith\" id=\"T1_xw0oy\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><shadow type=\"text\" id=\"T2_jxlr8\"><field name=\"TEXT\">a</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (mind_s_my_string_variable.startsWith(\"a\")) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 310.7672424316406,
+   "h": 27
+  },
+  "img": "041.png"
+ },
+ {
+  "i": 42,
+  "type": "data_listcontents",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_mltns\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_listcontents\" id=\"T1_68szg\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_l_my_list;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 91.09222412109375,
+   "h": 27
+  },
+  "img": "042.png"
+ },
+ {
+  "i": 43,
+  "type": "data_addtolist",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_addtolist\" id=\"T1_siwtv\"><value name=\"ITEM\"><shadow type=\"text\" id=\"T2_ur4og\"><field name=\"TEXT\">东西</field></shadow></value><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_l_my_list.push_back(\"东西\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 208.54220581054688,
+   "h": 37.800018310546875
+  },
+  "img": "043.png"
+ },
+ {
+  "i": 44,
+  "type": "data_deleteoflist",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_deleteoflist\" id=\"T1_3gh7i\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"INDEX\"><shadow type=\"math_integer\" id=\"T2_36onv\"><field name=\"NUM\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_l_my_list.remove(1-1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 197.74215698242188,
+   "h": 37.800018310546875
+  },
+  "img": "044.png"
+ },
+ {
+  "i": 45,
+  "type": "data_deletealloflist",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_deletealloflist\" id=\"T1_34qwh\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_l_my_list.clear();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 186.94216918945312,
+   "h": 37.800018310546875
+  },
+  "img": "045.png"
+ },
+ {
+  "i": 46,
+  "type": "data_insertatlist",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_insertatlist\" id=\"T1_97jiy\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"INDEX\"><shadow type=\"math_integer\" id=\"T2_el5zi\"><field name=\"NUM\">1</field></shadow></value><value name=\"ITEM\"><shadow type=\"text\" id=\"T3_izuxj\"><field name=\"TEXT\">东西</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_l_my_list.insert(1-1, \"东西\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 300.3421936035156,
+   "h": 37.800018310546875
+  },
+  "img": "046.png"
+ },
+ {
+  "i": 47,
+  "type": "data_replaceitemoflist",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_replaceitemoflist\" id=\"T1_7hya9\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"INDEX\"><shadow type=\"math_integer\" id=\"T2_ea7ke\"><field name=\"NUM\">1</field></shadow></value><value name=\"ITEM\"><shadow type=\"text\" id=\"T3_l3x4j\"><field name=\"TEXT\">东西</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_l_my_list.replace(1-1, \"东西\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 300.3421936035156,
+   "h": 37.800018310546875
+  },
+  "img": "047.png"
+ },
+ {
+  "i": 48,
+  "type": "data_itemoflist",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_bv6el\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_itemoflist\" id=\"T1_pvbsp\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"INDEX\"><shadow type=\"math_integer\" id=\"T2_14639\"><field name=\"NUM\">1</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_l_my_list[1-1];\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 170.7421875,
+   "h": 27
+  },
+  "img": "048.png"
+ },
+ {
+  "i": 49,
+  "type": "data_itemnumoflist",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T3_walhd\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_itemnumoflist\" id=\"T1_a9wau\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"ITEM\"><shadow type=\"text\" id=\"T2_ggcxg\"><field name=\"TEXT\">东西</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_l_my_list.indexOf(\"东西\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 259.84222412109375,
+   "h": 27
+  },
+  "img": "049.png"
+ },
+ {
+  "i": 50,
+  "type": "data_lengthoflist",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_h82kp\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"data_lengthoflist\" id=\"T1_6d6u8\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = mind_l_my_list.size();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 146.44219970703125,
+   "h": 27
+  },
+  "img": "050.png"
+ },
+ {
+  "i": 51,
+  "type": "data_listcontainsitem",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T3_hz23w\"><value name=\"CONDITION\"><block type=\"data_listcontainsitem\" id=\"T1_uz1x9\"><field name=\"LIST\" id=\";osvLMVbLQZ3sef+2J@H\" variabletype=\"list\">my list</field><value name=\"ITEM\"><shadow type=\"text\" id=\"T2_z1jsl\"><field name=\"TEXT\">东西</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <SimpleList.h>\n\n// 动态变量\nSimpleList<String> mind_l_my_list;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (mind_l_my_list.contains(\"东西\")) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 209.79061889648438,
+   "h": 27
+  },
+  "img": "051.png"
+ },
+ {
+  "i": 52,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_start",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_start\" id=\"T1_lmri5\"></block></xml>",
+  "code": "！错误提示：程序头[ESP32 主程序]仅能同时使用一个，请删除重复定义的模块。\n/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 133.2593994140625,
+   "h": 48.93748474121094
+  },
+  "img": "052.png"
+ },
+ {
+  "i": 53,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buttonPress",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_buttonPress\" id=\"T1_e1o8f\"><field name=\"REFERENCE\">A</field><field name=\"BUTTONSTATE\">Pressed</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\nvoid onButtonAPressed();\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuttonA.setPressedCallback(onButtonAPressed);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid onButtonAPressed() {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 198.07342529296875,
+   "h": 48.93748474121094
+  },
+  "img": "053.png"
+ },
+ {
+  "i": 54,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_padConnected",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_padConnected\" id=\"T1_m596v\"><field name=\"REFERENCE\">27</field><field name=\"TOUCHSTATE\">Connected</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\nvoid pin27TouchCallback();\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\ttouchPadP.setTouchedCallback(pin27TouchCallback);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid pin27TouchCallback() {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 238.92498779296875,
+   "h": 48.93748474121094
+  },
+  "img": "054.png"
+ },
+ {
+  "i": 55,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_onGesture",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_onGesture\" id=\"T1_i0oqp\"><field name=\"GESTURE\">TiltForward</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\nvoid TiltForwardEvent();\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\taccelerometer.onGesture(accelerometer.TiltForward, TiltForwardEvent);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid TiltForwardEvent() {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 150.5250244140625,
+   "h": 48.93748474121094
+  },
+  "img": "055.png"
+ },
+ {
+  "i": 56,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_serialSend",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_serialSend\" id=\"T1_md6nx\"><field name=\"SERIAL\">SerialPort0</field><field name=\"WAY\">string output</field><value name=\"STRING\"><shadow type=\"text\" id=\"T2_lvb5a\"><field name=\"TEXT\">hello</field></shadow></value><field name=\"LINE\">Wrap</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial.begin(9600);\n\tSerial.println(\"hello\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 332.3453063964844,
+   "h": 43.20001220703125
+  },
+  "img": "056.png"
+ },
+ {
+  "i": 57,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_havenumberread",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_5sg8n\"><value name=\"CONDITION\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_havenumberread\" id=\"T1_272nk\"><field name=\"SERIAL\">SerialPort0</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial.begin(9600);\n\tif ((Serial.available())) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 217.62033081054688,
+   "h": 32.399993896484375
+  },
+  "img": "057.png"
+ },
+ {
+  "i": 58,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialdata",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_bphgo\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialdata\" id=\"T1_cjs6o\"><field name=\"SERIAL\">SerialPort0</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial.begin(9600);\n\tmind_s_my_string_variable = Serial.read();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 185.2203369140625,
+   "h": 32.399993896484375
+  },
+  "img": "058.png"
+ },
+ {
+  "i": 59,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialIntfloat",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_13k1u\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialIntfloat\" id=\"T1_giiiz\"><field name=\"SERIAL\">SerialPort0</field><field name=\"READTYPE\">int</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial.begin(9600);\n\tmind_s_my_string_variable = Serial.parseInt();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 259.4703369140625,
+   "h": 32.399993896484375
+  },
+  "img": "059.png"
+ },
+ {
+  "i": 60,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getNumOfFloat",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T4_az418\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_getNumOfFloat\" id=\"T1_td77w\"><value name=\"TARGET\"><shadow type=\"math_number\" id=\"T2_q9rs8\"><field name=\"NUM\">123.123</field></shadow></value><value name=\"NNUMS\"><shadow type=\"math_slider\" id=\"T3_gew0x\"><field name=\"NUM\">0</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = String(\"123\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 233.120361328125,
+   "h": 32.399993896484375
+  },
+  "img": "060.png"
+ },
+ {
+  "i": 61,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setSerial",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setSerial\" id=\"T1_jcpj2\"><field name=\"BAUD\">9600</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial.begin(9600);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 222.07968139648438,
+   "h": 43.20001220703125
+  },
+  "img": "061.png"
+ },
+ {
+  "i": 62,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_seriaRemapping",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_seriaRemapping\" id=\"T1_ptnnz\"><field name=\"SERIAL\">SerialPort1</field><field name=\"RX\">P0</field><field name=\"TX\">P1</field><field name=\"BAUD\">9600</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tSerial1.begin(9600, P0, P1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 410.3578186035156,
+   "h": 43.20001220703125
+  },
+  "img": "062.png"
+ },
+ {
+  "i": 63,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_set_pinMode",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_set_pinMode\" id=\"T1_wq773\"><field name=\"PIN\">P0</field><field name=\"PINMODE\">OUTPUT</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tpinMode(P0, OUTPUT);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 274.8390808105469,
+   "h": 43.20001220703125
+  },
+  "img": "063.png"
+ },
+ {
+  "i": 64,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalRead",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_hmksi\"><value name=\"CONDITION\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalRead\" id=\"T1_v8p3f\"><field name=\"PIN\">P0</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tpinMode(P0, INPUT);\n\tif ((digitalRead(P0))) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 199.37033081054688,
+   "h": 32.399993896484375
+  },
+  "img": "064.png"
+ },
+ {
+  "i": 65,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_analogRead",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_vozn2\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_analogRead\" id=\"T1_je79l\"><field name=\"PIN\">P0</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = (analogRead(P0));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 188.5703125,
+   "h": 32.399993896484375
+  },
+  "img": "065.png"
+ },
+ {
+  "i": 66,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalWrite",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalWrite\" id=\"T1_2y17n\"><field name=\"PIN\">P0</field><field name=\"VALUE\">LOW</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tpinMode(P0, OUTPUT);\n\tdigitalWrite(P0, LOW);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 287.1203308105469,
+   "h": 43.20001220703125
+  },
+  "img": "066.png"
+ },
+ {
+  "i": 67,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_analogWrite",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_analogWrite\" id=\"T1_lakbq\"><field name=\"PIN\">P0</field><value name=\"VALUE\"><shadow type=\"math_slider\" id=\"T2_3pk4q\"><field name=\"NUM\">512</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n\n\n// 主程序开始\nvoid setup() {\n\tanalogWrite(P0, 512);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 297.8468933105469,
+   "h": 43.20001220703125
+  },
+  "img": "067.png"
+ },
+ {
+  "i": 68,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_timer",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_aguh0\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_timer\" id=\"T1_w4vb4\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = millis();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 167.203125,
+   "h": 32.399993896484375
+  },
+  "img": "068.png"
+ },
+ {
+  "i": 69,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_btnIsPressed",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_gx8jy\"><value name=\"CONDITION\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_btnIsPressed\" id=\"T1_8pb61\"><field name=\"BUTTON\">A</field><field name=\"BUTTONSTATE\">Pressed</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tif ((buttonA.isPressed())) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 235.87344360351562,
+   "h": 32.399993896484375
+  },
+  "img": "069.png"
+ },
+ {
+  "i": 70,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_pinIsConnected",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_z5lzr\"><value name=\"CONDITION\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_pinIsConnected\" id=\"T1_ewbh4\"><field name=\"PIN\">27</field><field name=\"TOUCHSTATE\">Connected</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tif ((touchPadP.isTouched())) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 263.2250061035156,
+   "h": 32.399993896484375
+  },
+  "img": "070.png"
+ },
+ {
+  "i": 71,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setTouchThreshold",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setTouchThreshold\" id=\"T1_6a26e\"><field name=\"PIN\">ALL</field><value name=\"THRESHOLD\"><shadow type=\"math_slider\" id=\"T2_f4nr9\"><field name=\"NUM\">35</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmPython.setTouchThreshold(35);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 272.5656433105469,
+   "h": 43.20001220703125
+  },
+  "img": "071.png"
+ },
+ {
+  "i": 72,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readTouchValue",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_ij8nu\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_readTouchValue\" id=\"T1_8z3rq\"><field name=\"PIN\">27</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = (touchPadP.read());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 199.77496337890625,
+   "h": 32.399993896484375
+  },
+  "img": "072.png"
+ },
+ {
+  "i": 73,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_isGesture",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_8g9gw\"><value name=\"CONDITION\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_isGesture\" id=\"T1_ra1yz\"><field name=\"GESTURE\">TiltForward</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tif ((accelerometer.isGesture(accelerometer.TiltForward))) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 235.47348022460938,
+   "h": 32.399993896484375
+  },
+  "img": "073.png"
+ },
+ {
+  "i": 74,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getSoundIntensity",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_lwprf\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_getSoundIntensity\" id=\"T1_mpyi8\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = (sound.read());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 178.87506103515625,
+   "h": 32.399993896484375
+  },
+  "img": "074.png"
+ },
+ {
+  "i": 75,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readBrightness",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_718d3\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_readBrightness\" id=\"T1_hjhh5\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = (light.read());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 151.87506103515625,
+   "h": 32.399993896484375
+  },
+  "img": "075.png"
+ },
+ {
+  "i": 76,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_accelerationCalibration",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_accelerationCalibration\" id=\"T1_hdc88\"><value name=\"XOFFSET\"><shadow type=\"math_slider\" id=\"T2_8t3mn\"><field name=\"NUM\">0</field></shadow></value><value name=\"YOFFSET\"><shadow type=\"math_slider\" id=\"T3_2z35l\"><field name=\"NUM\">0</field></shadow></value><value name=\"ZOFFSET\"><shadow type=\"math_slider\" id=\"T4_6rnak\"><field name=\"NUM\">0</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\taccelerometer.setOffset(0, 0, 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 413.5031433105469,
+   "h": 43.20001220703125
+  },
+  "img": "076.png"
+ },
+ {
+  "i": 77,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_acceleration",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_1etqb\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_acceleration\" id=\"T1_1q279\"><field name=\"TYPE\">X</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = (accelerometer.getX());\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 228.640625,
+   "h": 32.399993896484375
+  },
+  "img": "077.png"
+ },
+ {
+  "i": 78,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInLine",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInLine\" id=\"T1_8oy4a\"><value name=\"TEXT\"><shadow type=\"text\" id=\"T2_ji66v\"><field name=\"TEXT\">Mind+</field></shadow></value><value name=\"LINE\"><shadow type=\"dev-DFRobot-handpyEsp32@0.0.6_menu_oledLineMenu\" id=\"T3_q87d6\"><field name=\"oledLineMenu\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.setCursorLine(1);\n\tdisplay.printLine(\"Mind+\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 303.2390441894531,
+   "h": 43.20001220703125
+  },
+  "img": "078.png"
+ },
+ {
+  "i": 79,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayClearInLine",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_displayClearInLine\" id=\"T1_yi891\"><value name=\"LINE\"><shadow type=\"dev-DFRobot-handpyEsp32@0.0.6_menu_oledLineMenu\" id=\"T2_65588\"><field name=\"oledLineMenu\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.fillInLine(1, 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 204.12033081054688,
+   "h": 43.20001220703125
+  },
+  "img": "079.png"
+ },
+ {
+  "i": 80,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInXY",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInXY\" id=\"T1_yx8ju\"><value name=\"TEXT\"><shadow type=\"text\" id=\"T2_81spg\"><field name=\"TEXT\">Mind+</field></shadow></value><value name=\"X\"><shadow type=\"math_slider\" id=\"T3_cmyxy\"><field name=\"NUM\">42</field></shadow></value><value name=\"Y\"><shadow type=\"math_slider\" id=\"T4_ae7d0\"><field name=\"NUM\">22</field></shadow></value><value name=\"PREVIEW\"><shadow type=\"text_preview\" id=\"T5_jfvpy\"></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.setCursor(42, 22);\n\tdisplay.print(\"Mind+\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 429.3921813964844,
+   "h": 43.20001220703125
+  },
+  "img": "080.png"
+ },
+ {
+  "i": 81,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_imageDrawing",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_imageDrawing\" id=\"T1_cbgrv\"><value name=\"IMAGE\"><shadow type=\"img_preview\" id=\"T2_a9qy8\"><field name=\"ESP32_IMG\">{&quot;imgSrc&quot;: &quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAACHUlEQVRoQ+2Y4ZLDIAiEk/d/6HTsnB1CwF3QeEmb+9l4yscCguuyLNsy6W/b7KPWde22oOwwBaRCaKO936NkU0CQseg7AzUNBIVPgUFrWkAPCCN3XcN4m1lzCUWKEV7o3CZHCsRXVC0LRN4pPUlewy2U7PpCixigc6A3J3S+0CA6NCIetcIqCoKcSIG0kpFJVEuNVvJLb2uHeQ6kQbIVx1ODAYk4EIJkPK49mu2vUPhJ2yBIrTgZRXrUQOfqSkiDHKrEX+stvea16c0budHCD1dE03sVhAlD2bZ87gAHRu6HCgaliJbZ8lQEAuWQd4HW8LbOokCsOySbwDrMmDyyQlafD0FaB0U64Mhay0moi3iDZJI0YtgZaw+KtCiQF84w0LvV0VlrBflvo5Gh1vddu3JnkF11e0AysXDC/3yq6s8pMqNERwvOrvuVinhDywkRAbdsOc5qVQ7ld4bnIUXj6Uj2fa4i1iLm0Jlrihq1ae0GkbE8QkEdKsgxdGhVam9Dr/NFBljfM3vdHkSGlZ5ZzGS/qiJNkNrGS7luDVKk0sTWfK3n7N5kjxYOa335bTdYeZtmEjKT+Ki4WC821TYXxJutq3LZAQgBsu9negSnQViwSKhZRjMPDbpivZ0rZ/Zo0+apwuzDGuwpOEyRVoggVRhQFIJTQJARI74/ICO8OHKPr1DEffvNPkCP9HBkr98BiXjlCmtlGb/tI7ZulV4HB1ENaBCwMgAAAABJRU5ErkJggg==&quot;, &quot;imgAddr&quot;: &quot;&quot;, &quot;imgWidth&quot;: &quot;50&quot;, &quot;imgHeight&quot;: &quot;50&quot;}</field></shadow></value><value name=\"X\"><shadow type=\"math_slider\" id=\"T3_n6yif\"><field name=\"NUM\">39</field></shadow></value><value name=\"Y\"><shadow type=\"math_slider\" id=\"T4_i8dkq\"><field name=\"NUM\">7</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n// 静态常量\nconst uint8_t imageMatrix[] = {0x0,0x0,0x0,0x1f,0x80,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x33,0x80,0x0,0x0,0x0,0x1e,0x0,0x22,0x0,0x0,0x0,0x0,0x33,0x80,0x62,0x0,0x3c,0x0,0x0,0x60,0xc0,0x46,0x0,0xee,0x0,0x0,0x40,0xc0,0xc6,0x1,0x83,0x0,0x0,0xc0,0x40,0x86,0x1,0x1,0x80,0x0,0x40,0xc1,0x8c,0x1,0x1,0x80,0x0,0x7c,0x9f,0xff,0x1,0x1,0x80,0x0,0x37,0x98,0x3,0x81,0xa3,0x0,0x0,0x24,0x30,0x0,0x83,0x26,0x0,0x0,0x64,0x30,0x0,0xc6,0x7c,0x0,0x0,0xc7,0xff,0xff,0xf8,0x40,0x0,0x7f,0xff,0xff,0xff,0xff,0xfc,0x0,0xfe,0x0,0x0,0x0,0x1,0xff,0xc0,0xc0,0x0,0x0,0x0,0x0,0x1,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x3f,0xff,0xff,0xe0,0x1,0x80,0xdc,0x0,0x0,0x0,0x3,0xf9,0x80,0xcf,0xff,0xff,0xff,0xfc,0x5,0x80,0xcb,0xff,0xff,0xff,0xff,0xf5,0x80,0xcb,0xf8,0xff,0xff,0x9f,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x4b,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x68,0x7c,0xff,0xff,0x1f,0xf1,0x80,0x63,0x87,0xff,0xff,0xff,0x93,0x0,0x60,0x38,0x7f,0xff,0xf0,0x33,0x0,0x60,0x3,0x8f,0xfe,0xf,0x83,0x0,0x60,0x0,0x38,0x3,0xe0,0x3,0x0,0x60,0x0,0x7,0xf8,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0};\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.drawImage(39, 7, 50, 50, imageMatrix);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 312.9468688964844,
+   "h": 43.20001220703125
+  },
+  "img": "081.png"
+ },
+ {
+  "i": 82,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_fillScreen",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_fillScreen\" id=\"T1_tjymp\"><field name=\"COLOR\">Black</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.fillScreen(0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 219.54220581054688,
+   "h": 43.20001220703125
+  },
+  "img": "082.png"
+ },
+ {
+  "i": 83,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_screenRotation",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_screenRotation\" id=\"T1_pwo4o\"><field name=\"ROTATION\">180</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.setRotaion(eROTATION_180);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 192.51095581054688,
+   "h": 43.20001220703125
+  },
+  "img": "083.png"
+ },
+ {
+  "i": 84,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_pointDrawing",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_pointDrawing\" id=\"T1_4pn5t\"><value name=\"X\"><shadow type=\"math_slider\" id=\"T2_r4eqw\"><field name=\"NUM\">0</field></shadow></value><value name=\"Y\"><shadow type=\"math_slider\" id=\"T3_6f4gs\"><field name=\"NUM\">0</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.point(0, 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 172.00625610351562,
+   "h": 43.20001220703125
+  },
+  "img": "084.png"
+ },
+ {
+  "i": 85,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setLineWidth",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setLineWidth\" id=\"T1_zwgsf\"><value name=\"LINEWIDTH\"><shadow type=\"math_slider\" id=\"T2_uydsq\"><field name=\"NUM\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.lineWidth(1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 149.17501831054688,
+   "h": 43.20001220703125
+  },
+  "img": "085.png"
+ },
+ {
+  "i": 86,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_lineDrawing",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_lineDrawing\" id=\"T1_lb9f2\"><value name=\"X1\"><shadow type=\"math_slider\" id=\"T2_lr3al\"><field name=\"NUM\">0</field></shadow></value><value name=\"Y1\"><shadow type=\"math_slider\" id=\"T3_v41pk\"><field name=\"NUM\">0</field></shadow></value><value name=\"X2\"><shadow type=\"math_slider\" id=\"T4_9blt6\"><field name=\"NUM\">0</field></shadow></value><value name=\"Y2\"><shadow type=\"math_slider\" id=\"T5_l5s7b\"><field name=\"NUM\">0</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.line(0, 0, 0, 0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 354.8796691894531,
+   "h": 43.20001220703125
+  },
+  "img": "086.png"
+ },
+ {
+  "i": 87,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_circleDrawing",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_circleDrawing\" id=\"T1_2iwlq\"><field name=\"FILL\">FILL</field><value name=\"X\"><shadow type=\"math_slider\" id=\"T2_njtfq\"><field name=\"NUM\">0</field></shadow></value><value name=\"Y\"><shadow type=\"math_slider\" id=\"T3_d3nfl\"><field name=\"NUM\">0</field></shadow></value><value name=\"RADIUS\"><shadow type=\"math_number\" id=\"T4_zkuz9\"><field name=\"NUM\">20</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.fillCircle(0, 0, 20);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 337.2203063964844,
+   "h": 43.20001220703125
+  },
+  "img": "087.png"
+ },
+ {
+  "i": 88,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rectangleDrawing",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_rectangleDrawing\" id=\"T1_hk6xw\"><field name=\"FILL\">FILL</field><value name=\"X\"><shadow type=\"math_slider\" id=\"T2_uek2n\"><field name=\"NUM\">0</field></shadow></value><value name=\"Y\"><shadow type=\"math_slider\" id=\"T3_04rfo\"><field name=\"NUM\">0</field></shadow></value><value name=\"WIDTH\"><shadow type=\"math_slider\" id=\"T4_7z9ov\"><field name=\"NUM\">0</field></shadow></value><value name=\"HEIGHT\"><shadow type=\"math_slider\" id=\"T5_8lhz7\"><field name=\"NUM\">0</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tdisplay.rect(0, 0, 0, 0, true);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 389.3031311035156,
+   "h": 43.20001220703125
+  },
+  "img": "088.png"
+ },
+ {
+  "i": 89,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setLightsColor",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setLightsColor\" id=\"T1_eg6eh\"><value name=\"LIGHTS\"><shadow type=\"dev-DFRobot-handpyEsp32@0.0.6_menu_lightsMenu\" id=\"T2_4pldm\"><field name=\"lightsMenu\">0</field></shadow></value><value name=\"COLOR\"><shadow type=\"colour_palette\" id=\"T3_2jwx7\"><field name=\"COLOUR\">#0000ff</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\trgb.write(0, 0x0000FF);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 209.52029418945312,
+   "h": 43.20001220703125
+  },
+  "img": "089.png"
+ },
+ {
+  "i": 90,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbDisable",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbDisable\" id=\"T1_36wod\"><field name=\"INDEX\">all</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\trgb.write(-1, 0x000000);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 167.49533081054688,
+   "h": 43.20001220703125
+  },
+  "img": "090.png"
+ },
+ {
+  "i": 91,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbToColor",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T5_4bdqm\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbToColor\" id=\"T1_pm4pc\"><value name=\"RED\"><shadow type=\"math_slider\" id=\"T2_3jk3z\"><field name=\"NUM\">255</field></shadow></value><value name=\"GREEN\"><shadow type=\"math_slider\" id=\"T3_l2vb3\"><field name=\"NUM\">255</field></shadow></value><value name=\"BLUE\"><shadow type=\"math_slider\" id=\"T4_0u5fd\"><field name=\"NUM\">255</field></shadow></value></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\nuint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b);\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = rgbToColor(round(255), round(255), round(255));\n}\nvoid loop() {\n\n}\n\n// 静态函数\nuint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b)\n{\n\treturn (uint32_t)((((uint32_t)r<<16) | ((uint32_t)g<<8)) | (uint32_t)b);\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 233.2828369140625,
+   "h": 32.399993896484375
+  },
+  "img": "091.png"
+ },
+ {
+  "i": 92,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setBrightness",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setBrightness\" id=\"T1_40dye\"><value name=\"BRIGHTVALUE\"><shadow type=\"dev-DFRobot-handpyEsp32@0.0.6_menu_brightnessMenu\" id=\"T2_45ylx\"><field name=\"brightnessMenu\">9</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\trgb.brightness(round(9));\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 196.79061889648438,
+   "h": 43.20001220703125
+  },
+  "img": "092.png"
+ },
+ {
+  "i": 93,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getBrightness",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_70hqi\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_getBrightness\" id=\"T1_7ft3a\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tmind_s_my_string_variable = rgb.brightness();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 149.9453125,
+   "h": 32.399993896484375
+  },
+  "img": "093.png"
+ },
+ {
+  "i": 94,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_playMusic",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_playMusic\" id=\"T1_ci14o\"><field name=\"MUSIC\">DADADADUM</field><field name=\"REPEAT\">Once</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.play(DADADADUM, Once);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 340.5890808105469,
+   "h": 43.20001220703125
+  },
+  "img": "094.png"
+ },
+ {
+  "i": 95,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_musicSetTempo",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_musicSetTempo\" id=\"T1_zk44u\"><value name=\"TICKS\"><shadow type=\"math_number\" id=\"T2_xhf66\"><field name=\"NUM\">4</field></shadow></value><value name=\"TEMPO\"><shadow type=\"math_number\" id=\"T3_uwloa\"><field name=\"NUM\">60</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.setTicksTempo(4, 60);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 352.2156066894531,
+   "h": 43.20001220703125
+  },
+  "img": "095.png"
+ },
+ {
+  "i": 96,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setBuzzerFreq",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_setBuzzerFreq\" id=\"T1_lying\"><value name=\"NOTE\"><shadow type=\"piano\" id=\"T2_rv9a7\"><field name=\"PIANO\">131</field></shadow></value><value name=\"BEAT\"><shadow type=\"dev-DFRobot-handpyEsp32@0.0.6_menu_beatMenu\" id=\"T3_7j9g7\"><field name=\"beatMenu\">1</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.freq(131, BEAT_1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 241.33908081054688,
+   "h": 43.20001220703125
+  },
+  "img": "096.png"
+ },
+ {
+  "i": 97,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_backgroundSetBuzzerFreq",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_backgroundSetBuzzerFreq\" id=\"T1_i9dyp\"><value name=\"NOTE\"><shadow type=\"piano\" id=\"T2_g1ihh\"><field name=\"PIANO\">131</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.freq(131);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 207.99374389648438,
+   "h": 43.20001220703125
+  },
+  "img": "097.png"
+ },
+ {
+  "i": 98,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerSwitch",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerSwitch\" id=\"T1_qa18e\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.stop();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 130.27499389648438,
+   "h": 43.20001220703125
+  },
+  "img": "098.png"
+ },
+ {
+  "i": 99,
+  "type": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerRedirect",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerRedirect\" id=\"T1_rth7q\"><field name=\"PIN\">P0</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <MPython.h>\n\n\n\n// 主程序开始\nvoid setup() {\n\tmPython.begin();\n\tbuzz.redirect(P0);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 220.97030639648438,
+   "h": 43.20001220703125
+  },
+  "img": "099.png"
+ },
+ {
+  "i": 100,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_n20pf\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_\" id=\"T1_s3cy6\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = message;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 80.65313720703125,
+   "h": 27
+  },
+  "img": "100.png"
+ },
+ {
+  "i": 101,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_initial",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_initial\" id=\"T1_10dmf\"><value name=\"SETTING\"><shadow type=\"mqtt_settings\" id=\"T2_pa10v\"><field name=\"MQTT\">{&quot;platform&quot;: &quot;easyiot&quot;, &quot;params&quot;: {&quot;server1&quot;: &quot;cn-shanghai&quot;, &quot;server2&quot;: &quot;mqtt.heclouds.com&quot;, &quot;server5&quot;: &quot;183.230.40.96&quot;, &quot;server3&quot;: &quot;iot.dfrobot.com.cn&quot;, &quot;topic&quot;: &quot;&quot;}}</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 静态常量\nconst String topics[] = {\"\",\"\",\"\",\"\",\"\"};\n\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.init(\"iot.dfrobot.com.cn\",\"\",\"9404080078718433\",\"\",topics,1883);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 195.06716918945312,
+   "h": 43.20001220703125
+  },
+  "img": "101.png"
+ },
+ {
+  "i": 102,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnect",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnect\" id=\"T1_n3kcp\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.connect();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 143.76718139648438,
+   "h": 43.20001220703125
+  },
+  "img": "102.png"
+ },
+ {
+  "i": 103,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttDisconnect",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttDisconnect\" id=\"T1_hatyz\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.disconnect();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 143.76718139648438,
+   "h": 43.20001220703125
+  },
+  "img": "103.png"
+ },
+ {
+  "i": 104,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnected",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_fpwim\"><value name=\"CONDITION\"><block type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnected\" id=\"T1_1yreb\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (myIot.connected()) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 176.16720581054688,
+   "h": 32.399993896484375
+  },
+  "img": "104.png"
+ },
+ {
+  "i": 105,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend\" id=\"T1_y5rxl\"><value name=\"MSG\"><shadow type=\"text\" id=\"T2_u9ou0\"><field name=\"TEXT\">hello</field></shadow></value><field name=\"TOPIC\">Topic_0</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.publish(topic_0, \"hello\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 319.3937072753906,
+   "h": 43.20001220703125
+  },
+  "img": "105.png"
+ },
+ {
+  "i": 106,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend_save",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend_save\" id=\"T1_0v9nb\"><value name=\"MSG\"><shadow type=\"text\" id=\"T2_q7k92\"><field name=\"TEXT\">hello</field></shadow></value><field name=\"TOPIC\">Topic_0</field></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.publish(topic_0, \"hello\", 1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 451.6921691894531,
+   "h": 43.20001220703125
+  },
+  "img": "106.png"
+ },
+ {
+  "i": 107,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedData",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedData\" id=\"T1_x2g72\"><field name=\"TOPIC\">Topic_0</field><value name=\"MSG\"><shadow type=\"ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_\" id=\"T2_uq474\"></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\nvoid obloqMqttEventTp384w(String& message);\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setMqttCallback(obloqMqttEventTp384w, 0);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid obloqMqttEventTp384w(String& message) {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 292.0797119140625,
+   "h": 48.93748474121094
+  },
+  "img": "107.png"
+ },
+ {
+  "i": 108,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_meaage",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_meaage\" id=\"T1_e81dh\"><field name=\"TOPIC\">Topic_0</field><value name=\"MSG\"><shadow type=\"text\" id=\"T2_636xe\"><field name=\"TEXT\">hello</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\nvoid whenTopic0Received0();\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setMqttCallback(topic_0, \"hello\", whenTopic0Received0);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid whenTopic0Received0() {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 319.40155029296875,
+   "h": 48.93748474121094
+  },
+  "img": "108.png"
+ },
+ {
+  "i": 109,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_subscribe",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_subscribe\" id=\"T1_lnlt2\"><value name=\"TOPIC\"><shadow type=\"text\" id=\"T2_7l7xu\"><field name=\"TEXT\">topic/a</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.subscribeTopic(\"topic/a\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 202.60311889648438,
+   "h": 43.20001220703125
+  },
+  "img": "109.png"
+ },
+ {
+  "i": 110,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic\" id=\"T1_mxkko\"><value name=\"MSG\"><shadow type=\"text\" id=\"T2_hfv9r\"><field name=\"TEXT\">hello</field></shadow></value><value name=\"TOPIC\"><shadow type=\"text\" id=\"T3_l3l05\"><field name=\"TEXT\">topic/a</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.publish(\"topic/a\", \"hello\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 321.3781433105469,
+   "h": 43.20001220703125
+  },
+  "img": "110.png"
+ },
+ {
+  "i": 111,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic_save",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic_save\" id=\"T1_atntt\"><value name=\"MSG\"><shadow type=\"text\" id=\"T2_fi89j\"><field name=\"TEXT\">hello</field></shadow></value><value name=\"TOPIC\"><shadow type=\"text\" id=\"T3_vq3ol\"><field name=\"TEXT\">topic/a</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.publish(\"topic/a\", \"hello\", 1);\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 453.6765441894531,
+   "h": 43.20001220703125
+  },
+  "img": "111.png"
+ },
+ {
+  "i": 112,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedTopicData",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedTopicData\" id=\"T1_notxj\"><value name=\"TOPIC\"><shadow type=\"text\" id=\"T2_n9s14\"><field name=\"TEXT\">topic/a</field></shadow></value><value name=\"MSG\"><shadow type=\"ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_\" id=\"T3_d85mh\"></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\nvoid obloqMqttEventTtopic47a(String& message);\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setCustomMqttCallback(obloqMqttEventTtopic47a, \"topic/a\");\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid obloqMqttEventTtopic47a(String& message) {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 294.0640869140625,
+   "h": 48.93748474121094
+  },
+  "img": "112.png"
+ },
+ {
+  "i": 113,
+  "type": "ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_topic_meaage",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_topic_meaage\" id=\"T1_dokhe\"><value name=\"TOPIC\"><shadow type=\"text\" id=\"T2_8em0m\"><field name=\"TEXT\">topic/a</field></shadow></value><value name=\"MSG\"><shadow type=\"text\" id=\"T3_9xwby\"><field name=\"TEXT\">hello</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\nvoid whentopic47aReceived0();\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setCustomMqttCallback(\"topic/a\", \"hello\", whentopic47aReceived0);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid whentopic47aReceived0() {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 321.38592529296875,
+   "h": 48.93748474121094
+  },
+  "img": "113.png"
+ },
+ {
+  "i": 114,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoDebug_eventHeadInner_",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_5e0nj\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoDebug_eventHeadInner_\" id=\"T1_ks7a8\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = debugMessage;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 70.20001220703125,
+   "h": 27
+  },
+  "img": "114.png"
+ },
+ {
+  "i": 115,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoError_eventHeadInner_",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_l47kd\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoError_eventHeadInner_\" id=\"T1_glmzd\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n\n// 动态变量\nString mind_s_my_string_variable;\n\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = errorCode;\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 56.70001220703125,
+   "h": 27
+  },
+  "img": "115.png"
+ },
+ {
+  "i": 116,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiConnectByPwd",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-WIFI@0.0.5_wifiConnectByPwd\" id=\"T1_tu5ci\"><value name=\"ACCOUNT\"><shadow type=\"text\" id=\"T2_l5nk7\"><field name=\"TEXT\">yourSSID</field></shadow></value><value name=\"PASSWORD\"><shadow type=\"text\" id=\"T3_0m2mx\"><field name=\"TEXT\">yourPASSWD</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.wifiConnect(\"yourSSID\", \"yourPASSWD\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 419.1281433105469,
+   "h": 43.20001220703125
+  },
+  "img": "116.png"
+ },
+ {
+  "i": 117,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiConnected",
+  "how": "in-if",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"control_if\" id=\"T2_ewq7c\"><value name=\"CONDITION\"><block type=\"ext-DFRobot-WIFI@0.0.5_wifiConnected\" id=\"T1_sfge9\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tif (myIot.wifiStatus()) {\n\n\t}\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 446.1499938964844,
+   "y": 154.10000610351562,
+   "w": 171.01876831054688,
+   "h": 32.399993896484375
+  },
+  "img": "117.png"
+ },
+ {
+  "i": 118,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiDisConnected",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-WIFI@0.0.5_wifiDisConnected\" id=\"T1_v4sbv\"></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.wifiDisconnect();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 138.61874389648438,
+   "h": 43.20001220703125
+  },
+  "img": "118.png"
+ },
+ {
+  "i": 119,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiGetLocalIP",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_muwf8\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"ext-DFRobot-WIFI@0.0.5_wifiGetLocalIP\" id=\"T1_5wduz\"><field name=\"CONFIGURATION\">getWiFiLocalIP</field></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = myIot.getWiFiLocalIP();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 220.3984375,
+   "h": 32.399993896484375
+  },
+  "img": "119.png"
+ },
+ {
+  "i": 120,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiSetSoftAP",
+  "how": "stack",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-WIFI@0.0.5_wifiSetSoftAP\" id=\"T1_uvyqq\"><value name=\"ACCOUNT2\"><shadow type=\"text\" id=\"T2_vfy8g\"><field name=\"TEXT\">yourSSID</field></shadow></value><value name=\"PASSWORD2\"><shadow type=\"text\" id=\"T3_75o8h\"><field name=\"TEXT\">yourPASSWD</field></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setSoftAP(\"yourSSID\", \"yourPASSWD\");\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 408.3500061035156,
+   "y": 151.39999389648438,
+   "w": 419.7375183105469,
+   "h": 43.20001220703125
+  },
+  "img": "120.png"
+ },
+ {
+  "i": 121,
+  "type": "ext-DFRobot-WIFI@0.0.5_wifiGetSoftAPIP",
+  "how": "in-set-string",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"data_setStringto\" id=\"T2_kepc2\"><field name=\"STRING\" id=\"an#s.![f|QV7gYn=SK+=.-my string variable\" variabletype=\"string\">my string variable</field><value name=\"VALUE\"><block type=\"ext-DFRobot-WIFI@0.0.5_wifiGetSoftAPIP\" id=\"T1_0d8nx\"></block></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n\n// 动态变量\nString mind_s_my_string_variable;\n\n// 创建对象\nDFRobot_Iot myIot;\n\n\n\n// 主程序开始\nvoid setup() {\n\tmind_s_my_string_variable = myIot.getWiFiSoftIP();\n}\nvoid loop() {\n\n}\n",
+  "rect": {
+   "x": 641.1515502929688,
+   "y": 154.10000610351562,
+   "w": 203.7890625,
+   "h": 32.399993896484375
+  },
+  "img": "121.png"
+ },
+ {
+  "i": 122,
+  "type": "ext-DFRobot-WIFI@0.0.5_whenDebugInfo",
+  "how": "hat",
+  "xml": "<xml><block x=\"200\" y=\"200\" type=\"ext-DFRobot-WIFI@0.0.5_whenDebugInfo\" id=\"T1_lkv3i\"><value name=\"DEBUG\"><shadow type=\"ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoDebug_eventHeadInner_\" id=\"T2_f4b6j\"></shadow></value><value name=\"ERROR\"><shadow type=\"ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoError_eventHeadInner_\" id=\"T3_v807f\"></shadow></value></block></xml>",
+  "code": "/*!\n * MindPlus\n * DFRobot, 掌控板\n */\n#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\nvoid iotDebugEvent(String& debugMessage, int32_t errorCode);\n\n// 主程序开始\nvoid setup() {\n\tmyIot.setIotDebugCallback(iotDebugEvent);\n}\nvoid loop() {\n\n}\n\n// 事件回调函数\nvoid iotDebugEvent(String& debugMessage, int32_t errorCode) {\n}\n",
+  "rect": {
+   "x": 515,
+   "y": 215.8625030517578,
+   "w": 249.3187255859375,
+   "h": 48.93748474121094
+  },
+  "img": "122.png"
+ }
+]

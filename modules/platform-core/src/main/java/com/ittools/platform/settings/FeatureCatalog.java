@@ -40,6 +40,7 @@ public final class FeatureCatalog {
         l.add(new Feature(STUDENT, "tests", "作业与测验", "学习"));
         l.add(new Feature(STUDENT, "practice", "刷题练习", "学习", "/api/student/quiz/practice/**", "/api/student/quiz/practice-sets/**", "/api/student/quiz/practice-sessions/**"));
         l.add(new Feature(STUDENT, "python", "Python 练习", "学习", "/api/student/python/**"));
+        l.add(new Feature(STUDENT, "blocks", "图形化编程", "学习", "/api/student/mpblocks/free/**", "/api/student/mpblocks/free"));
         l.add(new Feature(STUDENT, "op-practice", "课后操作题", "学习", "/api/student/op-practice/**"));
         l.add(new Feature(STUDENT, "typing", "指法练习", "学习", "/api/student/typing/**", "/api/typing/**"));
         l.add(new Feature(STUDENT, "resources", "学习资源", "资源与空间", "/api/student/resources/**"));

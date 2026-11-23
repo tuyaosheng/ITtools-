@@ -5,7 +5,7 @@
       <div class="hero-ic">{{ me.groupNo ? me.groupNo : '?' }}</div>
       <div class="hero-text">
         <div class="hero-title">
-          <template v-if="me.groupNo">我在第 {{ me.groupNo }} 组{{ me.isLeader ? ' · 组长 ★' : '' }}</template>
+          <template v-if="me.groupNo">我在{{ me.groupLabel || `第 ${me.groupNo} 组` }}{{ me.isLeader ? ' · 组长 ★' : '' }}</template>
           <template v-else>我还没有小组</template>
         </div>
         <div class="hero-sub">
@@ -19,6 +19,26 @@
       <el-button v-if="canMove && me.groupNo" round @click="join(0)">退出小组</el-button>
     </div>
 
+    <!-- 整组选角色和配对号（组里谁选都算全组的） -->
+    <div v-if="data.roleOpen && me.groupNo" class="role-pick">
+      <div class="rp-title">我们组做：<b>{{ myGroup?.role ? myGroup.label : '还没选' }}</b></div>
+      <div class="rp-row">
+        <el-radio-group v-model="rolePick.role">
+          <el-radio-button v-for="r in data.roles" :key="r" :value="r">{{ r }}组</el-radio-button>
+        </el-radio-group>
+        <span>第</span>
+        <el-select v-model="rolePick.pairNo" class="rp-no" placeholder="号">
+          <el-option v-for="n in data.pairCount" :key="n" :value="n" :label="String(n)" :disabled="!!takenBy(rolePick.role, n)">
+            {{ n }}<span v-if="takenBy(rolePick.role, n)" class="muted">（{{ takenBy(rolePick.role, n) }}已选）</span>
+          </el-option>
+        </el-select>
+        <span>号</span>
+        <el-button type="primary" :disabled="!rolePick.role || !rolePick.pairNo" @click="pickRole">确定</el-button>
+        <el-button v-if="myGroup?.role" link @click="pickRole(true)">撤销</el-button>
+      </div>
+      <div class="muted">商量好再选：组里任何一个人选了，全组都是这个角色；同一角色同一个号只能一个组选。{{ data.roles.join('组和') }}组同一个号是一对，要一起配合。</div>
+    </div>
+
     <div v-if="data.voteOpen" class="vote-tip">🗳 组长推选进行中：在自己组里点「推选」投给一位同学（每人一票，可以改）</div>
     <el-empty v-if="!data.groups.length" description="老师还没有设置小组" :image-size="80" />
 
@@ -27,7 +47,7 @@
         :style="{ '--gc': groupColor(g.groupNo) }">
         <div class="g-head">
           <span class="g-no">{{ g.groupNo }}</span>
-          <b>第 {{ g.groupNo }} 组</b>
+          <b>{{ g.label || `第 ${g.groupNo} 组` }}</b>
           <span v-if="g.groupNo === me.groupNo" class="me-badge">我的组</span>
           <span class="grow" />
           <span class="g-count">{{ g.members.length }}{{ data.maxSize ? ` / ${data.maxSize}` : '' }}</span>
@@ -69,7 +89,21 @@ const error = ref('')
 const me = computed(() => data.value?.me || {})
 // 开放中、已签到、且（没进组 或 没被开网规则锁定）时可以加入 / 换组 / 退出
 const canMove = computed(() => data.value?.joinOpen && me.value.joined && !(data.value.locked && me.value.groupNo))
+const myGroup = computed(() => data.value?.groups.find((g: any) => g.groupNo === me.value.groupNo))
+const rolePick = ref<{ role: string; pairNo?: number }>({ role: '' })
+const takenBy = (role: string, n: number) =>
+  data.value?.groups.find((g: any) => g.role === role && g.pairNo === n && g.groupNo !== me.value.groupNo)?.label || ''
 let timer: number | undefined
+
+async function pickRole(undo = false) {
+  try {
+    data.value = await api.post(`${base}/role`, undo === true ? { role: null } : rolePick.value)
+    ElMessage.success(undo === true ? '已撤销' : `我们组是${myGroup.value?.label}`)
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+    load()
+  }
+}
 
 async function load() {
   try {
@@ -83,7 +117,7 @@ async function load() {
 async function join(groupNo: number) {
   try {
     data.value = await api.post(`${base}/join`, { groupNo })
-    ElMessage.success(groupNo ? `已加入第 ${groupNo} 组` : '已退出小组')
+    ElMessage.success(groupNo ? `已加入${data.value.groups.find((g: any) => g.groupNo === groupNo)?.label || `第 ${groupNo} 组`}` : '已退出小组')
   } catch (err) {
     ElMessage.error(errMsg(err))
     load()
@@ -120,6 +154,10 @@ onMounted(load)
 .hero-text { flex: 1; min-width: 180px; }
 .hero-title { font-family: var(--hb-title-font); font-size: 22px; color: var(--hb-ink-deep); }
 .hero-sub { font-size: 13px; color: var(--el-text-color-secondary); margin-top: 2px; }
+.role-pick { padding: 12px 14px; border-radius: 12px; border: 2px dashed var(--el-color-primary-light-5); background: var(--el-color-primary-light-9); display: flex; flex-direction: column; gap: 8px; }
+.rp-title { font-size: 15px; }
+.rp-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rp-no { width: 110px; }
 .vote-tip { font-size: 13px; padding: 8px 12px; border-radius: 10px; background: var(--el-color-warning-light-9); color: var(--el-color-warning-dark-2); }
 
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }

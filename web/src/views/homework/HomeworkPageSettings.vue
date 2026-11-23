@@ -1,6 +1,27 @@
 <template>
   <div class="hw-settings">
     <el-divider content-position="left">作品提交设置</el-divider>
+    <el-form-item label="图形化编程">
+      <el-switch v-model="cfg.blockEditor" />
+      <span class="muted bx">学生在这一页里用平台的图形化编程（掌控板，积木和 Mind+ 一样）拼程序、上传到掌控板、点“提交作品”交 .mpcode，程序自动保存，下节课接着做。自动评分可以用 Mind+ 规则（含“MQTT 设置正确”）。</span>
+    </el-form-item>
+    <el-form-item v-if="cfg.blockEditor" label="旁边显示任务单">
+      <el-select v-model="cfg.taskPageTitle" clearable filterable placeholder="不显示（只有积木编辑器）" class="w320">
+        <el-option v-for="t in taskPages" :key="t.id" :label="`${t.title}（${t.pageType === 'SURVEY' ? '课堂调查' : '图文'}）`" :value="t.title" />
+      </el-select>
+      <span class="muted bx">学生在这一页左边拼积木、右边看任务单（步骤、填读数、选择题）并提交，不用来回切换页面。选的是本课程里的“课堂调查”或“图文”页；上课时那一页也要打开，学生才能填写。</span>
+      <span v-if="cfg.taskPageTitle && !taskPages.some(t => t.title === cfg.taskPageTitle)" class="warn">课程里找不到标题为“{{ cfg.taskPageTitle }}”的任务单，改过标题的话请重新选择</span>
+    </el-form-item>
+    <el-form-item v-if="cfg.blockEditor" label="起始程序">
+      <el-tag :type="cfg.hasStarter ? 'success' : 'info'" effect="plain">{{ cfg.hasStarter ? '已设置' : '未设置' }}</el-tag>
+      <el-button size="small" class="ml8" @click="starterDlg = true">{{ cfg.hasStarter ? '修改起始程序' : '设置起始程序' }}</el-button>
+      <el-button v-if="cfg.hasStarter" size="small" link type="danger" @click="clearStarter">清除</el-button>
+      <span class="muted bx">学生第一次打开这一页时，可以选“老师给的起始程序”接着拼。在编辑器里直接搭（自动保存），或点编辑器的“打开”载入 .mpcode（Mind+ 做的也行）。不同角色的作品页各配一份，就是按角色不同。复制课程、导出课程包会带上。</span>
+    </el-form-item>
+    <el-form-item v-if="cfg.blockEditor" label="以前的程序">
+      <el-checkbox v-model="cfg.allowHistory">允许学生选用自己以前的程序</el-checkbox>
+      <span class="muted bx">学生可以从自己别的课的程序、“图形化编程”随时练习、交过的 .mpcode 作品开始，上节课的接着做。</span>
+    </el-form-item>
     <el-form-item label="允许的类型">
       <el-input v-model="cfg.allowedExts" placeholder="如 docx,pptx（留空不限）" class="w320" />
     </el-form-item>
@@ -73,6 +94,9 @@
       <el-button type="primary" plain @click="save">保存作品设置与评分点</el-button>
     </el-form-item>
 
+    <el-dialog v-model="starterDlg" :title="`起始程序：${page.title}`" fullscreen append-to-body destroy-on-close @closed="refreshStarter">
+      <iframe :src="`/mpblocks/index.html?starter=${page.id}`" class="starter-frame" />
+    </el-dialog>
     <el-dialog v-model="inspectDlg" :title="`文件格式：${inspectName}`" width="900px" append-to-body>
       <OfficeInspectView v-if="inspected" :data="inspected" />
     </el-dialog>
@@ -81,13 +105,32 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadRequestOptions } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import OfficeInspectView from './OfficeInspectView.vue'
 
 const props = defineProps<{ page: any }>()
-const cfg = reactive<any>({ allowedExts: '', peerReview: false, showClassmates: false, autoGrade: true, rubricId: null, autoVisibility: 'ALL', practice: false })
+const cfg = reactive<any>({ allowedExts: '', peerReview: false, showClassmates: false, autoGrade: true, rubricId: null, autoVisibility: 'ALL', practice: false, blockEditor: false, taskPageTitle: null, allowHistory: true, hasStarter: false })
+const starterDlg = ref(false)
+async function refreshStarter() {
+  try {
+    const c = await api.get(`/teacher/homework/pages/${props.page.id}/config`)
+    cfg.hasStarter = !!c.hasStarter
+  } catch { /* 忽略 */ }
+}
+async function clearStarter() {
+  try {
+    await ElMessageBox.confirm('清除这一页的起始程序？已经开始做的学生不受影响', '清除起始程序', { type: 'warning' })
+  } catch { return }
+  try {
+    await api.del(`/teacher/mpblocks/pages/${props.page.id}/starter`)
+    cfg.hasStarter = false
+    ElMessage.success('已清除起始程序')
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 const rules = ref<any[]>([])
 const catalog = ref<any[]>([])
 const rubrics = ref<any[]>([])
@@ -124,7 +167,19 @@ function move(i: number, d: number) {
   rules.value.splice(i + d, 0, x)
 }
 
+const taskPages = ref<any[]>([])
+async function loadTaskPages() {
+  if (!props.page?.courseId) return
+  try {
+    const c = await api.get(`/teacher/courses/${props.page.courseId}`)
+    taskPages.value = (c.pages || []).filter((p: any) => (p.pageType === 'SURVEY' || p.pageType === 'TEXT') && p.id !== props.page.id)
+  } catch {
+    taskPages.value = []
+  }
+}
+
 async function load() {
+  loadTaskPages()
   Object.assign(cfg, await api.get(`/teacher/homework/pages/${props.page.id}/config`))
   rules.value = await api.get(`/teacher/grading/pages/${props.page.id}/rules`)
   testResult.value = null
@@ -176,6 +231,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.ml8 { margin-left: 8px; }
+.starter-frame { width: 100%; height: calc(100vh - 90px); border: 0; display: block; }
 .w320 { width: 320px; }
 .w200 { width: 200px; }
 .w150 { width: 150px; }
@@ -189,4 +246,6 @@ onMounted(async () => {
 .res { font-size: 12px; width: 100%; padding-left: 26px; }
 .res.ok { color: var(--el-color-success); }
 .res.bad { color: var(--el-color-danger); }
+.bx { margin-left: 10px; font-size: 12px; line-height: 1.5; }
+.warn { display: block; color: var(--el-color-danger); font-size: 12px; margin-top: 4px; }
 </style>

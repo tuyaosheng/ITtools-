@@ -41,7 +41,34 @@ public class GroupController {
     public ApiResponse<Map<String, Object>> settings(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Body b = Body.of(body);
         return ApiResponse.ok(svc.updateSettings(CurrentUser.id(), id, b.intv("groupCount"),
-                b.has("joinOpen") ? b.bool("joinOpen", false) : null, b.has("voteOpen") ? b.bool("voteOpen", false) : null, b.intv("maxSize")));
+                b.has("joinOpen") ? b.bool("joinOpen", false) : null, b.has("voteOpen") ? b.bool("voteOpen", false) : null, b.intv("maxSize"),
+                body.containsKey("roles") ? (body.get("roles") == null ? "" : body.get("roles")) : null,
+                b.has("roleOpen") ? b.bool("roleOpen", false) : null));
+    }
+
+    /** 老师设置某组的角色、配对号、组名：{role, pairNo, name}。 */
+    @PutMapping("/api/teacher/groups/lessons/{id}/groups/{groupNo}/role")
+    public ApiResponse<Map<String, Object>> groupRole(@PathVariable Long id, @PathVariable int groupNo, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        return ApiResponse.ok(svc.setGroupRole(CurrentUser.id(), id, groupNo, b.str("role"), b.intv("pairNo"), b.str("name")));
+    }
+
+    /** 一键生成角色：{roles: "门铃,显示"}（不带 roles 用本节课已设的）。 */
+    @PostMapping("/api/teacher/groups/lessons/{id}/auto-roles")
+    public ApiResponse<Map<String, Object>> autoRoles(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        return ApiResponse.ok(svc.autoRoles(CurrentUser.id(), id, body == null ? null : body.get("roles")));
+    }
+
+    @PostMapping("/api/teacher/groups/lessons/{id}/clear-roles")
+    public ApiResponse<Map<String, Object>> clearRoles(@PathVariable Long id) {
+        return ApiResponse.ok(svc.clearRoles(CurrentUser.id(), id));
+    }
+
+    /** 按学号分组：{size: 3, mode: "CONSECUTIVE" 挨着排 | "INTERLEAVED" 间隔排}。 */
+    @PostMapping("/api/teacher/groups/lessons/{id}/by-number")
+    public ApiResponse<Map<String, Object>> byNumber(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        return ApiResponse.ok(svc.autoByNumber(CurrentUser.id(), id, b.intv("size", 3), b.str("mode")));
     }
 
     @PutMapping("/api/teacher/groups/lessons/{id}/members/{studentId}")
@@ -98,6 +125,13 @@ public class GroupController {
     @PostMapping("/api/student/groups/lessons/{id}/vote")
     public ApiResponse<Map<String, Object>> vote(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return ApiResponse.ok(svc.studentVote(CurrentUser.id(), id, Body.of(body).lng("candidateId")));
+    }
+
+    /** 学生整组选角色和配对号：{role, pairNo}；role 为空 = 撤销。 */
+    @PostMapping("/api/student/groups/lessons/{id}/role")
+    public ApiResponse<Map<String, Object>> role(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Body b = Body.of(body);
+        return ApiResponse.ok(svc.studentSetRole(CurrentUser.id(), id, b.str("role"), b.intv("pairNo")));
     }
 
     // ================= 学生：小组合作 =================

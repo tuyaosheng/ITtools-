@@ -9,7 +9,7 @@
         </div>
         <div class="meta">
           机位 {{ lesson.myAttendance?.pcName || '未登记' }}
-          <template v-if="lesson.myAttendance?.groupNo"> · 第 {{ lesson.myAttendance.groupNo }} 组</template>
+          <template v-if="lesson.myAttendance?.groupNo"> · {{ lesson.myAttendance.groupLabel || `第 ${lesson.myAttendance.groupNo} 组` }}</template>
         </div>
       </div>
     </el-card>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
@@ -65,8 +65,19 @@ const lesson = ref<any>(null)
 const pages = ref<any[]>([])
 const page = ref<any>(null)
 const toolTab = ref(studentTools[0]?.name)
+// 老师设了“成绩开网”时，最前面多一个“完成情况”：自己和组员还差什么
+const hasGate = ref(false)
+const progressTool = { name: 'progress', label: '完成情况', component: defineAsyncComponent(() => import('../quiz/GroupProgress.vue')) }
 // 教师关闭的功能（如课堂论坛）不显示对应标签
-const tools = computed(() => studentTools.filter(t => !t.feature || !closedFeatures(lesson.value).includes(t.feature)))
+const tools = computed(() => [...(hasGate.value ? [progressTool] : []),
+  ...studentTools.filter(t => !t.feature || !closedFeatures(lesson.value).includes(t.feature))])
+async function checkGate() {
+  try {
+    const g = await api.get(`/student/lessons/${id}/net-gate/progress`)
+    if (g?.enabled && !hasGate.value) { hasGate.value = true; toolTab.value = 'progress' }
+    if (!g?.enabled) hasGate.value = false
+  } catch { /* 忽略 */ }
+}
 let timer: number | undefined
 let hbTimer: number | undefined
 
@@ -90,6 +101,7 @@ async function openPage(pageId: number) {
 }
 
 onMounted(async () => {
+  checkGate()
   const cur = await api.get('/student/lessons/current')
   if (cur && cur.id === id) {
     lesson.value = cur.myAttendance?.status === 'PRESENT' ? cur : await api.post(`/student/lessons/${id}/join`)
@@ -103,7 +115,7 @@ onMounted(async () => {
   // ?page= 指定打开的页面（如从“我的作品”补交入口跳转）
   const want = Number(route.query.page)
   if (pages.value.length) await openPage(pages.value.some(p => p.id === want) ? want : pages.value[0].id)
-  timer = window.setInterval(loadPages, 8000)
+  timer = window.setInterval(() => { loadPages(); checkGate() }, 8000)
   // 在线监控心跳：上报当前查看的页面（教师"在线监控"与"学情监控·页面停留时间"使用）；切换页面时立即上报
   beat()
   hbTimer = window.setInterval(beat, 20000)

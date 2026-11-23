@@ -10,6 +10,7 @@
       </div>
       <div class="row muted small">服务器 {{ data.server }}　端口 {{ data.port }}<template v-if="teacher">　账号 {{ data.username }} / {{ data.password }}　在线设备 {{ data.clients ?? 0 }}</template></div>
       <div v-if="teacher" class="ops">
+        <el-button size="small" type="success" @click="openScreen">投屏大屏</el-button>
         <el-button size="small" @click="load">刷新</el-button>
         <el-button size="small" type="danger" plain :disabled="!data.devices.length" @click="clear">清空本课消息</el-button>
         <el-input v-model="sendDevice" size="small" placeholder="设备名，如 G01" class="w110" />
@@ -71,6 +72,9 @@ async function load() {
     if (!data.value) ElMessage.error(errMsg(err))
   }
 }
+
+// 新窗口打开全屏大屏（拖到投影仪那块屏幕上，点“全屏”）
+function openScreen() { window.open(`/teacher/screen/mqtt/${lid.value}`, `mqtt-screen-${lid.value}`) }
 
 async function clear() {
   try {

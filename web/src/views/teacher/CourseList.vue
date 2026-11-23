@@ -16,6 +16,7 @@
           <el-upload v-if="tab === 'mine'" :show-file-list="false" accept=".zip" :http-request="importPack">
             <el-button :loading="importing">导入课程包</el-button>
           </el-upload>
+          <el-checkbox v-if="tab === 'mine'" v-model="showArchived" @change="load">显示已归档</el-checkbox>
           <el-button v-if="tab === 'mine'" type="primary" @click="openCreate">新建课程</el-button>
         </div>
       </div>
@@ -26,6 +27,7 @@
         <template #default="{ row }: { row: any }">
           <el-link type="primary" @click="router.push(`/teacher/courses/${row.id}`)">《{{ row.name }}》</el-link>
           <el-tag v-if="row.shared && tab === 'mine'" size="small" class="ml">共享</el-tag>
+          <el-tag v-if="row.archived" size="small" type="info" class="ml">已归档</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="category" label="分类" width="120" />
@@ -33,10 +35,11 @@
       <el-table-column v-if="tab === 'shared'" prop="teacherName" label="教师" width="100" />
       <el-table-column prop="pageCount" label="页面数" width="80" />
       <el-table-column v-if="tab === 'mine'" prop="lessonCount" label="开课次数" width="90" />
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column label="操作" width="350" fixed="right">
         <template #default="{ row }: { row: any }">
           <template v-if="tab === 'mine'">
-            <el-button link type="primary" @click="startCourse = row.id; startVisible = true">开课</el-button>
+            <el-button v-if="!row.archived" link type="primary" @click="startCourse = row.id; startVisible = true">开课</el-button>
+            <el-button link type="primary" @click="setArchived(row, !row.archived)">{{ row.archived ? '取消归档' : '归档' }}</el-button>
             <el-button link type="primary" @click="openEdit(row)">属性</el-button>
             <el-button link type="primary" @click="copy(row)">复制</el-button>
             <el-button link type="primary" @click="exportPack(row)">导出</el-button>
@@ -107,6 +110,7 @@ const startVisible = ref(false)
 const startCourse = ref<number>()
 const category = ref<string>()
 const importing = ref(false)
+const showArchived = ref(false)
 const warnDialog = ref(false)
 const imported = ref<any>(null)
 const myCourses = ref<any[]>([])
@@ -140,10 +144,13 @@ async function importPack(o: UploadRequestOptions) {
 async function load() {
   loading.value = true
   try {
+    const params: any = {}
+    if (termId.value) params.termId = termId.value
+    if (showArchived.value) params.includeArchived = true
     list.value = tab.value === 'mine'
-      ? await api.get('/teacher/courses', termId.value ? { termId: termId.value } : undefined)
+      ? await api.get('/teacher/courses', params)
       : await api.get('/teacher/courses/shared')
-    if (tab.value === 'mine' && !termId.value) myCourses.value = list.value
+    if (tab.value === 'mine' && !termId.value && !showArchived.value) myCourses.value = list.value
     if (category.value && !list.value.some(c => c.category === category.value)) category.value = undefined
   } finally {
     loading.value = false
@@ -191,6 +198,17 @@ async function copy(row: any) {
   }
 }
 
+// 归档只是收起来：课程、上课记录、学生提交都不动，随时可以取消归档
+async function setArchived(row: any, archived: boolean) {
+  try {
+    await api.post(`/teacher/courses/${row.id}/archive`, { archived })
+    ElMessage.success(archived ? `已归档《${row.name}》（勾选“显示已归档”可以找回）` : `已取消归档《${row.name}》`)
+    await load()
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
+
 async function remove(row: any) {
   try {
     await api.del(`/teacher/courses/${row.id}`)
@@ -210,7 +228,7 @@ onMounted(async () => {
 
 <style scoped>
 .card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-.ops { display: flex; gap: 8px; }
+.ops { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ml { margin-left: 6px; }
 .full { width: 100%; }
 .tip { margin-left: 10px; font-size: 12px; color: var(--el-text-color-secondary); }

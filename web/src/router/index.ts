@@ -75,6 +75,7 @@ const router = createRouter({
         { path: 'tests', meta: { feature: 'tests' }, component: () => import('../views/student/StudentTests.vue') },
         { path: 'practice', meta: { feature: 'practice' }, component: () => import('../views/student/PracticeView.vue') },
         { path: 'python', meta: { feature: 'python' }, component: () => import('../views/python/StudentPracticeView.vue') },
+        { path: 'blocks', meta: { feature: 'blocks' }, component: () => import('../views/student/StudentBlocks.vue') },
         { path: 'resources', meta: { feature: 'resources' }, component: () => import('../views/student/StudentResources.vue') },
         { path: 'disk', meta: { feature: 'disk' }, component: () => import('../views/common/DiskView.vue') },
         { path: 'notes', meta: { feature: 'notes' }, component: () => import('../views/student/StudentNotes.vue') },
@@ -86,7 +87,9 @@ const router = createRouter({
         { path: 'typing', meta: { feature: 'typing' }, component: () => import('../views/student/StudentTyping.vue') },
         { path: 'site', meta: { feature: 'site' }, component: () => import('../views/student/StudentSite.vue') }
       ]
-    }
+    },
+    // 投屏大屏：全屏、不带菜单，老师在课堂控制台“物联网消息”点“投屏大屏”打开
+    { path: '/teacher/screen/mqtt/:id', meta: { requiresAuth: true, role: 'TEACHER' }, component: () => import('../views/activity/MqttScreen.vue') }
   ]
 })
 

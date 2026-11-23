@@ -41,7 +41,7 @@ public class GroupService {
 
     private Map<String, Object> settings(Long lessonId) {
         return jdbc.queryForMap("SELECT group_count AS \"groupCount\", group_join_open AS \"joinOpen\", leader_vote_open AS \"voteOpen\", "
-                + "group_max_size AS \"maxSize\", class_id AS \"classId\", status, "
+                + "group_max_size AS \"maxSize\", class_id AS \"classId\", status, group_roles AS \"roles\", group_role_open AS \"roleOpen\", "
                 // 自由分组开放期间学生可以随时换组/退出（人数上限只限制加入已满的组）；
                 // 只有成绩开网要求全组完成时才锁定，否则做完的人可以离开没做完的组
                 + "EXISTS (SELECT 1 FROM lesson_net_gate g WHERE g.lesson_id = lesson.id AND g.enabled AND g.require_group) AS locked "
@@ -94,6 +94,15 @@ public class GroupService {
         }
         int maxSize = ((Number) s.get("maxSize")).intValue();
         for (int g = 1; g <= count; g++) groups.get(g - 1).put("full", maxSize > 0 && sizes[g] >= maxSize);
+        // 组名、角色、配对号（门铃1组 / 显示1组）
+        Map<Integer, Map<String, Object>> info = lessons.groupInfo(lessonId);
+        for (Map<String, Object> g : groups) {
+            Map<String, Object> e = info.get(((Number) g.get("groupNo")).intValue());
+            g.put("role", e == null ? null : e.get("role"));
+            g.put("pairNo", e == null ? null : e.get("pairNo"));
+            g.put("name", e == null ? null : e.get("name"));
+            g.put("label", e == null ? "第" + g.get("groupNo") + "组" : e.get("label"));
+        }
         for (Map<String, Object> g : groups) {
             Object leader = g.get("leaderId");
             String leaderName = null;
@@ -108,9 +117,24 @@ public class GroupService {
         out.put("voteOpen", s.get("voteOpen"));
         out.put("maxSize", maxSize);
         out.put("locked", s.get("locked"));
+        out.put("roles", roleList(s.get("roles")));
+        out.put("roleOpen", s.get("roleOpen"));
+        out.put("pairCount", pairCount(count, roleList(s.get("roles")).size()));
         out.put("groups", groups);
         out.put("ungrouped", ungrouped);
         return out;
+    }
+
+    private static List<String> roleList(Object v) {
+        List<String> out = new ArrayList<>();
+        if (v != null) for (String s : String.valueOf(v).split(",")) if (!s.trim().isEmpty()) out.add(s.trim());
+        return out;
+    }
+
+    /** 配对号的范围：组数 ÷ 角色数（至少 1）；凑不成对多出来的组并进已有的对。 */
+    private static int pairCount(int groupCount, int roleCount) {
+        if (roleCount <= 0) return groupCount;
+        return Math.max(1, groupCount / roleCount);
     }
 
     @SuppressWarnings("unchecked")
@@ -163,8 +187,47 @@ public class GroupService {
         List<Long> v = jdbc.queryForList("SELECT candidate_id FROM lesson_group_vote WHERE lesson_id = :l AND voter_id = :s",
                 p("l", lessonId, "s", studentId), Long.class);
         me.put("myVote", v.isEmpty() ? null : v.get(0));
+        me.put("groupLabel", lessons.groupLabel(lessonId, g));
+        me.put("role", lessons.roleOf(lessonId, studentId));
         o.put("me", me);
         return o;
+    }
+
+    /**
+     * 学生整组选角色和配对号（如 显示 + 3 → 显示3组）：组里任何一人选了，全组都是这个角色，组员不变。
+     * 同一角色同一配对号已被别的组选了就不能再选（凑不成对时让老师在分组管理里调）。
+     */
+    @Transactional
+    public Map<String, Object> studentSetRole(Long studentId, Long lessonId, String role, Integer pairNo) {
+        Map<String, Object> l = lessons.requireStudent(studentId, lessonId);
+        if (!"ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂已结束");
+        jdbc.queryForList("SELECT id FROM lesson WHERE id = :l FOR UPDATE", p("l", lessonId));
+        Map<String, Object> s = settings(lessonId);
+        if (!Boolean.TRUE.equals(s.get("roleOpen"))) throw new IllegalArgumentException("老师还没有开放选角色");
+        int g = groupOf(lessonId, studentId);
+        if (g == 0) throw new IllegalArgumentException("你还没有加入小组");
+        List<String> roles = roleList(s.get("roles"));
+        if (role == null || role.trim().isEmpty()) {
+            // 撤销本组的选择
+            ensureGroup(lessonId, g);
+            jdbc.update("UPDATE lesson_group SET role = NULL, pair_no = NULL, updated_at = now() WHERE lesson_id = :l AND group_no = :g", p("l", lessonId, "g", g));
+            changed(lessonId);
+            return studentOverview(studentId, lessonId);
+        }
+        role = role.trim();
+        if (!roles.contains(role)) throw new IllegalArgumentException("没有“" + role + "”这个角色");
+        int max = pairCount(((Number) s.get("groupCount")).intValue(), roles.size());
+        if (pairNo == null || pairNo < 1 || pairNo > max) throw new IllegalArgumentException("配对号要在 1~" + max + " 之间");
+        List<Integer> taken = jdbc.queryForList("SELECT group_no FROM lesson_group WHERE lesson_id = :l AND role = :r AND pair_no = :p AND group_no <> :g",
+                p("l", lessonId, "r", role, "p", pairNo, "g", g), Integer.class);
+        if (!taken.isEmpty()) {
+            throw new IllegalArgumentException(role + pairNo + "组已经被" + lessons.groupLabel(lessonId, taken.get(0)) + "选了，请换一个号");
+        }
+        ensureGroup(lessonId, g);
+        jdbc.update("UPDATE lesson_group SET role = :r, pair_no = :p, updated_at = now() WHERE lesson_id = :l AND group_no = :g",
+                p("r", role, "p", pairNo, "l", lessonId, "g", g));
+        changed(lessonId);
+        return studentOverview(studentId, lessonId);
     }
 
     @Transactional
@@ -229,7 +292,19 @@ public class GroupService {
 
     @Transactional
     public Map<String, Object> updateSettings(Long teacherId, Long lessonId, Integer groupCount, Boolean joinOpen, Boolean voteOpen, Integer maxSize) {
+        return updateSettings(teacherId, lessonId, groupCount, joinOpen, voteOpen, maxSize, null, null);
+    }
+
+    /** roles：本节课可选角色（"门铃,显示"，空串 = 清除）；roleOpen：是否让学生整组选角色和配对号。null = 不改。 */
+    @Transactional
+    public Map<String, Object> updateSettings(Long teacherId, Long lessonId, Integer groupCount, Boolean joinOpen, Boolean voteOpen, Integer maxSize,
+                                              Object roles, Boolean roleOpen) {
         lessons.requireTeacher(teacherId, lessonId);
+        if (roles != null) {
+            String norm = com.ittools.classroom.service.CourseService.normalizeRoles(roles);
+            jdbc.update("UPDATE lesson SET group_roles = :r WHERE id = :l", p("r", norm, "l", lessonId));
+        }
+        if (roleOpen != null) jdbc.update("UPDATE lesson SET group_role_open = :o WHERE id = :l", p("o", roleOpen, "l", lessonId));
         if (maxSize != null && (maxSize < 0 || maxSize > 100)) throw new IllegalArgumentException("每组上限须在 0~100 之间（0 表示不限）");
         if (groupCount != null) {
             if (groupCount < 0 || groupCount > MAX_GROUPS) throw new IllegalArgumentException("组数须在 0~" + MAX_GROUPS + " 之间");
@@ -301,6 +376,111 @@ public class GroupService {
         return overview(lessonId, true);
     }
 
+    /** 老师设置某组的角色、配对号、组名（不受“同号已被选”限制，凑不成对时三组共用一个号）。空值 = 清除。 */
+    @Transactional
+    public Map<String, Object> setGroupRole(Long teacherId, Long lessonId, int groupNo, String role, Integer pairNo, String name) {
+        lessons.requireTeacher(teacherId, lessonId);
+        if (groupNo < 1 || groupNo > MAX_GROUPS) throw new IllegalArgumentException("组号无效");
+        if (pairNo != null && pairNo < 1) throw new IllegalArgumentException("配对号从 1 开始");
+        String r = role == null || role.trim().isEmpty() ? null : role.trim();
+        String n = name == null || name.trim().isEmpty() ? null : name.trim();
+        if (r != null && r.length() > 20) throw new IllegalArgumentException("角色名不超过 20 字");
+        if (n != null && n.length() > 40) throw new IllegalArgumentException("组名不超过 40 字");
+        ensureGroup(lessonId, groupNo);
+        jdbc.update("UPDATE lesson_group SET role = :r, pair_no = :p, name = :n, updated_at = now() WHERE lesson_id = :l AND group_no = :g",
+                p("r", r, "p", r == null ? null : pairNo, "n", n, "l", lessonId, "g", groupNo));
+        if (groupNo > ((Number) settings(lessonId).get("groupCount")).intValue()) {
+            jdbc.update("UPDATE lesson SET group_count = :g WHERE id = :l", p("g", groupNo, "l", lessonId));
+        }
+        changed(lessonId);
+        return overview(lessonId, true);
+    }
+
+    /**
+     * 一键生成角色：组按组号依次分给各角色，每个角色 组数÷角色数 个组，配对号 1..N（如 6 组、门铃/显示 → 门铃1~3组、显示1~3组）。
+     * 组数凑不成对时，多出来的组用最后一个角色，依次并进第 1、2…对（三组共用一个主题）。手改的组名会清掉。
+     */
+    @Transactional
+    public Map<String, Object> autoRoles(Long teacherId, Long lessonId, Object rolesArg) {
+        lessons.requireTeacher(teacherId, lessonId);
+        if (rolesArg != null) {
+            jdbc.update("UPDATE lesson SET group_roles = :r WHERE id = :l",
+                    p("r", com.ittools.classroom.service.CourseService.normalizeRoles(rolesArg), "l", lessonId));
+        }
+        Map<String, Object> s = settings(lessonId);
+        List<String> roles = roleList(s.get("roles"));
+        if (roles.isEmpty()) throw new IllegalArgumentException("先填写角色，如：门铃,显示");
+        int count = ((List<?>) overview(lessonId, true).get("groups")).size();
+        if (count < 1) throw new IllegalArgumentException("先分好组再生成角色");
+        int pairs = pairCount(count, roles.size());
+        for (int i = 0; i < count; i++) {
+            int g = i + 1;
+            String role;
+            int pair;
+            if (i < pairs * roles.size()) {
+                role = roles.get(i / pairs);
+                pair = i % pairs + 1;
+            } else {
+                role = roles.get(roles.size() - 1);
+                pair = (i - pairs * roles.size()) % pairs + 1;
+            }
+            ensureGroup(lessonId, g);
+            jdbc.update("UPDATE lesson_group SET role = :r, pair_no = :p, name = NULL, updated_at = now() WHERE lesson_id = :l AND group_no = :g",
+                    p("r", role, "p", pair, "l", lessonId, "g", g));
+        }
+        changed(lessonId);
+        return overview(lessonId, true);
+    }
+
+    /** 清掉本节课所有组的角色、配对号和手改的组名。 */
+    @Transactional
+    public Map<String, Object> clearRoles(Long teacherId, Long lessonId) {
+        lessons.requireTeacher(teacherId, lessonId);
+        jdbc.update("UPDATE lesson_group SET role = NULL, pair_no = NULL, name = NULL WHERE lesson_id = :l", p("l", lessonId));
+        changed(lessonId);
+        return overview(lessonId, true);
+    }
+
+    /**
+     * 按学号分组：全班（含还没进课的）按学号排好，每组 size 人左右。
+     * mode=CONSECUTIVE 挨着排（1-2-3、4-5-6）；INTERLEAVED 间隔排（45 人 15 组：1、16、31 一组）。
+     * 组数 = 人数 ÷ 每组人数（至少 1 组），除不尽时前几组多一人。已进课的直接生效，没进课的记为预分组。会清掉原来的分组、组长和角色。
+     */
+    @Transactional
+    public Map<String, Object> autoByNumber(Long teacherId, Long lessonId, int size, String mode) {
+        lessons.requireTeacher(teacherId, lessonId);
+        if (size < 1 || size > 20) throw new IllegalArgumentException("每组人数须在 1~20 之间");
+        boolean interleaved = "INTERLEAVED".equalsIgnoreCase(mode);
+        List<Map<String, Object>> students = jdbc.queryForList(
+                "SELECT u.id, (a.id IS NOT NULL) AS joined FROM lesson l JOIN users u ON u.class_id = l.class_id AND u.role = 'STUDENT' AND NOT u.graduated "
+                        + "LEFT JOIN lesson_attendance a ON a.lesson_id = l.id AND a.student_id = u.id "
+                        + "WHERE l.id = :l ORDER BY u.student_no NULLS LAST, u.name", p("l", lessonId));
+        int n = students.size();
+        if (n == 0) throw new IllegalArgumentException("班里没有学生");
+        int groups = Math.min(MAX_GROUPS, Math.max(1, n / size));
+        resetGroups(lessonId);
+        jdbc.update("UPDATE lesson_group SET role = NULL, pair_no = NULL, name = NULL WHERE lesson_id = :l", p("l", lessonId));
+        int base = n / groups, extra = n % groups;
+        int idx = 0;
+        for (int g = 1; g <= groups; g++) {
+            int take = base + (g <= extra ? 1 : 0);
+            for (int k = 0; k < take; k++, idx++) {
+                // 间隔排：第 i 个学生去第 (i % 组数) + 1 组；挨着排：连续切块
+                int target = interleaved ? (idx % groups) + 1 : g;
+                Map<String, Object> st = students.get(idx);
+                if (Boolean.TRUE.equals(st.get("joined"))) {
+                    jdbc.update("UPDATE lesson_attendance SET group_no = :g WHERE lesson_id = :l AND student_id = :s", p("g", target, "l", lessonId, "s", st.get("id")));
+                } else {
+                    jdbc.update("INSERT INTO lesson_group_preset(lesson_id, student_id, group_no) VALUES (:l, :s, :g) "
+                            + "ON CONFLICT (lesson_id, student_id) DO UPDATE SET group_no = EXCLUDED.group_no", p("l", lessonId, "s", st.get("id"), "g", target));
+                }
+            }
+        }
+        jdbc.update("UPDATE lesson SET group_count = :c WHERE id = :l", p("c", groups, "l", lessonId));
+        changed(lessonId);
+        return overview(lessonId, true);
+    }
+
     /** 已进课学生随机均分到 n 个组。 */
     @Transactional
     public Map<String, Object> randomize(Long teacherId, Long lessonId, int groupCount) {
@@ -363,12 +543,18 @@ public class GroupService {
                         p("l", lessonId, "s", a.get("student_id"), "g", g));
             }
         }
-        for (Map<String, Object> g : jdbc.queryForList("SELECT group_no, leader_id FROM lesson_group WHERE lesson_id = :f AND leader_id IS NOT NULL",
-                p("f", fromLessonId))) {
+        // 组长、角色、配对号、组名一起照搬（上节课是门铃3组，这节课还是门铃3组）
+        jdbc.update("UPDATE lesson_group SET role = NULL, pair_no = NULL, name = NULL WHERE lesson_id = :l", p("l", lessonId));
+        for (Map<String, Object> g : jdbc.queryForList("SELECT group_no, leader_id, role, pair_no, name FROM lesson_group WHERE lesson_id = :f "
+                + "AND (leader_id IS NOT NULL OR role IS NOT NULL OR name IS NOT NULL)", p("f", fromLessonId))) {
             int no = ((Number) g.get("group_no")).intValue();
+            max = Math.max(max, no);
             ensureGroup(lessonId, no);
-            jdbc.update("UPDATE lesson_group SET leader_id = :s WHERE lesson_id = :l AND group_no = :g", p("s", g.get("leader_id"), "l", lessonId, "g", no));
+            jdbc.update("UPDATE lesson_group SET leader_id = :s, role = :r, pair_no = :p, name = :n WHERE lesson_id = :l AND group_no = :g",
+                    p("s", g.get("leader_id"), "r", g.get("role"), "p", g.get("pair_no"), "n", g.get("name"), "l", lessonId, "g", no));
         }
+        List<String> roles = jdbc.queryForList("SELECT group_roles FROM lesson WHERE id = :f AND group_roles IS NOT NULL", p("f", fromLessonId), String.class);
+        if (!roles.isEmpty()) jdbc.update("UPDATE lesson SET group_roles = :r WHERE id = :l", p("r", roles.get(0), "l", lessonId));
         jdbc.update("UPDATE lesson SET group_count = GREATEST(group_count, :c) WHERE id = :l", p("c", max, "l", lessonId));
         changed(lessonId);
         return overview(lessonId, true);

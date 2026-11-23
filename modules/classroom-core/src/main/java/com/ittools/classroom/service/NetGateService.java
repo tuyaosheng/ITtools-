@@ -48,7 +48,7 @@ public class NetGateService {
     public Map<String, Object> rule(Long lessonId) {
         List<Map<String, Object>> l = jdbc.queryForList("SELECT g.lesson_id AS \"lessonId\", g.test_id AS \"testId\", t.page_id AS \"pageId\", "
                 + "t.title AS \"title\", g.pass_score AS \"passScore\", g.max_tries AS \"maxTries\", g.enabled, g.homework_pass AS \"homeworkPass\", "
-                + "g.require_group AS \"requireGroup\", g.group_programs AS \"groupPrograms\" "
+                + "g.require_group AS \"requireGroup\", g.group_programs AS \"groupPrograms\", g.require_pair AS \"requirePair\" "
                 + "FROM lesson_net_gate g JOIN quiz_test t ON t.id = g.test_id WHERE g.lesson_id = :l", p("l", lessonId));
         if (l.isEmpty()) return null;
         l.get(0).put("pages", requiredPages(lessonId));
@@ -57,13 +57,20 @@ public class NetGateService {
 
     /** 本堂课规则要求的页面（id、标题、类型）：作品页要达标，任务单要提交过。按课程页面顺序。 */
     private List<Map<String, Object>> requiredPages(Long lessonId) {
-        return jdbc.queryForList("SELECT p.id, p.title, p.page_type AS \"pageType\" FROM lesson_net_gate_page gp JOIN course_page p ON p.id = gp.page_id "
+        return jdbc.queryForList("SELECT p.id, p.title, p.page_type AS \"pageType\", p.visible_roles AS \"visibleRoles\" FROM lesson_net_gate_page gp JOIN course_page p ON p.id = gp.page_id "
                 + "WHERE gp.lesson_id = :l ORDER BY p.seq, p.id", p("l", lessonId));
     }
 
     @Transactional
     public void save(Long teacherId, Long lessonId, Long testId, double passScore, int maxTries, boolean enabled,
                      List<Long> pageIds, double homeworkPass, boolean requireGroup, boolean groupPrograms) {
+        save(teacherId, lessonId, testId, passScore, maxTries, enabled, pageIds, homeworkPass, requireGroup, groupPrograms, false);
+    }
+
+    /** requirePair：本对（同一配对号的各组）都完成才开网。 */
+    @Transactional
+    public void save(Long teacherId, Long lessonId, Long testId, double passScore, int maxTries, boolean enabled,
+                     List<Long> pageIds, double homeworkPass, boolean requireGroup, boolean groupPrograms, boolean requirePair) {
         Map<String, Object> l = lessons.requireTeacher(teacherId, lessonId);
         if (!"ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂已结束");
         if (!network.enabled()) throw new IllegalArgumentException("未启用网络控制器（管理员在“系统设置 → 网络控制器”中开启）");
@@ -78,9 +85,10 @@ public class NetGateService {
                         + "VALUES (:l, :t, :ps, :mt, :e, :hp, :rg, :gp) "
                         + "ON CONFLICT (lesson_id) DO UPDATE SET test_id = EXCLUDED.test_id, pass_score = EXCLUDED.pass_score, "
                         + "max_tries = EXCLUDED.max_tries, enabled = EXCLUDED.enabled, homework_pass = EXCLUDED.homework_pass, require_group = EXCLUDED.require_group, "
-                        + "group_programs = EXCLUDED.group_programs",
+                        + "group_programs = EXCLUDED.group_programs, require_pair = EXCLUDED.require_pair",
                 p("l", lessonId, "t", testId, "ps", passScore, "mt", maxTries, "e", enabled, "hp", homeworkPass, "rg", requireGroup,
                         "gp", requireGroup && groupPrograms));
+        jdbc.update("UPDATE lesson_net_gate SET require_pair = :rp WHERE lesson_id = :l", p("rp", requirePair, "l", lessonId));
         jdbc.update("DELETE FROM lesson_net_gate_page WHERE lesson_id = :l", p("l", lessonId));
         for (Long pageId : pageIds) {
             jdbc.update("INSERT INTO lesson_net_gate_page(lesson_id, page_id) VALUES (:l, :p) ON CONFLICT DO NOTHING", p("l", lessonId, "p", pageId));
@@ -134,6 +142,8 @@ public class NetGateService {
             groupOk.put(((Number) m.get("groupNo")).intValue(), ok);
         }
         Map<String, Map<String, Object>> st = network.enabled() ? network.statusByIp() : null;
+        Map<Integer, Map<String, Object>> info = lessons.groupInfo(lessonId);
+        boolean requirePair = Boolean.TRUE.equals(g.get("requirePair"));
         List<Map<String, Object>> rows = jdbc.queryForList(
                 "SELECT u.id AS \"studentId\", u.name, u.student_no AS \"studentNo\", a.status AS attendance, a.ip_address AS ip, COALESCE(a.group_no, 0) AS \"groupNo\", "
                         + "COALESCE(s.tries, 0) AS tries, COALESCE(s.extra_tries, 0) AS \"extraTries\", s.best_score AS \"bestScore\", "
@@ -156,10 +166,21 @@ public class NetGateService {
             long sid = ((Number) r.get("studentId")).longValue();
             int groupNo = ((Number) r.get("groupNo")).intValue();
             Map<Long, Map<String, Object>> mine = subs.getOrDefault(sid, new HashMap<>());
+            String role = roleOfGroup(info, groupNo);
+            r.put("role", role);
+            r.put("pairNo", pairOfGroup(info, groupNo));
+            r.put("groupLabel", groupNo <= 0 ? null : info.containsKey(groupNo) ? info.get(groupNo).get("label") : "第" + groupNo + "组");
             for (Map<String, Object> pg : pages) {
                 long pageId = ((Number) pg.get("id")).longValue();
                 Map<String, Object> one = new LinkedHashMap<>();
                 one.put("pageId", pageId);
+                if (!LessonService.visibleToRole(pg.get("visibleRoles"), role)) {
+                    // 这一页不是给本组角色的，不用做
+                    one.put("na", true);
+                    one.put("ok", true);
+                    programs.add(one);
+                    continue;
+                }
                 if ("SURVEY".equals(pg.get("pageType"))) {
                     boolean ok = sheets.contains(sid + ":" + pageId);
                     one.put("ok", ok);
@@ -180,7 +201,11 @@ public class NetGateService {
             r.put("programs", programs);
             Map<String, Object> me = decided.get(sid);
             r.put("groupMissing", me == null ? new ArrayList<>() : me.get("groupMissing"));
-            String groupState = !requireGroup ? "PASS" : groupNo == 0 ? "NO_GROUP" : me != null && Boolean.TRUE.equals(me.get("open")) ? "PASS" : "GROUP";
+            boolean opened = me != null && Boolean.TRUE.equals(me.get("open"));
+            String groupState = !requireGroup && !requirePair ? "PASS" : opened ? "PASS"
+                    : requireGroup && groupNo == 0 ? "NO_GROUP"
+                    : requireGroup && (me == null || !Boolean.TRUE.equals(me.get("groupComplete"))) ? "GROUP"
+                    : requirePair ? "PAIR" : "GROUP";
             r.put("state", passed && !sheetsOk ? "SHEET" : passed && !programsOk ? "PROGRAM" : passed ? groupState
                     : (tries >= allowed && as != null && !"IN_PROGRESS".equals(as)) ? "EXHAUSTED" : as == null ? "NOT_STARTED" : "TRYING");
             Map<String, Object> agent = st == null || r.get("ip") == null ? null : st.get((String) r.get("ip"));
@@ -190,16 +215,104 @@ public class NetGateService {
     }
 
     /**
+     * 学生看本组的完成情况（“完成情况”标签）：每个组员的测验、任务单、作品还差什么。
+     * 要求小组全员完成时列出同组出席的所有人，否则只列自己；作品组内共享时作品按组算（groupMissing）。
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> studentProgress(Long studentId, Long lessonId) {
+        lessons.requireStudent(studentId, lessonId);
+        Map<String, Object> out = new LinkedHashMap<>();
+        Map<String, Object> g = rule(lessonId);
+        if (g == null || !Boolean.TRUE.equals(g.get("enabled"))) {
+            out.put("enabled", false);
+            return out;
+        }
+        boolean requireGroup = Boolean.TRUE.equals(g.get("requireGroup"));
+        boolean shared = Boolean.TRUE.equals(g.get("groupPrograms"));
+        out.put("enabled", true);
+        out.put("requireGroup", requireGroup);
+        out.put("groupPrograms", shared);
+        out.put("quizTitle", g.get("title"));
+        out.put("passScore", g.get("passScore"));
+        Map<Long, Map<String, Object>> quiz = new HashMap<>();
+        for (Map<String, Object> q : jdbc.queryForList("SELECT student_id, passed, best_score, tries FROM lesson_net_gate_student WHERE lesson_id = :l", p("l", lessonId))) {
+            quiz.put(((Number) q.get("student_id")).longValue(), q);
+        }
+        List<Map<String, Object>> dec = decisions(lessonId);
+        Map<String, Object> me = null;
+        for (Map<String, Object> r : dec) if (((Number) r.get("studentId")).longValue() == studentId) me = r;
+        int groupNo = lessons.groupNoOf(lessonId, studentId);
+        out.put("groupNo", groupNo);
+        out.put("joined", me != null);
+        List<Map<String, Object>> members = new ArrayList<>();
+        for (Map<String, Object> r : dec) {
+            long sid = ((Number) r.get("studentId")).longValue();
+            int gno = ((Number) r.get("groupNo")).intValue();
+            boolean mine = sid == studentId;
+            if (!mine && !(requireGroup && groupNo > 0 && gno == groupNo)) continue;
+            Map<String, Object> q = quiz.get(sid);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("name", r.get("name"));
+            m.put("me", mine);
+            m.put("quizPassed", q != null && Boolean.TRUE.equals(q.get("passed")));
+            m.put("quizScore", q == null ? null : q.get("best_score"));
+            m.put("quizTried", q != null && ((Number) q.get("tries")).intValue() > 0);
+            m.put("missing", r.get("missing"));
+            // 还差的每一项带上类型：任务单只看交没交，作品还要达到分数
+            List<Map<String, Object>> items = new ArrayList<>();
+            @SuppressWarnings("unchecked") List<String> miss = (List<String>) r.get("missing");
+            for (Map<String, Object> pg : requiredPages(lessonId)) {
+                if (miss.contains((String) pg.get("title"))) {
+                    Map<String, Object> it = new LinkedHashMap<>();
+                    it.put("title", pg.get("title"));
+                    it.put("type", pg.get("pageType"));
+                    items.add(it);
+                }
+            }
+            m.put("missingItems", items);
+            m.put("done", r.get("done"));
+            m.put("override", r.get("override"));
+            members.add(m);
+        }
+        members.sort((a, b) -> Boolean.compare(Boolean.TRUE.equals(b.get("me")), Boolean.TRUE.equals(a.get("me"))));
+        out.put("members", members);
+        out.put("groupMissing", me == null ? new ArrayList<>() : me.get("groupMissing"));
+        out.put("open", me != null && Boolean.TRUE.equals(me.get("open")));
+        out.put("groupLabel", lessons.groupLabel(lessonId, groupNo));
+        out.put("requirePair", Boolean.TRUE.equals(g.get("requirePair")));
+        // 配对的搭档组（门铃3组 ↔ 显示3组）：一组没完成时，另一组能看到对方还差什么
+        Map<String, Object> myPair = null;
+        for (Map<String, Object> pm : pairs(lessonId)) {
+            @SuppressWarnings("unchecked") List<Map<String, Object>> gl = (List<Map<String, Object>>) pm.get("groups");
+            for (Map<String, Object> x : gl) if (((Number) x.get("groupNo")).intValue() == groupNo) myPair = pm;
+        }
+        if (myPair != null) {
+            Map<String, Object> pair = new LinkedHashMap<>();
+            pair.put("pairNo", myPair.get("pairNo"));
+            pair.put("done", myPair.get("done"));
+            List<Map<String, Object>> partners = new ArrayList<>();
+            @SuppressWarnings("unchecked") List<Map<String, Object>> gl = (List<Map<String, Object>>) myPair.get("groups");
+            for (Map<String, Object> x : gl) if (((Number) x.get("groupNo")).intValue() != groupNo) partners.add(x);
+            pair.put("partners", partners);
+            out.put("pair", pair);
+        }
+        return out;
+    }
+
+    /**
      * 本堂课出席学生的开网判定。done：本人完成（手动放行也算，手动断网不算）；open：规则要求开网；
      * missing：本人还差的作品和任务单标题（不含测验）；groupMissing：作品组内共享时，本组还没人达标的作品；groupOk：本组已有人达标的作品页。
      * 要求小组全员完成时，同组所有出席的同学都 done 才开网；请假、没进课的不算在内，他们交的作品也不算。手动放行只开被放行的学生。
      */
     private List<Map<String, Object>> decisions(Long lessonId) {
-        List<Map<String, Object>> gs = jdbc.queryForList("SELECT require_group, group_programs FROM lesson_net_gate WHERE lesson_id = :l", p("l", lessonId));
+        List<Map<String, Object>> gs = jdbc.queryForList("SELECT require_group, group_programs, require_pair FROM lesson_net_gate WHERE lesson_id = :l", p("l", lessonId));
         if (gs.isEmpty()) return new ArrayList<>();
         boolean requireGroup = Boolean.TRUE.equals(gs.get(0).get("require_group"));
         boolean shared = requireGroup && Boolean.TRUE.equals(gs.get(0).get("group_programs"));
+        boolean requirePair = Boolean.TRUE.equals(gs.get(0).get("require_pair"));
         List<Map<String, Object>> pages = requiredPages(lessonId);
+        // 按小组角色显示的页面只算对应角色的组（门铃组不用交显示组的作品）
+        Map<Integer, Map<String, Object>> info = lessons.groupInfo(lessonId);
         Set<String> ok = sheetsDone(lessonId);
         for (Map<String, Object> s : jdbc.queryForList("SELECT s.student_id, s.page_id FROM submission s JOIN lesson_net_gate g ON g.lesson_id = s.lesson_id "
                 + "JOIN lesson_net_gate_page gp ON gp.lesson_id = s.lesson_id AND gp.page_id = s.page_id WHERE s.lesson_id = :l AND " + PROGRAM_OK, p("l", lessonId))) {
@@ -220,8 +333,14 @@ public class NetGateService {
         }
         Map<Integer, Boolean> groupDone = new HashMap<>();
         for (Map<String, Object> r : rows) {
+            int g0 = ((Number) r.get("groupNo")).intValue();
+            String role = roleOfGroup(info, g0);
+            r.put("role", role);
+            r.put("pairNo", pairOfGroup(info, g0));
+            r.put("groupLabel", g0 <= 0 ? null : info.containsKey(g0) ? info.get(g0).get("label") : "第" + g0 + "组");
             List<String> missing = new ArrayList<>();
             for (Map<String, Object> pg : pages) {
+                if (!LessonService.visibleToRole(pg.get("visibleRoles"), role)) continue;
                 if (shared && "HOMEWORK".equals(pg.get("pageType"))) continue;
                 if (!ok.contains(r.get("studentId") + ":" + pg.get("id"))) missing.add((String) pg.get("title"));
             }
@@ -231,22 +350,131 @@ public class NetGateService {
             r.put("done", done);
             groupDone.merge(((Number) r.get("groupNo")).intValue(), done, Boolean::logicalAnd);
         }
+        Map<Integer, Boolean> groupComplete = new HashMap<>();
         for (Map<String, Object> r : rows) {
             int group = ((Number) r.get("groupNo")).intValue();
             Set<Long> got = groupOk.get(group);
             List<String> groupMissing = new ArrayList<>();
             if (shared && group > 0) {
                 for (Map<String, Object> pg : pages) {
+                    if (!LessonService.visibleToRole(pg.get("visibleRoles"), (String) r.get("role"))) continue;
                     if ("HOMEWORK".equals(pg.get("pageType")) && !got.contains(((Number) pg.get("id")).longValue())) groupMissing.add((String) pg.get("title"));
                 }
             }
             r.put("groupOk", group > 0 ? got : new HashSet<Long>());
             r.put("groupMissing", groupMissing);
+            boolean complete = group > 0 && groupDone.get(group) && groupMissing.isEmpty();
+            r.put("groupComplete", complete);
+            if (group > 0) groupComplete.merge(group, complete, Boolean::logicalAnd);
+        }
+        // 每一对（同一配对号）的各组是否都完成：要求本对都完成时，搭档组没做完也不开网
+        Map<Integer, Boolean> pairDone = new HashMap<>();
+        for (Map.Entry<Integer, Boolean> e : groupComplete.entrySet()) {
+            Integer pair = pairOfGroup(info, e.getKey());
+            if (pair != null) pairDone.merge(pair, e.getValue(), Boolean::logicalAnd);
+        }
+        for (Map.Entry<Integer, Map<String, Object>> e : info.entrySet()) {
+            // 一对里有组整组没人出席：这组还没完成
+            Integer pair = pairOfGroup(info, e.getKey());
+            if (pair != null && !groupComplete.containsKey(e.getKey())) pairDone.put(pair, false);
+        }
+        for (Map<String, Object> r : rows) {
+            int group = ((Number) r.get("groupNo")).intValue();
             boolean done = Boolean.TRUE.equals(r.get("done"));
+            boolean groupOkAll = Boolean.TRUE.equals(r.get("groupComplete"));
+            Integer pair = (Integer) r.get("pairNo");
+            boolean pairOk = !requirePair || (pair != null && Boolean.TRUE.equals(pairDone.get(pair)));
+            r.put("pairComplete", pair != null && Boolean.TRUE.equals(pairDone.get(pair)));
             r.put("open", r.get("override") != null ? done
-                    : done && (!requireGroup || (group > 0 && groupDone.get(group) && groupMissing.isEmpty())));
+                    : done && (!requireGroup || (group > 0 && groupOkAll)) && pairOk);
         }
         return rows;
+    }
+
+    private static String roleOfGroup(Map<Integer, Map<String, Object>> info, int group) {
+        Map<String, Object> e = group > 0 ? info.get(group) : null;
+        return e == null ? null : (String) e.get("role");
+    }
+
+    private static Integer pairOfGroup(Map<Integer, Map<String, Object>> info, int group) {
+        Map<String, Object> e = group > 0 ? info.get(group) : null;
+        return e == null || e.get("pairNo") == null ? null : ((Number) e.get("pairNo")).intValue();
+    }
+
+    /**
+     * 按对看完成情况：每一对（配对号）里各组的角色、组名、出席组员和每人还差什么、本组是否完成。
+     * 没设置成绩开网时 done/missing 为空，只列分组。
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> pairs(Long lessonId) {
+        Map<Integer, Map<String, Object>> info = lessons.groupInfo(lessonId);
+        Map<Integer, List<Map<String, Object>>> byGroup = new HashMap<>();
+        boolean hasRule = rule(lessonId) != null;
+        if (hasRule) {
+            for (Map<String, Object> r : decisions(lessonId)) {
+                int g = ((Number) r.get("groupNo")).intValue();
+                if (g <= 0) continue;
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("name", r.get("name"));
+                m.put("done", r.get("done"));
+                List<String> miss = new ArrayList<>();
+                if (!Boolean.TRUE.equals(r.get("passed")) && r.get("override") == null) miss.add("测验");
+                @SuppressWarnings("unchecked") List<String> rest = (List<String>) r.get("missing");
+                miss.addAll(rest);
+                m.put("missing", miss);
+                m.put("groupMissing", r.get("groupMissing"));
+                byGroup.computeIfAbsent(g, k -> new ArrayList<>()).add(m);
+            }
+        } else {
+            for (Map<String, Object> r : lessons.attendance(lessonId)) {
+                int g = ((Number) r.get("groupNo")).intValue();
+                if (g <= 0 || !"PRESENT".equals(r.get("status"))) continue;
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("name", r.get("name"));
+                byGroup.computeIfAbsent(g, k -> new ArrayList<>()).add(m);
+            }
+        }
+        Map<Integer, Map<String, Object>> pairs = new java.util.TreeMap<>();
+        for (Map<String, Object> e : info.values()) {
+            if (e.get("pairNo") == null) continue;
+            int pair = ((Number) e.get("pairNo")).intValue();
+            int g = ((Number) e.get("groupNo")).intValue();
+            Map<String, Object> pm = pairs.computeIfAbsent(pair, k -> {
+                Map<String, Object> x = new LinkedHashMap<>();
+                x.put("pairNo", k);
+                x.put("groups", new ArrayList<Map<String, Object>>());
+                return x;
+            });
+            List<Map<String, Object>> members = byGroup.getOrDefault(g, new ArrayList<>());
+            Map<String, Object> gm = new LinkedHashMap<>(e);
+            gm.put("members", members);
+            if (hasRule) {
+                boolean done = !members.isEmpty();
+                for (Map<String, Object> m : members) {
+                    done &= Boolean.TRUE.equals(m.get("done"));
+                    @SuppressWarnings("unchecked") List<String> gmiss = (List<String>) m.get("groupMissing");
+                    done &= gmiss == null || gmiss.isEmpty();
+                }
+                gm.put("done", done);
+                gm.put("groupMissing", members.isEmpty() ? new ArrayList<>() : members.get(0).get("groupMissing"));
+            }
+            @SuppressWarnings("unchecked") List<Map<String, Object>> gl = (List<Map<String, Object>>) pm.get("groups");
+            gl.add(gm);
+        }
+        List<Map<String, Object>> out = new ArrayList<>(pairs.values());
+        for (Map<String, Object> pm : out) {
+            @SuppressWarnings("unchecked") List<Map<String, Object>> gl = (List<Map<String, Object>>) pm.get("groups");
+            boolean all = hasRule && !gl.isEmpty();
+            for (Map<String, Object> g : gl) all &= Boolean.TRUE.equals(g.get("done"));
+            pm.put("done", all);
+        }
+        return out;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> teacherPairs(Long teacherId, Long lessonId) {
+        lessons.requireTeacher(teacherId, lessonId);
+        return pairs(lessonId);
     }
 
     /** 已提交的任务单（课堂调查页），"学生id:页面id"。调查要全部填完才能提交，有作答记录就是交过。 */
@@ -390,7 +618,7 @@ public class NetGateService {
                 } else {
                     // 下课：恢复网络并停用规则
                     release(lessonId);
-                    jdbc.update("UPDATE lesson_net_gate SET enabled = FALSE WHERE lesson_id = :l", p("l", lessonId));
+                    jdbc.update("UPDATE lesson_net_gate SET enabled = FALSE, disabled_by_end = TRUE WHERE lesson_id = :l", p("l", lessonId));
                 }
             }
         } catch (RuntimeException e) {
@@ -402,7 +630,8 @@ public class NetGateService {
         try {
             Map<String, Map<String, Object>> st = network.enabled() ? network.statusByIp() : null;
             if (st == null) return;
-            boolean requireGroup = !jdbc.queryForList("SELECT 1 FROM lesson_net_gate WHERE lesson_id = :l AND require_group", p("l", lessonId)).isEmpty();
+            // 要求全组或本对完成时，一个人的变化会影响别人，全部重新对一遍
+            boolean requireGroup = !jdbc.queryForList("SELECT 1 FROM lesson_net_gate WHERE lesson_id = :l AND (require_group OR require_pair)", p("l", lessonId)).isEmpty();
             for (Map<String, Object> r : decisions(lessonId)) {
                 // 要求全组完成时，一个人的变化会影响同组所有人
                 if (r.get("ip") == null || (onlyStudent != null && !requireGroup && !onlyStudent.equals(((Number) r.get("studentId")).longValue()))) continue;

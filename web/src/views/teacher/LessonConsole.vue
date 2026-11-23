@@ -22,7 +22,8 @@
           <div class="stat"><b>{{ notYet }}</b><span>未到</span></div>
           <div class="stat"><b>{{ leave }}</b><span>请假</span></div>
           <el-button v-if="active" type="danger" @click="endLesson">下课</el-button>
-          <el-button v-else @click="router.push('/teacher/lessons')">返回记录</el-button>
+          <el-button v-if="!active" type="success" @click="reopenLesson">重新开课</el-button>
+          <el-button v-if="!active" @click="router.push('/teacher/lessons')">返回记录</el-button>
         </div>
       </div>
     </el-card>
@@ -51,7 +52,7 @@
                 <UserAvatar :user-id="row.hasAvatar ? row.studentId : undefined" :name="row.name" :size="34" />
                 <div class="m-who">
                   <div class="m-name">{{ row.name }} <span class="m-no">{{ row.studentNo }}</span></div>
-                  <div class="m-meta">{{ row.pcName || '未上机' }}{{ row.groupNo ? ` · 第${row.groupNo}组` : '' }}</div>
+                  <div class="m-meta">{{ row.pcName || '未上机' }}{{ row.groupNo ? ` · ${row.groupLabel || `第${row.groupNo}组`}` : '' }}</div>
                 </div>
                 <el-radio-group :model-value="row.status" size="small" @change="(v: any) => patch(row, { status: v })">
                   <el-radio-button value="PRESENT">到</el-radio-button>
@@ -104,10 +105,11 @@
             <el-table-column label="进课时间" width="140">
               <template #default="{ row }: { row: any }">{{ fmtTime(row.joinedAt) }}</template>
             </el-table-column>
-            <el-table-column label="小组" width="110">
+            <el-table-column label="小组" width="130">
               <template #default="{ row }: { row: any }">
                 <el-input-number :model-value="row.groupNo" :min="0" :max="50" size="small" controls-position="right"
                   class="w90" @change="(v: number) => patch(row, { groupNo: v })" />
+                <div v-if="row.groupLabel && row.groupLabel !== `第${row.groupNo}组`" class="muted">{{ row.groupLabel }}</div>
               </template>
             </el-table-column>
             <el-table-column label="课堂得分" width="120">
@@ -175,7 +177,7 @@
                       </div>
                       <div class="sub">
                         <span>{{ seatAt(r, c).pcName }}</span>
-                        <span v-if="studentAt(seatAt(r, c).pcName).groupNo" class="grp">第{{ studentAt(seatAt(r, c).pcName).groupNo }}组</span>
+                        <span v-if="studentAt(seatAt(r, c).pcName).groupNo" class="grp">{{ studentAt(seatAt(r, c).pcName).groupLabel || `第${studentAt(seatAt(r, c).pcName).groupNo}组` }}</span>
                       </div>
                       <div class="flags">
                         <template v-if="flagOf(studentAt(seatAt(r, c).pcName))">
@@ -391,6 +393,19 @@ async function togglePage(p: any, open: boolean) {
 async function openPage(p: any) {
   // 走课堂接口：正文里的 {{MQTT项目}}、{{媒体:…}} 等占位符替换成本节课的值，和学生看到的一样
   currentPage.value = await api.get(`/teacher/lessons/${id}/pages/${p.id}`)
+}
+
+// 重新开课：已下课的课堂还原到上课中（下课时自动记的缺席撤回，成绩开网规则恢复）
+async function reopenLesson() {
+  try {
+    await ElMessageBox.confirm('把这节课还原到“上课中”？页面、分组、学生交的东西和成绩都保留，下课时自动记的缺席会撤回，成绩开网规则会恢复。', '重新开课',
+      { type: 'warning', confirmButtonText: '重新开课' })
+    await api.post(`/teacher/lessons/${id}/reopen`)
+    ElMessage.success('已重新开课')
+    await loadLesson()
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
 }
 
 async function endLesson() {

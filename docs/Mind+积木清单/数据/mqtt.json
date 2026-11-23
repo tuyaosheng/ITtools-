@@ -1,0 +1,451 @@
+{
+ "name": "MQTT",
+ "color": [
+  "#8B92E8",
+  "#6E78E6",
+  "#3E46A7"
+ ],
+ "blocks": [
+  {
+   "opcode": "mqtt_initial",
+   "blockType": "command",
+   "text": "MQTT 初始化参数 [SETTING]",
+   "arguments": {
+    "SETTING": {
+     "type": "mqtt_setting_parameter",
+     "inputTypes": [
+      "setting"
+     ]
+    }
+   },
+   "code": "",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttConnect",
+   "blockType": "command",
+   "text": "MQTT 发起连接",
+   "arguments": {},
+   "code": "myIot.connect();",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttDisconnect",
+   "blockType": "command",
+   "text": "MQTT 断开连接",
+   "code": "myIot.disconnect();",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttConnected",
+   "blockType": "Boolean",
+   "text": "MQTT 连接成功？",
+   "arguments": {},
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "myIot.connected()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttSend",
+   "blockType": "command",
+   "text": "MQTT 发送消息[MSG]至[TOPIC]",
+   "arguments": {
+    "MSG": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "TOPIC": {
+     "type": "string",
+     "menu": "topicMenu",
+     "defaultValue": "Topic_0"
+    }
+   },
+   "code": "myIot.publish(topic_0, hello);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttSend_save",
+   "blockType": "command",
+   "text": "MQTT 发送消息[MSG]至[TOPIC]并存数据库 (SIoT V2)",
+   "arguments": {
+    "MSG": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "TOPIC": {
+     "type": "string",
+     "menu": "topicMenu",
+     "defaultValue": "Topic_0"
+    }
+   },
+   "code": "myIot.publish(topic_0, hello, 1);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_whenReceivedData",
+   "blockType": "hat",
+   "text": "当接收到[TOPIC]的[MSG]",
+   "arguments": {
+    "TOPIC": {
+     "type": "string",
+     "menu": "topicMenu",
+     "defaultValue": "Topic_0"
+    },
+    "MSG": {
+     "type": "specialBlock_eventHead_origin",
+     "name": "VALUE",
+     "specialType": "string",
+     "inputParams": {
+      "parent": "mqtt_whenReceivedData",
+      "block": "mqtt_argumentReporterStringNumber_eventHeadInner_"
+     }
+    }
+   },
+   "code": "void obloqMqttEventTroydv(String& message)",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [
+     "myIot.setMqttCallbackobloqMqttEventTroydv; => myIot.setMqttCallback(obloqMqttEventTroydv, 0);"
+    ],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_argumentReporterStringNumber_eventHeadInner_",
+   "blockType": "reporter",
+   "text": "MQTT消息",
+   "outputTypes": [
+    "string"
+   ],
+   "code": [
+    "message",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "mqtt_acceptance_meaage",
+   "blockType": "hat",
+   "text": "当接收到[TOPIC]的消息为[MSG]",
+   "arguments": {
+    "TOPIC": {
+     "type": "string",
+     "menu": "topicMenu",
+     "defaultValue": "Topic_0"
+    },
+    "MSG": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "void"
+     ]
+    }
+   },
+   "code": "void whenTopic0ReceivedNaN()",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [
+     "myIot.setMqttCallbackTopic_0hello => myIot.setMqttCallback(topic_0, hello, whenTopic0ReceivedNaN);"
+    ],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_subscribe",
+   "blockType": "command",
+   "text": "MQTT 订阅[TOPIC]",
+   "arguments": {
+    "TOPIC": {
+     "type": "string",
+     "defaultValue": "topic/a",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "string"
+     ]
+    }
+   },
+   "code": "myIot.subscribeTopic(topic/a);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttSendToTopic",
+   "blockType": "command",
+   "text": "MQTT 发送消息[MSG]至[TOPIC]",
+   "arguments": {
+    "MSG": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "TOPIC": {
+     "type": "string",
+     "defaultValue": "topic/a",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "string"
+     ]
+    }
+   },
+   "code": "myIot.publish(topic/a, hello);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_mqttSendToTopic_save",
+   "blockType": "command",
+   "text": "MQTT 发送消息[MSG]至[TOPIC]并存数据库 (SIoT V2)",
+   "arguments": {
+    "MSG": {
+     "type": "string",
+     "defaultValue": "hello",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "TOPIC": {
+     "type": "string",
+     "defaultValue": "topic/a",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "string"
+     ]
+    }
+   },
+   "code": "myIot.publish(topic/a, hello, 1);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_whenReceivedTopicData",
+   "blockType": "hat",
+   "text": "当接收到[TOPIC]的[MSG]",
+   "arguments": {
+    "TOPIC": {
+     "type": "string",
+     "defaultValue": "topic/a",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "void"
+     ]
+    },
+    "MSG": {
+     "type": "specialBlock_eventHead_origin",
+     "name": "VALUE",
+     "specialType": "string",
+     "inputParams": {
+      "parent": "mqtt_whenReceivedTopicData",
+      "block": "mqtt_argumentReporterStringNumber_eventHeadInner_"
+     }
+    }
+   },
+   "code": "void obloqMqttEventTopic47(String& message)",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [
+     "myIot.setCustomMqttCallbacktopic/a => myIot.setCustomMqttCallback(obloqMqttEventTopic47, topic/a);"
+    ],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "mqtt_acceptance_topic_meaage",
+   "blockType": "hat",
+   "text": "当接收到[TOPIC]的消息为[MSG]",
+   "arguments": {
+    "TOPIC": {
+     "type": "string",
+     "defaultValue": "topic/a",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "inputTypes": [
+      "void"
+     ]
+    },
+    "MSG": {
+     "type": "string",
+     "inputParams": {
+      "symbol": "\"\""
+     },
+     "defaultValue": "hello"
+    }
+   },
+   "code": "void whenopic47ReceivedNaN()",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [
+     "myIot.setCustomMqttCallbacktopic/ahello => myIot.setCustomMqttCallback(topic/a, hello, whenopic47ReceivedNaN);"
+    ],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  }
+ ],
+ "menus": {
+  "topicMenu": [
+   "Topic_0",
+   "Topic_1",
+   "Topic_2",
+   "Topic_3",
+   "Topic_4"
+  ]
+ },
+ "extraPrims": [
+  "runtime"
+ ]
+}

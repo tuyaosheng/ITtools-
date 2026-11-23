@@ -14,7 +14,7 @@
           <h2>《{{ lesson.courseName }}》</h2>
           <div class="meta">{{ lesson.teacherName }} · {{ lesson.className }} · {{ fmtTime(lesson.startedAt) }} 开始</div>
           <div v-if="lesson.myAttendance" class="meta">
-            ✅ 已签到 · 机位 {{ lesson.myAttendance.pcName || '未登记' }}{{ lesson.myAttendance.groupNo ? ' · 第 ' + lesson.myAttendance.groupNo + ' 组' : '' }}
+            ✅ 已签到 · 机位 {{ lesson.myAttendance.pcName || '未登记' }}{{ lesson.myAttendance.groupNo ? ' · ' + (lesson.myAttendance.groupLabel || '第 ' + lesson.myAttendance.groupNo + ' 组') : '' }}
           </div>
           <el-button type="primary" size="large" class="go" @click="enter">{{ lesson.myAttendance?.status === 'PRESENT' ? '回到课堂' : '进入课堂' }}</el-button>
         </template>

@@ -1,0 +1,90 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; background: #f9f9f9; color: #333; }
+#app { display: flex; flex-direction: column; height: 100vh; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 48px; background: #ffb23f; color: #fff; flex: none; }
+.brand { font-size: 18px; font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+.brand .dev { margin-left: 8px; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,.25); font-weight: 400; }
+.menu, .device { display: flex; gap: 6px; align-items: center; }
+.grow { flex: 1; }
+.bar button { height: 30px; padding: 0 12px; border: 1px solid rgba(255,255,255,.75); background: rgba(255,255,255,.15); color: #fff; border-radius: 15px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.bar button:hover:not(:disabled) { background: rgba(255,255,255,.3); }
+.bar button:disabled { opacity: .5; cursor: not-allowed; }
+.bar button.primary { background: #fff; color: #e08a00; border-color: #fff; font-weight: 700; }
+.bar button.upload { background: #4cbf56; border-color: #4cbf56; font-weight: 700; }
+.bar button.submit { background: #ff6680; border-color: #ff6680; font-weight: 700; }
+.bar button.toggle.on { background: #fff; color: #e08a00; }
+.state { font-size: 12px; padding: 3px 10px; border-radius: 10px; background: rgba(0,0,0,.18); white-space: nowrap; }
+.state.on { background: #2e9e3a; }
+.ctx { font-size: 12px; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+.save-state { font-size: 12px; opacity: .9; white-space: nowrap; }
+.main { flex: 1; display: flex; min-height: 0; }
+#blocklyDiv { flex: 1; min-width: 0; position: relative; }
+.code-pane { width: 380px; flex: none; display: flex; flex-direction: column; border-left: 1px solid #ddd; background: #fff; }
+.code-pane.hidden { display: none; }
+.pane-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #eee; background: #fafafa; }
+.muted { color: #999; font-weight: 400; font-size: 12px; }
+button.mini { margin-left: auto; height: 22px; padding: 0 8px; font-size: 12px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+#code { flex: 1; margin: 0; padding: 8px 10px; overflow: auto; font: 12px/1.5 Consolas, "Courier New", monospace; white-space: pre; color: #24292e; background: #fff; }
+.warn { padding: 6px 10px; background: #fff4e5; color: #b26a00; font-size: 12px; border-top: 1px solid #ffd8a8; }
+.serial-pane[hidden] { display: none; }
+.serial-pane { height: 180px; flex: none; display: flex; flex-direction: column; border-top: 1px solid #ddd; background: #1e1e1e; color: #ddd; }
+.serial-pane .pane-head { background: #2b2b2b; color: #eee; border-bottom: 1px solid #333; }
+.serial-pane input { width: 260px; height: 24px; border: 1px solid #555; background: #111; color: #eee; padding: 0 6px; border-radius: 4px; }
+#serialOut { flex: 1; margin: 0; padding: 6px 10px; overflow: auto; font: 12px/1.4 Consolas, monospace; white-space: pre-wrap; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal[hidden] { display: none; }
+.dialog { background: #fff; border-radius: 10px; width: min(520px, 94vw); max-height: calc(100% - 24px); display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.dlg-head { display: flex; align-items: center; padding: 12px 16px; font-weight: 700; border-bottom: 1px solid #eee; }
+.dlg-head .x { margin-left: auto; border: none; background: none; font-size: 22px; cursor: pointer; color: #999; }
+.dlg-body { padding: 14px 16px; overflow: auto; font-size: 14px; flex: 1 1 auto; min-height: 0; }
+.dlg-head, .dlg-foot { flex-shrink: 0; }
+.dlg-foot { padding: 10px 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; }
+.dlg-foot button { height: 32px; padding: 0 16px; border-radius: 16px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+.dlg-foot button.ok { background: #ffb23f; border-color: #ffb23f; color: #fff; font-weight: 700; }
+.form-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.form-row label { width: 90px; flex: none; color: #666; text-align: right; }
+.form-row input, .form-row select { flex: 1; height: 30px; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px; font-size: 14px; }
+.hint { font-size: 12px; color: #888; margin: 4px 0 10px 98px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px 98px; }
+.chips button { font-size: 12px; padding: 3px 8px; border: 1px solid #ffb23f; color: #e08a00; background: #fff8ec; border-radius: 10px; cursor: pointer; }
+.toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); background: rgba(0,0,0,.78); color: #fff; padding: 8px 18px; border-radius: 18px; font-size: 14px; z-index: 2000; max-width: 80vw; }
+canvas.oled { image-rendering: pixelated; background: #000; border-radius: 4px; display: block; margin: 0 auto; }
+/* 工具箱：分类名字和 Mind+ 一样的大小 */
+.scratchCategoryMenu { font-size: 12px; }
+.blocklyFlyoutLabelText { font-size: 14px; fill: #575e75; font-weight: 700; }
+
+/* 上传方式 */
+.device select { height: 30px; border: 1px solid rgba(255,255,255,.6); border-radius: 15px; padding: 0 8px; font-size: 13px; background: rgba(255,255,255,.95); color: #333; margin-right: 6px; max-width: 170px; }
+.device .state { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+
+/* 拖积木到左边删除：遮罩 + 垃圾桶（和 Mind+ 一样） */
+.mp-trash { position: absolute; left: 0; top: 0; height: 100%; z-index: 66; background: #000; opacity: 0; display: none; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; transition: opacity .3s; }
+.mp-trash.show { display: flex; opacity: .3; }
+.mp-trash.open { opacity: .5; }
+.mp-trash .lid { transition: transform .3s; transform-origin: 90% 100%; }
+.mp-trash.open .lid { transform: translate(-2px, -3px) rotate(-17deg); }
+.mp-trash svg { width: 72px; height: auto; }
+
+/* 嵌在课堂页面里比较窄时：顶栏按钮换行，不被挤出去 */
+@media (max-width: 1000px) {
+  .bar { flex-wrap: wrap; height: auto; min-height: 48px; padding: 6px 10px; row-gap: 6px; }
+  .bar .brand .dev, .bar .grow { display: none; }
+  .bar .ctx { order: 10; flex-basis: 100%; }
+  .bar .menu, .bar .device { flex-wrap: wrap; row-gap: 6px; }
+  .device select { max-width: 150px; }
+}
+
+/* 从哪里开始：老师给的起始程序 / 我以前的程序 / 空白 */
+.start-opts { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.start-opts .opt { display: block; padding: 8px 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; }
+.start-opts .hist { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 40vh; overflow: auto; }
+.start-opts .hist label { cursor: pointer; padding: 2px 0; }
+.dlg-body p.muted { font-size: 13px; color: #666; margin: 0; }
+
+/* 白色影子积木（音符）：下拉文字改深色，不然白字白底看不见 */
+.blocklySvg .mp-white-shadow .blocklyDropdownText,
+.blocklyFlyout .mp-white-shadow .blocklyDropdownText { fill: #575e75 !important; }
+
+/* MQTT 设置：Topic_1~4 收起 */
+.more-topics { margin: 4px 0 6px; }
+.more-topics summary { cursor: pointer; color: #666; font-size: 13px; padding: 4px 0; }

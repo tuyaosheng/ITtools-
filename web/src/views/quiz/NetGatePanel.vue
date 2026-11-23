@@ -35,6 +35,9 @@
         <el-form-item v-if="form.requireGroup && form.pageIds.length" label="作品组内有人交就算">
           <el-switch v-model="form.groupPrograms" :disabled="saving" />
         </el-form-item>
+        <el-form-item label="本对各组都完成才开网">
+          <el-switch v-model="form.requirePair" :disabled="saving" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" :disabled="!form.pageId || form.passScore == null || !active" @click="save">{{ rule ? '更新规则' : '启用成绩开网' }}</el-button>
           <el-button v-if="rule" :disabled="!active" @click="remove">取消并恢复网络</el-button>
@@ -44,13 +47,28 @@
         没达标且还有机会的学生，在测验页点“重新作答”重做；机会用完需要你加机会或直接放行。下课后会自动恢复所有人的网络。需要先启用网络控制器。
         任务单（课堂调查页）只看交没交，不看对错。
         打开“小组全员完成才开网”后，同组出席的同学都达标才一起开网，没进组的不开网，学生进组后不能自己退出或换组；手动放行的学生算已完成，但只开他自己的网。
-        再打开“作品组内有人交就算”：每个作品页组里有一位出席的同学达标就算全组完成，测验和任务单仍要每人完成。</Hint>
+        再打开“作品组内有人交就算”：每个作品页组里有一位出席的同学达标就算全组完成，测验和任务单仍要每人完成。
+        课程页设了“只给某角色的组看”时，别的角色的组不用做那一页（表里显示“不用做”）。
+        打开“本对各组都完成才开网”：在分组管理里设了角色和配对号后，门铃N组和显示N组都完成才一起开网（下面按对显示各组还差什么）。</Hint>
+
+      <div v-if="pairs.length" class="pairs">
+        <div v-for="p in pairs" :key="p.pairNo" class="pair" :class="{ done: p.done }">
+          <div class="p-head">第 {{ p.pairNo }} 对 <el-tag size="small" :type="p.done ? 'success' : 'warning'">{{ p.done ? '都完成了' : '还没完成' }}</el-tag></div>
+          <div v-for="g in p.groups" :key="g.groupNo" class="p-group">
+            <b>{{ g.label }}</b>
+            <span v-if="g.done" class="ok"> ✓ 完成</span>
+            <span v-else-if="!g.members.length" class="muted"> 没人进课</span>
+            <div v-for="m in g.members.filter((x: any) => !x.done)" :key="m.name" class="p-miss">{{ m.name }}：差 {{ (m.missing || []).join('、') || '—' }}</div>
+            <div v-if="g.groupMissing?.length" class="p-miss">本组还差作品：{{ g.groupMissing.join('、') }}</div>
+          </div>
+        </div>
+      </div>
 
       <el-table v-if="rule" :data="students" size="small" stripe class="tbl">
         <el-table-column prop="studentNo" label="学号" width="70" />
         <el-table-column prop="name" label="姓名" width="90" />
-        <el-table-column v-if="rule.requireGroup" prop="groupNo" label="小组" width="76" sortable>
-          <template #default="{ row }: { row: any }">{{ row.groupNo ? `第 ${row.groupNo} 组` : '—' }}</template>
+        <el-table-column v-if="rule.requireGroup || rule.requirePair || hasRoles" prop="groupNo" label="小组" width="96" sortable>
+          <template #default="{ row }: { row: any }">{{ row.groupNo ? (row.groupLabel || `第 ${row.groupNo} 组`) : '—' }}</template>
         </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }: { row: any }">
@@ -63,7 +81,8 @@
         <el-table-column v-for="p in rule.pages" :key="p.id" :label="p.title" min-width="100">
           <template #default="{ row }: { row: any }">
             <template v-for="x in row.programs.filter((g: any) => g.pageId === p.id)" :key="x.pageId">
-              <template v-if="p.pageType === 'SURVEY'">
+              <span v-if="x.na" class="muted">不用做</span>
+              <template v-else-if="p.pageType === 'SURVEY'">
                 <span v-if="x.ok" class="ok">✓ 已交</span>
                 <span v-else class="muted">未交</span>
               </template>
@@ -114,7 +133,9 @@ const surveyPages = computed<any[]>(() => (props.lesson.pages || []).filter((p: 
 const rule = ref<any>(null)
 const students = ref<any[]>([])
 const saving = ref(false)
-const form = reactive<{ pageId?: number; passScore?: number; maxTries: number; pageIds: number[]; sheetIds: number[]; homeworkPass: number; requireGroup: boolean; groupPrograms: boolean }>({ pageId: undefined, passScore: undefined, maxTries: 2, pageIds: [], sheetIds: [], homeworkPass: 100, requireGroup: false, groupPrograms: false })
+const form = reactive<{ pageId?: number; passScore?: number; maxTries: number; pageIds: number[]; sheetIds: number[]; homeworkPass: number; requireGroup: boolean; groupPrograms: boolean; requirePair: boolean }>({ pageId: undefined, passScore: undefined, maxTries: 2, pageIds: [], sheetIds: [], homeworkPass: 100, requireGroup: false, groupPrograms: false, requirePair: false })
+const pairs = ref<any[]>([])
+const hasRoles = computed(() => students.value.some((s: any) => s.role))
 const papers = ref<any[]>([])
 // 所选测验页关联试卷的总分
 const quizTotal = computed<number | undefined>(() => {
@@ -132,6 +153,7 @@ const stateTag: Record<string, { text: string; type: any }> = {
   PROGRAM: { text: '差作品', type: 'warning' },
   SHEET: { text: '差任务单', type: 'warning' },
   GROUP: { text: '等组员', type: 'warning' },
+  PAIR: { text: '等搭档组', type: 'warning' },
   NO_GROUP: { text: '未进组', type: 'danger' },
   TRYING: { text: '答题中', type: 'warning' },
   NOT_STARTED: { text: '未开始', type: 'info' },
@@ -143,6 +165,7 @@ async function load() {
   const d = await api.get(`/teacher/quiz/lessons/${lessonId}/net-gate`)
   rule.value = d.rule
   students.value = d.students
+  pairs.value = d.rule ? await api.get(`/teacher/lessons/${lessonId}/pairs`).catch(() => []) : []
   if (d.rule && !saving.value && form.pageId === undefined) {
     form.pageId = d.rule.pageId
     form.passScore = Number(d.rule.passScore)
@@ -152,6 +175,7 @@ async function load() {
     form.homeworkPass = Number(d.rule.homeworkPass)
     form.requireGroup = !!d.rule.requireGroup
     form.groupPrograms = !!d.rule.groupPrograms
+    form.requirePair = !!d.rule.requirePair
   }
   // 只有一个测验页时直接选上
   if (!d.rule && form.pageId === undefined && quizPages.value.length === 1) form.pageId = quizPages.value[0].id
@@ -160,7 +184,7 @@ async function load() {
 async function save() {
   saving.value = true
   try {
-    await api.put(`/teacher/quiz/lessons/${lessonId}/net-gate`, { pageId: form.pageId, passScore: form.passScore, maxTries: form.maxTries, enabled: true, pageIds: [...form.pageIds, ...form.sheetIds], homeworkPass: form.homeworkPass, requireGroup: form.requireGroup, groupPrograms: form.requireGroup && form.groupPrograms })
+    await api.put(`/teacher/quiz/lessons/${lessonId}/net-gate`, { pageId: form.pageId, passScore: form.passScore, maxTries: form.maxTries, enabled: true, pageIds: [...form.pageIds, ...form.sheetIds], homeworkPass: form.homeworkPass, requireGroup: form.requireGroup, groupPrograms: form.requireGroup && form.groupPrograms, requirePair: form.requirePair })
     ElMessage.success('已启用，没达标的学生马上断网')
     await load()
   } catch (err) {
@@ -181,6 +205,7 @@ async function remove() {
     form.sheetIds = []
     form.requireGroup = false
     form.groupPrograms = false
+    form.requirePair = false
     await load()
     ElMessage.success('已取消，正在恢复网络')
   } catch (err) {
@@ -222,4 +247,10 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .ok { color: var(--el-color-success-dark-2); }
 .off { color: var(--el-color-danger); }
 .muted { color: var(--el-text-color-placeholder); }
+.pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
+.pair { border: 1px solid var(--el-color-warning-light-5); border-radius: 10px; padding: 8px 10px; background: var(--el-color-warning-light-9); }
+.pair.done { border-color: var(--el-color-success-light-5); background: var(--el-color-success-light-9); }
+.p-head { font-weight: 700; margin-bottom: 4px; }
+.p-group { margin-top: 4px; font-size: 13px; }
+.p-miss { font-size: 12px; color: var(--el-color-danger); margin-left: 10px; }
 </style>

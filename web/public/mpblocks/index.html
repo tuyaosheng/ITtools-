@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图形化编程 · 掌控板</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <div class="brand">图形化编程<span class="dev">掌控板</span></div>
+    <div class="menu">
+      <button id="btnNew" title="新建项目">新建</button>
+      <button id="btnOpen" title="打开电脑里的 .mpcode 文件（Mind+ 做的也行）">打开</button>
+      <button id="btnSaveAs" title="把程序保存到电脑（.mpcode，Mind+ 也能打开）">另存为</button>
+      <input id="fileInput" type="file" accept=".mpcode,.mp,.sb3,.json" hidden>
+    </div>
+    <div class="grow"></div>
+    <div id="ctxInfo" class="ctx"></div>
+    <div class="device">
+      <select id="upMode" title="上传方式：Mind+ 方式要在这台电脑上打开“掌控板助手”，用 Mind+ 的编译工具，和 Mind+ 上传模式一样；MicroPython 方式要先给板子刷 MicroPython 固件">
+        <option value="mindplus">Mind+ 方式（本机编译）</option>
+        <option value="mpy">MicroPython 方式</option>
+        <option value="auto">自动（有助手用 Mind+）</option>
+      </select>
+      <span id="devState" class="state off">未连接设备</span>
+      <button id="btnConnect" class="primary">连接设备</button>
+      <button id="btnUpload" class="upload" disabled>上传到设备</button>
+    </div>
+    <div class="menu right">
+      <span id="saveState" class="save-state"></span>
+      <button id="btnSubmit" class="submit" hidden>提交作品</button>
+      <button id="btnCode" class="toggle on" title="显示 / 隐藏 代码区">代码区</button>
+      <button id="btnSerial" class="toggle" title="显示 / 隐藏 掌控板输出">串口</button>
+      <button id="btnFlash" title="给掌控板刷 MicroPython 固件（Mind+ 上传过程序的板子要先刷一次）">刷固件</button>
+    </div>
+  </header>
+  <main class="main">
+    <div id="blocklyDiv"></div>
+    <aside id="codePane" class="code-pane">
+      <div class="pane-head">代码区 <span id="codeLang" class="muted">MicroPython（只读）</span><button id="btnCopy" class="mini">复制</button></div>
+      <pre id="code"></pre>
+      <div id="warn" class="warn" hidden></div>
+    </aside>
+  </main>
+  <section id="serialPane" class="serial-pane" hidden>
+    <div class="pane-head">掌控板输出 <button id="btnClear" class="mini">清空</button>
+      <span class="grow"></span>
+      <input id="serialInput" placeholder="发送给掌控板（回车）"></div>
+    <pre id="serialOut"></pre>
+  </section>
+</div>
+
+<div id="modal" class="modal" hidden>
+  <div class="dialog">
+    <div class="dlg-head"><span id="dlgTitle"></span><button id="dlgClose" class="x">×</button></div>
+    <div id="dlgBody" class="dlg-body"></div>
+    <div id="dlgFoot" class="dlg-foot"></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<!-- scratch-blocks（Apache-2.0）：和 Mind+ 同一套积木渲染 -->
+<script src="vendor/scratch-blocks/blockly_compressed_vertical.js"></script>
+<script src="vendor/scratch-blocks/blocks_compressed.js"></script>
+<script src="vendor/scratch-blocks/blocks_compressed_vertical.js"></script>
+<script src="vendor/scratch-blocks/msg/messages.js"></script>
+<script src="vendor/scratch-blocks/msg/zh-cn.js"></script>
+<!-- 掌控板串口（WebSerial），和“掌控板编程”页共用 -->
+<script src="/mpython/mpl/serial.js"></script>
+<script src="js/spec.js"></script>
+<script src="js/blocks.js"></script>
+<script src="js/toolbox.js"></script>
+<script src="js/codegen.js"></script>
+<script src="js/pinyin.js"></script>
+<script src="js/codegen_cpp.js"></script>
+<script src="js/project.js"></script>
+<script src="js/flash.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -60,6 +60,9 @@ public class LessonService {
     public Map<String, Object> start(Long teacherId, Long courseId, Long classId, Long groupModelId) {
         courses.getReadable(teacherId, courseId);
         courses.requireOwner(teacherId, courseId);
+        if (Boolean.TRUE.equals(courses.get(courseId).get("archived"))) {
+            throw new IllegalArgumentException("这门课程已归档，请先在“我的课程”里取消归档再开课");
+        }
         if (!bindings.teacherCanUseClass(teacherId, classId)) {
             throw new IllegalArgumentException("该班级已绑定其他教师，不能开课");
         }
@@ -88,12 +91,32 @@ public class LessonService {
     }
 
     private void endInternal(Long lessonId, String summary) {
-        jdbc.update("INSERT INTO lesson_attendance(lesson_id, student_id, status) "
-                + "SELECT :l, s.id, 'ABSENT' FROM users s JOIN lesson l ON l.class_id = s.class_id "
+        jdbc.update("INSERT INTO lesson_attendance(lesson_id, student_id, status, auto_absent) "
+                + "SELECT :l, s.id, 'ABSENT', TRUE FROM users s JOIN lesson l ON l.class_id = s.class_id "
                 + "WHERE l.id = :l AND s.role = 'STUDENT' AND NOT s.graduated "
                 + "AND NOT EXISTS (SELECT 1 FROM lesson_attendance a WHERE a.lesson_id = :l AND a.student_id = s.id)", p("l", lessonId));
         jdbc.update("UPDATE lesson SET status = 'ENDED', ended_at = now(), summary = COALESCE(:s, summary) WHERE id = :l",
                 p("l", lessonId, "s", summary));
+    }
+
+    /**
+     * 重新开课：已下课的课堂还原到上课中（页面开放、分组、提交、成绩、MQTT 项目都保留）。
+     * 撤回下课时自动记的缺席，恢复下课时自动停用的成绩开网规则。同一个班正在上别的课时不能重新开。
+     */
+    @Transactional
+    public Map<String, Object> reopen(Long teacherId, Long lessonId) {
+        Map<String, Object> l = requireTeacher(teacherId, lessonId);
+        if ("ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂还在上课中");
+        List<Map<String, Object>> active = jdbc.queryForList(
+                "SELECT u.name AS teacher, c.name AS course FROM lesson x JOIN users u ON u.id = x.teacher_id JOIN course c ON c.id = x.course_id "
+                        + "WHERE x.class_id = :k AND x.status = 'ACTIVE' AND x.id <> :l", p("k", l.get("classId"), "l", lessonId));
+        if (!active.isEmpty()) {
+            throw new IllegalArgumentException("该班级正在上课：" + active.get(0).get("teacher") + "《" + active.get(0).get("course") + "》，请先结束该课堂再重新开课");
+        }
+        jdbc.update("DELETE FROM lesson_attendance WHERE lesson_id = :l AND auto_absent", p("l", lessonId));
+        jdbc.update("UPDATE lesson SET status = 'ACTIVE', ended_at = NULL WHERE id = :l", p("l", lessonId));
+        jdbc.update("UPDATE lesson_net_gate SET enabled = TRUE, disabled_by_end = FALSE WHERE lesson_id = :l AND disabled_by_end", p("l", lessonId));
+        return get(lessonId);
     }
 
     @Transactional(readOnly = true)
@@ -118,7 +141,7 @@ public class LessonService {
     public List<Map<String, Object>> lessonPages(Long lessonId) {
         return jdbc.queryForList(
                 "SELECT p.id, p.seq, p.title, p.page_type AS \"pageType\", p.score, p.ref_id AS \"refId\", "
-                        + "COALESCE(s.is_open, p.student_visible) AS \"open\" "
+                        + "p.visible_roles AS \"visibleRoles\", COALESCE(s.is_open, p.student_visible) AS \"open\" "
                         + "FROM lesson l JOIN course_page p ON p.course_id = l.course_id "
                         + "LEFT JOIN lesson_page_state s ON s.lesson_id = l.id AND s.page_id = p.id "
                         + "WHERE l.id = :l ORDER BY p.seq, p.id", p("l", lessonId));
@@ -170,6 +193,17 @@ public class LessonService {
     /** 全班学生考勤（含未进课学生，状态 null 表示尚未进课）。 */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> attendance(Long lessonId) {
+        Map<Integer, Map<String, Object>> info = groupInfo(lessonId);
+        List<Map<String, Object>> rows = attendanceRows(lessonId);
+        for (Map<String, Object> r : rows) {
+            int g = ((Number) r.get("groupNo")).intValue();
+            Map<String, Object> e = info.get(g);
+            r.put("groupLabel", g <= 0 ? null : e == null ? "第" + g + "组" : e.get("label"));
+        }
+        return rows;
+    }
+
+    private List<Map<String, Object>> attendanceRows(Long lessonId) {
         return jdbc.queryForList(
                 "SELECT s.id AS \"studentId\", s.name, s.student_no AS \"studentNo\", a.status, a.pc_name AS \"pcName\", "
                         + "a.ip_address AS \"ipAddress\", a.joined_at AS \"joinedAt\", COALESCE(a.group_no, 0) AS \"groupNo\", "
@@ -260,7 +294,14 @@ public class LessonService {
         List<Map<String, Object>> a = jdbc.queryForList(
                 "SELECT status, group_no AS \"groupNo\", pc_name AS \"pcName\" FROM lesson_attendance WHERE lesson_id = :l AND student_id = :s",
                 p("l", m.get("id"), "s", studentId));
-        m.put("myAttendance", a.isEmpty() ? null : a.get(0));
+        if (!a.isEmpty()) {
+            Map<String, Object> me = new HashMap<>(a.get(0));
+            int g = ((Number) me.get("groupNo")).intValue();
+            me.put("groupLabel", groupLabel(((Number) m.get("id")).longValue(), g));
+            m.put("myAttendance", me);
+        } else {
+            m.put("myAttendance", null);
+        }
         return m;
     }
 
@@ -294,9 +335,11 @@ public class LessonService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> studentPages(Long studentId, Long lessonId) {
         requireStudent(studentId, lessonId);
+        String role = roleOf(lessonId, studentId);
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map<String, Object> pg : lessonPages(lessonId)) {
-            if (Boolean.TRUE.equals(pg.get("open"))) out.add(pg);
+            // 按小组角色显示的页面：只给对应角色的组看（门铃组看不到显示组的任务）
+            if (Boolean.TRUE.equals(pg.get("open")) && visibleToRole(pg.get("visibleRoles"), role)) out.add(pg);
         }
         return out;
     }
@@ -304,9 +347,11 @@ public class LessonService {
     @Transactional(readOnly = true)
     public Map<String, Object> studentPage(Long studentId, Long lessonId, Long pageId) {
         requireStudent(studentId, lessonId);
+        String role = roleOf(lessonId, studentId);
         for (Map<String, Object> pg : lessonPages(lessonId)) {
             if (((Number) pg.get("id")).longValue() == pageId && Boolean.TRUE.equals(pg.get("open"))) {
-                return renderPage(lessonId, courses.page(pageId), null);
+                if (!visibleToRole(pg.get("visibleRoles"), role)) throw new IllegalArgumentException("这个页面不是给你们组的");
+                return renderForStudent(lessonId, studentId, courses.page(pageId), null);
             }
         }
         throw new IllegalArgumentException("该页面未开放");
@@ -316,6 +361,27 @@ public class LessonService {
     @Transactional(readOnly = true)
     public Map<String, Object> studentPage(Long studentId, Long lessonId, Long pageId, String serverHost) {
         Map<String, Object> pg = studentPage(studentId, lessonId, pageId);
+        return renderPage(lessonId, pg, serverHost);
+    }
+
+    /**
+     * 学生看的页面：先替换和本组有关的占位符——{{组名}}（如 门铃3组）、{{组号}}（3）、{{角色}}（门铃）、{{配对号}}（3）；
+     * 没分组或组没有设置时，配对号退回组号、角色为空，这样主题写成 {{MQTT项目}}/Bell{{配对号}} 也不会断。
+     */
+    public Map<String, Object> renderForStudent(Long lessonId, Long studentId, Map<String, Object> page, String serverHost) {
+        Object c = page.get("content");
+        Map<String, Object> pg = page;
+        if (c instanceof String && ((String) c).contains("{{")) {
+            int g = groupNoOf(lessonId, studentId);
+            Map<String, Object> e = g > 0 ? groupInfo(lessonId).get(g) : null;
+            String label = e == null ? "（还没分组）" : (String) e.get("label");
+            String role = e == null || e.get("role") == null ? "" : (String) e.get("role");
+            String pair = e != null && e.get("pairNo") != null ? String.valueOf(e.get("pairNo")) : (g > 0 ? String.valueOf(g) : "0");
+            String content = ((String) c).replace("{{组名}}", label).replace("{{组号}}", String.valueOf(g))
+                    .replace("{{角色}}", role).replace("{{配对号}}", pair);
+            pg = new HashMap<>(page);
+            pg.put("content", content);
+        }
         return renderPage(lessonId, pg, serverHost);
     }
 
@@ -419,6 +485,90 @@ public class LessonService {
         List<Integer> l = jdbc.queryForList("SELECT group_no FROM lesson_attendance WHERE lesson_id = :l AND student_id = :s",
                 p("l", lessonId, "s", studentId), Integer.class);
         return l.isEmpty() ? 0 : l.get(0);
+    }
+
+    // ================= 小组名、角色与配对 =================
+
+    /**
+     * 本节课各组的角色、配对号和显示名（只含有设置的组和 1..组数）：
+     * name（老师手改）优先；否则有角色和配对号时为“门铃1组”，同一角色同一配对号有几个组时后面的加“·2”“·3”；否则“第N组”。
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Map<String, Object>> groupInfo(Long lessonId) {
+        Map<Integer, Map<String, Object>> out = new java.util.TreeMap<>();
+        Integer count = jdbc.queryForObject("SELECT GREATEST(l.group_count, COALESCE((SELECT MAX(group_no) FROM lesson_attendance a WHERE a.lesson_id = l.id), 0)) "
+                + "FROM lesson l WHERE l.id = :l", p("l", lessonId), Integer.class);
+        for (int g = 1; g <= (count == null ? 0 : count); g++) out.put(g, groupEntry(g, null, null, null));
+        for (Map<String, Object> r : jdbc.queryForList("SELECT group_no, role, pair_no, name FROM lesson_group WHERE lesson_id = :l ORDER BY group_no",
+                p("l", lessonId))) {
+            int g = ((Number) r.get("group_no")).intValue();
+            out.put(g, groupEntry(g, (String) r.get("role"), r.get("pair_no") == null ? null : ((Number) r.get("pair_no")).intValue(), (String) r.get("name")));
+        }
+        Map<String, Integer> seen = new HashMap<>();
+        for (Map<String, Object> e : out.values()) {
+            if (e.get("name") != null || e.get("role") == null || e.get("pairNo") == null) continue;
+            String key = e.get("role") + "#" + e.get("pairNo");
+            int n = seen.merge(key, 1, Integer::sum);
+            e.put("label", e.get("role") + String.valueOf(e.get("pairNo")) + "组" + (n > 1 ? "·" + n : ""));
+        }
+        return out;
+    }
+
+    private static Map<String, Object> groupEntry(int g, String role, Integer pairNo, String name) {
+        Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("groupNo", g);
+        m.put("role", role == null || role.trim().isEmpty() ? null : role.trim());
+        m.put("pairNo", pairNo);
+        m.put("name", name == null || name.trim().isEmpty() ? null : name.trim());
+        m.put("label", m.get("name") != null ? m.get("name") : "第" + g + "组");
+        return m;
+    }
+
+    /** 组的显示名（0 = 未分组 → null）。 */
+    public String groupLabel(Long lessonId, int groupNo) {
+        if (groupNo <= 0) return null;
+        Map<String, Object> e = groupInfo(lessonId).get(groupNo);
+        return e == null ? "第" + groupNo + "组" : (String) e.get("label");
+    }
+
+    /** 学生所在组的角色（未分组或组没有角色 → null）。 */
+    @Transactional(readOnly = true)
+    public String roleOf(Long lessonId, Long studentId) {
+        int g = groupNoOf(lessonId, studentId);
+        if (g <= 0) return null;
+        List<String> r = jdbc.queryForList("SELECT role FROM lesson_group WHERE lesson_id = :l AND group_no = :g AND role IS NOT NULL",
+                p("l", lessonId, "g", g), String.class);
+        return r.isEmpty() || r.get(0).trim().isEmpty() ? null : r.get(0).trim();
+    }
+
+    /** 页面对某角色是否可见：visibleRoles 为空 = 全班；否则学生组的角色必须在列表里（没有角色的看不到）。 */
+    public static boolean visibleToRole(Object visibleRoles, String role) {
+        if (visibleRoles == null || String.valueOf(visibleRoles).trim().isEmpty()) return true;
+        if (role == null) return false;
+        for (String s : String.valueOf(visibleRoles).split(",")) if (s.trim().equals(role)) return true;
+        return false;
+    }
+
+    /** 学生能看到的课程页 id（只按角色过滤，不看本堂开没开）；成绩开网用它只算本组角色的页。 */
+    @Transactional(readOnly = true)
+    public boolean pageVisibleToStudent(Long lessonId, Long studentId, Long pageId) {
+        List<String> r = jdbc.queryForList("SELECT COALESCE(visible_roles, '') FROM course_page WHERE id = :p", p("p", pageId), String.class);
+        return r.isEmpty() || visibleToRole(r.get(0), roleOf(lessonId, studentId));
+    }
+
+    /** 自动评分规则里按学生替换的占位符：{{MQTT项目}} {{组号}} {{配对号}} {{角色}} {{组名}}（没分组时配对号退回组号）。 */
+    @Transactional(readOnly = true)
+    public Map<String, String> gradingVars(Long lessonId, Long studentId) {
+        Map<String, String> v = new HashMap<>();
+        Object proj = get(lessonId).get("mqttProject");
+        v.put("MQTT项目", proj == null ? "" : proj.toString());
+        int g = groupNoOf(lessonId, studentId);
+        Map<String, Object> e = g > 0 ? groupInfo(lessonId).get(g) : null;
+        v.put("组号", String.valueOf(g));
+        v.put("配对号", e != null && e.get("pairNo") != null ? String.valueOf(e.get("pairNo")) : String.valueOf(g));
+        v.put("角色", e == null || e.get("role") == null ? "" : (String) e.get("role"));
+        v.put("组名", e == null ? "" : (String) e.get("label"));
+        return v;
     }
 
     /** 页面是否属于该课堂的课程。 */

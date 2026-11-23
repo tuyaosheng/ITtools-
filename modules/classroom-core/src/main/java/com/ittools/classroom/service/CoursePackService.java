@@ -68,7 +68,7 @@ public class CoursePackService {
     public void export(Long teacherId, Long courseId, OutputStream out) throws IOException {
         Map<String, Object> c = courses.getReadable(teacherId, courseId);
         List<Map<String, Object>> pages = jdbc.queryForList("SELECT p.id, p.seq, p.title, p.page_type, p.content, p.link_url, p.file_path, p.file_name, "
-                + "p.student_visible, p.score, p.ref_id, p.config, "
+                + "p.student_visible, p.score, p.ref_id, p.config, p.visible_roles, "
                 + "CASE WHEN p.page_type = 'QUIZ' THEN (SELECT name FROM paper WHERE id = p.ref_id) "
                 + "     WHEN p.page_type = 'PYTHON' THEN (SELECT title FROM py_problem WHERE id = p.ref_id) END AS ref_title "
                 + "FROM course_page p WHERE p.course_id = :c ORDER BY p.seq, p.id", p("c", courseId));
@@ -93,6 +93,7 @@ public class CoursePackService {
             m.put("content", pg.get("content"));
             m.put("linkUrl", pg.get("link_url"));
             m.put("studentVisible", pg.get("student_visible"));
+            if (pg.get("visible_roles") != null) m.put("visibleRoles", pg.get("visible_roles"));
             m.put("score", pg.get("score"));
             if (pg.get("ref_id") != null) {
                 m.put("refId", pg.get("ref_id"));
@@ -269,10 +270,11 @@ public class CoursePackService {
                     }
                     Object score = pg.get("score");
                     Long pageId = jdbc.queryForObject("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, "
-                                    + "student_visible, score, ref_id, config) VALUES (:c, :s, :t, :ty, :ct, :l, :fp, :fn, :v, :sc, :r, :cfg) RETURNING id",
+                                    + "student_visible, score, ref_id, config, visible_roles) VALUES (:c, :s, :t, :ty, :ct, :l, :fp, :fn, :v, :sc, :r, :cfg, :roles) RETURNING id",
                             p("c", courseId, "s", seq, "t", title, "ty", type, "ct", pg.get("content") == null ? null : String.valueOf(pg.get("content")),
                                     "l", str(pg.get("linkUrl"), 500), "fp", filePath, "fn", fileName, "v", !Boolean.FALSE.equals(pg.get("studentVisible")),
-                                    "sc", score instanceof Number ? Math.max(0, Math.min(1000, ((Number) score).intValue())) : 0, "r", ref, "cfg", config), Long.class);
+                                    "sc", score instanceof Number ? Math.max(0, Math.min(1000, ((Number) score).intValue())) : 0, "r", ref, "cfg", config,
+                                    "roles", CourseService.normalizeRoles(pg.get("visibleRoles"))), Long.class);
                     Map<String, Object> ext = pg.get("extensions") instanceof Map ? (Map<String, Object>) pg.get("extensions") : null;
                     if (ext != null) {
                         for (PageExtension e : courses.pageExtensions()) {

@@ -29,9 +29,10 @@
         </template>
       </el-table-column>
       <el-table-column prop="summary" label="小结" min-width="140" show-overflow-tooltip />
-      <el-table-column label="操作" width="120">
+      <el-table-column label="操作" width="190">
         <template #default="{ row }: { row: any }">
           <el-button link type="primary" @click="router.push(`/teacher/lessons/${row.id}`)">查看</el-button>
+          <el-button v-if="row.status !== 'ACTIVE'" link type="success" @click="reopen(row)">重新开课</el-button>
           <el-popconfirm title="撤销本次课堂？将清除本堂课全部学习记录（考勤、作品、测验、调查等），不可恢复" width="300" @confirm="revoke(row)">
             <template #reference><el-button link type="danger">撤销</el-button></template>
           </el-popconfirm>
@@ -44,7 +45,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 
@@ -52,6 +53,19 @@ const router = useRouter()
 const list = ref<any[]>([])
 const status = ref('')
 const loading = ref(false)
+
+// 重新开课：已下课的课堂还原到上课中，然后进课堂控制台
+async function reopen(row: any) {
+  try {
+    await ElMessageBox.confirm(`把《${row.courseName}》（${row.className}）还原到“上课中”？页面、分组、学生交的东西和成绩都保留，下课时自动记的缺席会撤回，成绩开网规则会恢复。`, '重新开课',
+      { type: 'warning', confirmButtonText: '重新开课' })
+    await api.post(`/teacher/lessons/${row.id}/reopen`)
+    ElMessage.success('已重新开课')
+    router.push(`/teacher/lessons/${row.id}`)
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
+}
 
 async function revoke(row: any) {
   try {

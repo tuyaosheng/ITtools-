@@ -78,12 +78,21 @@ public class GradingService {
     /** 对作品执行该页面的全部规则；无规则时返回 null。 */
     @Transactional(readOnly = true)
     public Map<String, Object> evaluate(Long pageId, Path file, String fileName) {
+        return evaluate(pageId, file, fileName, null);
+    }
+
+    /**
+     * vars：按学生替换规则参数里的占位符（{{MQTT项目}} {{配对号}} {{组号}} {{角色}} {{组名}}），
+     * 第 3 对的学生 {{MQTT项目}}/Bell{{配对号}} 就是 B81_1121_0201/Bell3。
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> evaluate(Long pageId, Path file, String fileName, Map<String, String> vars) {
         List<Map<String, Object>> rs = rules(pageId);
         if (rs.isEmpty()) return null;
         List<GradingEngine.Rule> rules = new ArrayList<>();
         for (Map<String, Object> r : rs) {
-            rules.add(new GradingEngine.Rule((String) r.get("type"), (String) r.get("param1"), (String) r.get("param2"),
-                    (String) r.get("param3"), ((Number) r.get("score")).doubleValue(), (String) r.get("note")));
+            rules.add(new GradingEngine.Rule((String) r.get("type"), fill((String) r.get("param1"), vars), fill((String) r.get("param2"), vars),
+                    fill((String) r.get("param3"), vars), ((Number) r.get("score")).doubleValue(), (String) r.get("note")));
         }
         GradingEngine.Result res = GradingEngine.grade(file, fileName, rules);
         Map<String, Object> m = new HashMap<>();
@@ -95,6 +104,12 @@ public class GradingService {
             m.put("detail", "[]");
         }
         return m;
+    }
+
+    private static String fill(String v, Map<String, String> vars) {
+        if (v == null || vars == null || !v.contains("{{")) return v;
+        for (Map.Entry<String, String> e : vars.entrySet()) v = v.replace("{{" + e.getKey() + "}}", e.getValue() == null ? "" : e.getValue());
+        return v;
     }
 
     // ---- 阅卷参数读取 / 用标准答案检验评分规则 ----

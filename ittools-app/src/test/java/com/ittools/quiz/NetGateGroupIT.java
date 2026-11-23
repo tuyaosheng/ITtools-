@@ -236,6 +236,23 @@ class NetGateGroupIT extends AbstractPostgresIT {
             assertThat(info.get("waiting").size()).isEqualTo(1);
             assertThat(info.get("waiting").get(0).get("name").asText()).isEqualTo("丙");
             assertThat(info.get("waiting").get(0).get("missing").toString()).contains("程序一").doesNotContain("测验");
+            // 学生“完成情况”：甲看到全组三人，丙还差程序一，自己排第一个
+            JsonNode prog = call(st.get(0), HttpMethod.GET, "/api/student/lessons/" + lesson + "/net-gate/progress", null);
+            assertThat(prog.get("enabled").asBoolean()).isTrue();
+            assertThat(prog.get("groupNo").asInt()).isEqualTo(1);
+            assertThat(prog.get("members").size()).isEqualTo(3);
+            assertThat(prog.get("members").get(0).get("me").asBoolean()).isTrue();
+            for (JsonNode m : prog.get("members")) {
+                if ("丙".equals(m.get("name").asText())) {
+                    assertThat(m.get("done").asBoolean()).isFalse();
+                    assertThat(m.get("quizPassed").asBoolean()).isTrue();
+                    assertThat(m.get("missing").toString()).contains("程序一");
+                    assertThat(m.get("missingItems").get(0).get("title").asText()).isEqualTo("程序一");
+                    assertThat(m.get("missingItems").get(0).get("type").asText()).isEqualTo("HOMEWORK");
+                } else {
+                    assertThat(m.get("done").asBoolean()).as(m.toString()).isTrue();
+                }
+            }
 
             // 丙交程序：全组一起开网
             upload(st.get(2), up, "我搭好了");
@@ -282,6 +299,63 @@ class NetGateGroupIT extends AbstractPostgresIT {
             await("10.9.0.4", "normal");
             assertThat(row(t, gate, "丁").get("state").asText()).isEqualTo("PASS");
             assertThat(call(t, HttpMethod.GET, gate, null).get("rule").get("requireGroup").asBoolean()).isFalse();
+        } finally {
+            ctr.stop(0);
+        }
+    }
+
+    /** 重新开课：下课后还原到上课中，撤回自动记的缺席，恢复下课时自动停用的成绩开网规则。 */
+    @Test
+    void reopenEndedLesson() throws Exception {
+        HttpServer ctr = fakeCtr();
+        try {
+            HttpHeaders admin = session("{\"loginType\":\"ADMIN\",\"loginName\":\"admin\",\"password\":\"admin123\"}");
+            Map<String, String> settings = new LinkedHashMap<>();
+            settings.put("net.enabled", "true");
+            settings.put("net.ctrUrl", "http://127.0.0.1:" + ctr.getAddress().getPort());
+            call(admin, HttpMethod.PUT, "/api/admin/settings", settings);
+            long yearId = call(admin, HttpMethod.POST, "/api/admin/school-years", map("yearCode", "2095", "label", "2095级", "active", true)).get("id").asLong();
+            long classId = call(admin, HttpMethod.POST, "/api/admin/classes", map("schoolYearId", yearId, "name", "重开班", "displayOrder", 1)).get("id").asLong();
+            call(admin, HttpMethod.POST, "/api/admin/users", map("role", "TEACHER", "name", "重开老师", "loginName", "ro_t", "password", "ro-pass-1"));
+            for (int i = 0; i < 2; i++) {
+                call(admin, HttpMethod.POST, "/api/admin/users", map("role", "STUDENT", "name", i == 0 ? "来了" : "没来", "studentNo", "0" + (i + 1),
+                        "xjh", "RO000" + i, "classId", classId, "enrollYearId", yearId, "password", "ro-pass-1"));
+            }
+            HttpHeaders s0 = session("{\"loginType\":\"STUDENT_XJH\",\"xjh\":\"RO0000\",\"password\":\"ro-pass-1\"}");
+            HttpHeaders t = session("{\"loginType\":\"TEACHER\",\"loginName\":\"ro_t\",\"password\":\"ro-pass-1\"}");
+            long q = call(t, HttpMethod.POST, "/api/teacher/quiz/questions", map("qtype", "JUDGE", "stem", "1 字节 = 8 位（重开）", "answer", "T", "score", 5)).get("id").asLong();
+            long paper = call(t, HttpMethod.POST, "/api/teacher/quiz/papers", map("name", "重开卷", "items", new Object[]{map("questionId", q, "score", 5)})).get("id").asLong();
+            long course = call(t, HttpMethod.POST, "/api/teacher/courses", map("name", "重开课")).get("id").asLong();
+            long quiz = call(t, HttpMethod.POST, "/api/teacher/courses/" + course + "/pages", map("title", "习题", "pageType", "QUIZ", "studentVisible", true, "refId", paper)).get("id").asLong();
+            long lesson = call(t, HttpMethod.POST, "/api/teacher/lessons", map("courseId", course, "classId", classId)).get("id").asLong();
+            call(s0, HttpMethod.POST, "/api/student/lessons/" + lesson + "/join", map());
+            String gate = "/api/teacher/quiz/lessons/" + lesson + "/net-gate";
+            call(t, HttpMethod.PUT, gate, map("pageId", quiz, "passScore", 5, "maxTries", 3));
+            // 学生“完成情况”：只有自己，习题还没做
+            JsonNode prog = call(s0, HttpMethod.GET, "/api/student/lessons/" + lesson + "/net-gate/progress", null);
+            assertThat(prog.get("enabled").asBoolean()).isTrue();
+            assertThat(prog.get("members").size()).isEqualTo(1);
+            assertThat(prog.get("members").get(0).get("quizTried").asBoolean()).isFalse();
+
+            call(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/end", map());
+            assertThat(db.queryForObject("SELECT COUNT(*) FROM lesson_attendance WHERE lesson_id = ? AND status = 'ABSENT'", Long.class, lesson)).isEqualTo(1);
+            for (int i = 0; i < 60 && call(t, HttpMethod.GET, gate, null).get("rule").get("enabled").asBoolean(); i++) Thread.sleep(500);
+            assertThat(call(t, HttpMethod.GET, gate, null).get("rule").get("enabled").asBoolean()).as("下课后规则自动停用").isFalse();
+
+            JsonNode re = call(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/reopen", map());
+            assertThat(re.get("status").asText()).isEqualTo("ACTIVE");
+            assertThat(re.get("endedAt").isNull()).isTrue();
+            assertThat(db.queryForObject("SELECT COUNT(*) FROM lesson_attendance WHERE lesson_id = ? AND status = 'ABSENT'", Long.class, lesson)).as("自动缺席撤回").isEqualTo(0);
+            assertThat(db.queryForObject("SELECT COUNT(*) FROM lesson_attendance WHERE lesson_id = ? AND status = 'PRESENT'", Long.class, lesson)).isEqualTo(1);
+            assertThat(call(t, HttpMethod.GET, gate, null).get("rule").get("enabled").asBoolean()).as("规则恢复").isTrue();
+            // 正在上课时不能再“重新开课”；同班有别的课在上时也不行
+            assertThat(raw(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/reopen", map()).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            call(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/end", map());
+            long other = call(t, HttpMethod.POST, "/api/teacher/lessons", map("courseId", course, "classId", classId)).get("id").asLong();
+            ResponseEntity<String> busy = raw(t, HttpMethod.POST, "/api/teacher/lessons/" + lesson + "/reopen", map());
+            assertThat(busy.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(busy.getBody()).contains("正在上课");
+            call(t, HttpMethod.POST, "/api/teacher/lessons/" + other + "/end", map());
         } finally {
             ctr.stop(0);
         }

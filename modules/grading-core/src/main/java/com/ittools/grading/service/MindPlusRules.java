@@ -27,6 +27,9 @@ final class MindPlusRules {
         c.put("MP_BLOCK_IN", new String[]{"Mind+ 积木放在指定积木里面", "里面的积木（如 getSoundIntensity）", "外层积木（如 control_loop、control_if）", "", "mp,mpcode"});
         c.put("MP_COMPARE_FILLED", new String[]{"Mind+ 比较积木已填入数值", "比较积木（默认 大于|小于）", "至少几个比较积木填了数值（默认 1）", "不算填写的默认值（如 50，Mind+ 2 的比较积木默认就是 50）", "mp,mpcode"});
         c.put("MP_VALUE", new String[]{"Mind+ 填写了数值或文字", "须出现的数值或文字（多个用 | 分隔，全部出现才得分，如 2000|警报）", "", "", "mp,mpcode"});
+        c.put("MP_MQTT", new String[]{"Mind+ MQTT 设置正确（平台、服务器、主题）",
+                "主题（可用 {{MQTT项目}} {{配对号}} {{组号}} {{角色}}，如 {{MQTT项目}}/Bell{{配对号}}；多个用 | 分隔，全部设置了才得分；留空不查主题）",
+                "服务器地址（如 10.174.233.61；留空不查）", "平台（默认 siot；留空不查）", "mp,mpcode"});
     }
 
     /** 积木中文别名 → opcode 片段，便于老师在规则里直接写中文。 */
@@ -207,9 +210,60 @@ final class MindPlusRules {
                 }
                 return new GradingEngine.Check(missing.isEmpty(), missing.isEmpty() ? "要求的数值/文字均已填写" : "没找到：" + String.join("、", missing));
             }
+            case "MP_MQTT":
+                return checkMqtt(p, r);
             default:
                 return new GradingEngine.Check(false, "未知规则类型 " + r.type);
         }
+    }
+
+    /**
+     * MQTT 设置：读“MQTT 初始化参数”里的 JSON（platform、params.siotwww、params.topic、topic_1~topic_4），
+     * 主题也认“发送消息至 / 订阅 / 当接收到”积木里直接写的主题。占位符在规则保存的参数里已经按学生替换好了。
+     */
+    private static GradingEngine.Check checkMqtt(Program p, GradingEngine.Rule r) {
+        java.util.Set<String> topics = new java.util.LinkedHashSet<>();
+        java.util.Set<String> servers = new java.util.LinkedHashSet<>();
+        java.util.Set<String> platforms = new java.util.LinkedHashSet<>();
+        for (JsonNode b : p.blocks.values()) {
+            String op = b.path("opcode").asText("");
+            if ("mqtt_settings".equals(op)) {
+                JsonNode f = b.path("fields").path("MQTT");
+                String raw = f.isArray() && f.size() > 0 ? f.get(0).asText("") : "";
+                try {
+                    JsonNode s = MAPPER.readTree(raw);
+                    if (s.hasNonNull("platform")) platforms.add(s.get("platform").asText());
+                    JsonNode prm = s.path("params");
+                    for (String k : new String[]{"topic", "topic_1", "topic_2", "topic_3", "topic_4", "topic1", "topic2", "topic3", "topic4"}) {
+                        if (prm.hasNonNull(k) && !prm.get(k).asText().trim().isEmpty()) topics.add(prm.get(k).asText().trim());
+                    }
+                    if (prm.hasNonNull("siotwww")) servers.add(prm.get("siotwww").asText().trim());
+                } catch (Exception ignored) { /* 设置框里不是 JSON：当没设置 */ }
+            } else if (op.endsWith("mqtt_mqttSendToTopic") || op.endsWith("mqtt_mqttSendToTopic_save") || op.endsWith("mqtt_subscribe")
+                    || op.endsWith("mqtt_whenReceivedTopicData") || op.endsWith("mqtt_acceptance_topic_meaage")) {
+                List<String> lits = new ArrayList<>();
+                collectLiterals(b.path("inputs").path("TOPIC"), lits);
+                for (String l : lits) if (!l.trim().isEmpty()) topics.add(l.trim());
+            }
+        }
+        if (platforms.isEmpty() && topics.isEmpty()) return new GradingEngine.Check(false, "没有用“MQTT 初始化参数”设置 MQTT");
+        List<String> problems = new ArrayList<>();
+        String wantPlat = r.p3 == null ? "" : r.p3.trim();
+        if (!wantPlat.isEmpty() && platforms.stream().noneMatch(x -> x.equalsIgnoreCase(wantPlat))) {
+            problems.add("平台应选 " + wantPlat + "（现在是 " + (platforms.isEmpty() ? "没设置" : String.join("、", platforms)) + "）");
+        }
+        String wantServer = r.p2 == null ? "" : r.p2.trim();
+        if (!wantServer.isEmpty() && !servers.contains(wantServer)) {
+            problems.add("服务器地址应为 " + wantServer + "（现在是 " + (servers.isEmpty() ? "空" : String.join("、", servers)) + "）");
+        }
+        if (r.p1 != null) {
+            for (String t : r.p1.split("\\|")) {
+                String want = t.trim();
+                if (want.isEmpty()) continue;
+                if (!topics.contains(want)) problems.add("主题应有 " + want + "（现在是 " + (topics.isEmpty() ? "没写" : String.join("、", topics)) + "）");
+            }
+        }
+        return new GradingEngine.Check(problems.isEmpty(), problems.isEmpty() ? "MQTT 平台、服务器、主题都对" : String.join("；", problems));
     }
 
     private static boolean numEq(String a, String b) {

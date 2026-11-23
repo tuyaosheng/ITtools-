@@ -1,6 +1,48 @@
 <template>
   <div v-if="data" class="hw">
-    <el-divider content-position="left">提交作品</el-divider>
+    <!-- 用平台图形化编程交作品：编辑器里“提交作品”就交了，这里显示结果 -->
+    <template v-if="data.config.blockEditor">
+      <div class="mpb-bar">
+        <span class="muted">在下面拼积木，连接掌控板“上传到设备”试一试，做好了点右上角“提交作品”。程序会自动保存，下节课接着做。</span>
+        <span class="grow" />
+        <template v-if="!cover">
+          <el-button size="small" @click="setCover(true)">铺满窗口</el-button>
+          <el-button size="small" @click="mpbFull">全屏</el-button>
+        </template>
+        <el-link :href="mpbSrc" target="_blank" type="primary">在新窗口打开</el-link>
+      </div>
+      <div ref="mpbWrap" class="mpb-wrap" :class="{ cover }">
+        <!-- 铺满窗口：课堂页面窄（左边导航、右边举手栏占了位置）时自动铺满，按 Esc 或点“退出铺满”回到课堂页面 -->
+        <div v-if="cover" class="mpb-cbar">
+          <b>{{ page.title }}</b><span class="grow" />
+          <el-button size="small" @click="mpbFull">全屏</el-button>
+          <el-button size="small" type="primary" plain @click="setCover(false)">退出铺满（Esc）</el-button>
+        </div>
+        <div class="mpb-row">
+        <!-- 同源 iframe：串口权限要显式放行，否则连不上掌控板 -->
+        <iframe :src="mpbSrc" class="mpb-frame" :class="{ dragging }" allow="serial; fullscreen; clipboard-write" />
+        <div v-if="task?.title && !taskFolded" class="task-resizer" title="拖动调整任务单宽度" @mousedown.prevent="startDrag" />
+        <!-- 老师在作品页设置里选了任务单：右边一栏看步骤、填读数，不用切换页面 -->
+        <aside v-if="task?.title" class="task" :class="{ folded: taskFolded }" :style="taskFolded ? undefined : { width: taskW + 'px' }">
+          <div class="task-head">
+            <template v-if="!taskFolded"><b>任务单</b><span class="task-title">{{ task.title }}</span><span class="grow" /></template>
+            <el-button size="small" text @click="taskFolded = !taskFolded">{{ taskFolded ? '任务单 ◀' : '收起 ▶' }}</el-button>
+          </div>
+          <div v-show="!taskFolded" class="task-body">
+            <el-alert v-if="task.missing" type="warning" :closable="false" title="找不到这个任务单页面，请告诉老师" />
+            <el-alert v-else-if="!task.open" type="info" :closable="false" :title="`老师还没打开《${task.title}》，打开后这里就能填写`" >
+              <el-button size="small" @click="loadTask">刷新</el-button>
+            </el-alert>
+            <template v-else-if="taskPage">
+              <PageContent :page="taskPage" />
+              <StudentSurveyPage v-if="taskPage.pageType === 'SURVEY'" :lesson-id="lessonId" :page="taskPage" :lesson="lesson" />
+            </template>
+          </div>
+        </aside>
+        </div>
+      </div>
+    </template>
+    <el-divider content-position="left">{{ data.config.blockEditor ? '也可以上传 Mind+ 文件' : '提交作品' }}</el-divider>
     <div class="submit-box">
       <el-alert v-if="data.config.allowedExts" type="info" :closable="false" :title="`允许的文件类型：${data.config.allowedExts}`" />
       <el-alert v-if="sub?.returned" type="error" :closable="false" show-icon
@@ -73,13 +115,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { fmtSize, fmtTime } from '../../utils/format'
 import AutoDetail from './AutoDetail.vue'
+import PageContent from '../../components/PageContent.vue'
+import StudentSurveyPage from '../activity/StudentSurveyPage.vue'
 
-const props = defineProps<{ lessonId: number; page: any }>()
+const props = defineProps<{ lessonId: number; page: any; lesson?: any }>()
 const data = ref<any>(null)
 const file = ref<File | null>(null)
 const description = ref('')
@@ -98,9 +142,78 @@ const rubricRows = computed(() => {
 })
 
 const base = () => `/student/homework/lessons/${props.lessonId}/pages/${props.page.id}`
+// 平台图形化编程（掌控板）
+const mpbSrc = computed(() => `/mpblocks/index.html?lesson=${props.lessonId}&page=${props.page.id}`)
+const mpbWrap = ref<HTMLElement>()
+function mpbFull() { mpbWrap.value?.requestFullscreen?.() }
+// 铺满窗口：编辑器（加上任务单）在课堂页面里太窄时自动打开；学生关掉后本页不再自动打开
+const cover = ref(false)
+let checkedCoverFor: any = null
+const COVER_KEY = 'mpb.coverOff'
+function setCover(v: boolean) {
+  cover.value = v
+  if (!v) { try { sessionStorage.setItem(COVER_KEY, '1') } catch { /* 无痕 */ } }
+}
+function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && cover.value && !document.fullscreenElement) setCover(false) }
+window.addEventListener('keydown', onKey)
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+function autoCover() {
+  let off = false
+  try { off = sessionStorage.getItem(COVER_KEY) === '1' } catch { /* 无痕 */ }
+  const w = mpbWrap.value?.clientWidth || 0
+  const need = 760 + (task.value?.title && !taskFolded.value ? taskW.value : 0)
+  if (!off && w && w < need) cover.value = true
+}
+// 任务单宽度可拖动
+const taskW = ref(380)
+try { const v = Number(localStorage.getItem('mpb.taskW')); if (v >= 240 && v <= 900) taskW.value = v } catch { /* 无痕 */ }
+const dragging = ref(false)
+function startDrag(e: MouseEvent) {
+  const x0 = e.clientX, w0 = taskW.value
+  dragging.value = true
+  const move = (ev: MouseEvent) => {
+    const max = Math.max(260, (mpbWrap.value?.clientWidth || 1200) - 420)
+    taskW.value = Math.min(max, Math.max(240, w0 + (x0 - ev.clientX)))
+  }
+  const up = () => {
+    dragging.value = false
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('mouseup', up)
+    try { localStorage.setItem('mpb.taskW', String(taskW.value)) } catch { /* 无痕 */ }
+  }
+  window.addEventListener('mousemove', move)
+  window.addEventListener('mouseup', up)
+}
+// 编辑器里交了作品：刷新下面的提交结果
+function onMpbMessage(e: MessageEvent) {
+  if (e.origin === location.origin && e.data?.type === 'mpblocks-submitted') load()
+}
+window.addEventListener('message', onMpbMessage)
+onBeforeUnmount(() => window.removeEventListener('message', onMpbMessage))
+
+// 任务单
+const task = ref<any>(null)
+const taskPage = ref<any>(null)
+const taskFolded = ref(false)
+async function loadTask() {
+  task.value = null
+  taskPage.value = null
+  try {
+    task.value = await api.get(`/student/mpblocks/lessons/${props.lessonId}/pages/${props.page.id}/task`)
+    if (task.value?.open && task.value.pageId) taskPage.value = await api.get(`/student/lessons/${props.lessonId}/pages/${task.value.pageId}`)
+  } catch {
+    /* 没有任务单 */
+  }
+}
 
 async function load() {
   data.value = await api.get(base())
+  const tp = data.value.config.blockEditor && data.value.config.taskPageTitle ? loadTask() : (task.value = null, Promise.resolve())
+  // 第一次打开这一页时看宽度够不够，不够就铺满窗口（交作品后刷新不再判断）
+  if (data.value.config.blockEditor && checkedCoverFor !== props.page.id) {
+    checkedCoverFor = props.page.id
+    tp.then(() => nextTick()).then(autoCover)
+  }
   description.value = data.value.submission?.description || ''
   title.value = data.value.submission?.title || ''
   selfScore.value = data.value.submission?.selfScore ?? undefined
@@ -151,6 +264,24 @@ onMounted(load)
 </script>
 
 <style scoped>
+.mpb-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.mpb-bar .grow { flex: 1; }
+.mpb-wrap { display: flex; flex-direction: column; width: 100%; height: 80vh; min-height: 560px; border: var(--hb-border-w, 1.5px) solid var(--hb-shadow-color, #ccc); border-radius: 8px; overflow: hidden; background: #fff; }
+.mpb-wrap:fullscreen { height: 100%; border: none; border-radius: 0; }
+.mpb-wrap.cover { position: fixed; inset: 0; z-index: 2000; width: auto; height: auto; min-height: 0; border: none; border-radius: 0; }
+.mpb-cbar { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-bottom: 1px solid var(--el-border-color-lighter); background: var(--el-bg-color); flex-shrink: 0; }
+.mpb-cbar .grow { flex: 1; }
+.mpb-row { flex: 1; min-height: 0; display: flex; }
+.mpb-frame { flex: 1; min-width: 0; height: 100%; border: 0; }
+.mpb-frame.dragging { pointer-events: none; }
+.task-resizer { width: 6px; flex-shrink: 0; cursor: col-resize; background: var(--el-border-color-lighter); }
+.task-resizer:hover { background: var(--el-color-primary-light-5); }
+.task { width: 380px; max-width: max(200px, calc(100% - 420px)); flex-shrink: 0; display: flex; flex-direction: column; background: var(--el-bg-color); }
+.task.folded { width: auto; border-left: 1px solid var(--el-border-color); }
+.task-head { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.task-head .grow { flex: 1; }
+.task-title { font-size: 13px; color: var(--el-text-color-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.task-body { flex: 1; overflow: auto; padding: 10px 12px; }
 .submit-box { display: flex; flex-direction: column; gap: 10px; }
 .meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .w240 { width: 240px; }

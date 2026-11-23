@@ -50,8 +50,15 @@ public class NetGateController {
         Long testId = ((Number) tests.lessonPageTest(lessonId, pageId).get("id")).longValue();
         Double homeworkPass = b.dbl("homeworkPass");
         gate.save(CurrentUser.id(), lessonId, testId, pass, b.intv("maxTries", 1), b.bool("enabled", true),
-                b.longs("pageIds"), homeworkPass == null ? 100 : homeworkPass, b.bool("requireGroup", false), b.bool("groupPrograms", false));
+                b.longs("pageIds"), homeworkPass == null ? 100 : homeworkPass, b.bool("requireGroup", false), b.bool("groupPrograms", false),
+                b.bool("requirePair", false));
         return ApiResponse.ok(null);
+    }
+
+    /** 按对看完成情况（门铃N组 ↔ 显示N组）；没设成绩开网时只列分组。 */
+    @GetMapping("/api/teacher/lessons/{lessonId}/pairs")
+    public ApiResponse<java.util.List<Map<String, Object>>> pairs(@PathVariable Long lessonId) {
+        return ApiResponse.ok(gate.teacherPairs(CurrentUser.id(), lessonId));
     }
 
     @DeleteMapping("/api/teacher/quiz/lessons/{lessonId}/net-gate")
@@ -77,6 +84,12 @@ public class NetGateController {
     }
 
     /** 学生：未达标且还有机会时重做。 */
+    /** 学生看本组每个人的完成情况（还差哪些没完成）。 */
+    @GetMapping("/api/student/lessons/{lessonId}/net-gate/progress")
+    public ApiResponse<Map<String, Object>> progress(@PathVariable Long lessonId) {
+        return ApiResponse.ok(gate.studentProgress(CurrentUser.id(), lessonId));
+    }
+
     @PostMapping("/api/student/quiz/tests/{id}/retake")
     public ApiResponse<Map<String, Object>> retake(@PathVariable Long id) {
         return ApiResponse.ok(tests.studentRetake(CurrentUser.id(), id));

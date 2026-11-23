@@ -402,6 +402,7 @@ public class InteractService {
         int g = lessons.groupNoOf(lessonId, studentId);
         Map<String, Object> out = new HashMap<>();
         out.put("groupNo", g);
+        out.put("groupLabel", lessons.groupLabel(lessonId, g));
         out.put("members", g == 0 ? new ArrayList<>() : jdbc.queryForList(
                 "SELECT u.name, a.pc_name AS \"pcName\" FROM lesson_attendance a JOIN users u ON u.id = a.student_id "
                         + "WHERE a.lesson_id = :l AND a.group_no = :g ORDER BY u.student_no", p("l", lessonId, "g", g)));

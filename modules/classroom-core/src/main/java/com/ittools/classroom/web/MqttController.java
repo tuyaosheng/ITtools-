@@ -59,6 +59,10 @@ public class MqttController {
         Map<String, Object> m = view(l, lessonId, req.getServerName());
         m.put("error", broker.status().get("error"));
         m.put("clients", broker.status().get("clients"));
+        // 投屏大屏把 G03 显示成第 3 组的组名（门铃3组），设备名末尾的数字当配对号
+        m.put("groups", new java.util.ArrayList<>(lessons.groupInfo(lessonId).values()));
+        m.put("className", l.get("className"));
+        m.put("courseName", l.get("courseName"));
         return ApiResponse.ok(m);
     }
 

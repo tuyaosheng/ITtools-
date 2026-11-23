@@ -28,9 +28,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                    .ignoringAntMatchers("/api/auth/login"))
+                    .ignoringAntMatchers("/api/auth/login", "/api/mpagent/agent/**"))
             .authorizeRequests(a -> a
                     .antMatchers("/api/auth/**", "/api/public/**").permitAll()
+                    // 掌控板助手（学生机上的小程序，按来访 IP 认电脑）和 Mind+ 积木代码生成文件
+                    .antMatchers("/api/mpagent/agent/**", "/api/mpagent/mindplus/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/teacher/**").hasRole("TEACHER")
                     .antMatchers("/api/student/**").hasRole("STUDENT")
@@ -41,7 +43,7 @@ public class SecurityConfig {
                     // .authenticated() below would 401 "/", "/admin/**" etc. before
                     // SpaForwardController/static resource resolution ever runs.
                     .antMatchers("/", "/index.html", "/login", "/admin/**", "/teacher/**", "/student/**",
-                            "/assets/**", "/pyrunner/**", "/scratch/**", "/mpython/**", "/favicon.ico").permitAll()
+                            "/assets/**", "/pyrunner/**", "/scratch/**", "/mpython/**", "/mpblocks/**", "/favicon.ico").permitAll()
                     // 课件包（Storyline 等）：按不可猜测的包编号公开访问，响应带 CSP sandbox，与平台会话隔离
                     .antMatchers(HttpMethod.GET, "/courseware/**").permitAll()
                     // 学生个人站点：按不可猜测的站点编号公开访问，响应始终带 CSP sandbox

@@ -20,7 +20,7 @@
     </div>
 
     <div v-if="group?.groupNo" class="section">
-      <div class="title">我的小组 · 第 {{ group.groupNo }} 组</div>
+      <div class="title">我的小组 · {{ group.groupLabel || `第 ${group.groupNo} 组` }}</div>
       <div class="members">
         <el-tag v-for="m in group.members" :key="m.name" size="small" class="member">{{ m.name }}<span class="pc">{{ m.pcName }}</span></el-tag>
       </div>

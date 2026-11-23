@@ -24,7 +24,7 @@
           <span class="seq">{{ i + 1 }}</span>
           <div class="info">
             <div class="ptitle">{{ p.title }}</div>
-            <div class="ptype">{{ pageTypes[p.pageType]?.label }}{{ p.studentVisible ? '' : ' · 默认隐藏' }}</div>
+            <div class="ptype">{{ pageTypes[p.pageType]?.label }}{{ p.studentVisible ? '' : ' · 默认隐藏' }}{{ p.visibleRoles ? ` · 只给${p.visibleRoles.split(',').join('、')}组` : '' }}</div>
           </div>
           <div v-if="isOwner" class="move" @click.stop>
             <el-button link size="small" :disabled="i === 0" @click="move(i, -1)">↑</el-button>
@@ -84,6 +84,13 @@
           <el-form-item label="学生可见">
             <el-switch v-model="current.studentVisible" />
           </el-form-item>
+          <el-form-item label="给哪些组看">
+            <el-select v-model="current.visibleRoleList" multiple filterable allow-create default-first-option clearable
+              placeholder="全班都看" class="w240">
+              <el-option v-for="r in roleSuggestions" :key="r" :label="`只给${r}组`" :value="r" />
+            </el-select>
+            <Hint><span v-pre>不选 = 全班都看。选了角色（如“门铃”），只有课堂分组管理里设成这个角色的组能看到这一页，成绩开网也只要求这些组完成这一页。正文里可以写 {{组名}}、{{配对号}}、{{角色}}、{{组号}}，学生看到的是自己组的（如主题写 {{MQTT项目}}/Bell{{配对号}}）。</span></Hint>
+          </el-form-item>
           <component :is="settingsComponent" v-if="settingsComponent && current.id" :page="current" />
           <el-form-item>
             <el-button type="primary" :loading="saving" @click="save">保存页面</el-button>
@@ -109,6 +116,16 @@ import { pageTypes, pageTypeOptions } from '../../modules/pageTypes'
 import RichEditor from '../../components/RichEditor.vue'
 import PageContent from '../../components/PageContent.vue'
 import StartLessonDialog from '../../components/StartLessonDialog.vue'
+import Hint from '../../components/Hint.vue'
+
+// 页面可见角色：后端存 "门铃,显示"，编辑时用数组
+const toList = (s?: string | null) => (s ? s.split(',').map(x => x.trim()).filter(Boolean) : [])
+const withList = (p: any) => ({ ...p, visibleRoleList: toList(p.visibleRoles) })
+const roleSuggestions = computed(() => {
+  const set = new Set<string>(['门铃', '显示'])
+  for (const p of pages.value) toList(p.visibleRoles).forEach(r => set.add(r))
+  return [...set]
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -134,25 +151,27 @@ async function load() {
   course.value = await api.get(`/teacher/courses/${id}`)
   pages.value = course.value.pages
   if (current.value?.id) {
-    current.value = { ...(pages.value.find(p => p.id === current.value.id) || current.value) }
+    current.value = withList(pages.value.find(p => p.id === current.value.id) || current.value)
   }
 }
 
 function select(p: any) {
-  current.value = { ...p }
+  current.value = withList(p)
 }
 
 function newPage() {
-  current.value = { title: '新页面', pageType: 'TEXT', content: '', studentVisible: true, score: 0 }
+  current.value = { title: '新页面', pageType: 'TEXT', content: '', studentVisible: true, score: 0, visibleRoleList: [] }
 }
 
 async function save() {
   saving.value = true
   try {
+    const body = { ...current.value, visibleRoles: (current.value.visibleRoleList || []).join(',') || null }
+    delete body.visibleRoleList
     const saved = current.value.id
-      ? await api.put(`/teacher/pages/${current.value.id}`, current.value)
-      : await api.post(`/teacher/courses/${course.value.id}/pages`, current.value)
-    current.value = { ...saved }
+      ? await api.put(`/teacher/pages/${current.value.id}`, body)
+      : await api.post(`/teacher/courses/${course.value.id}/pages`, body)
+    current.value = withList(saved)
     ElMessage.success('已保存')
     await load()
   } catch (err) {
