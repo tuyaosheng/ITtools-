@@ -1,6 +1,6 @@
 <template>
   <div class="panel">
-    <div class="section">
+    <div v-if="helpOn" class="section">
       <div class="title">举手求助</div>
       <template v-if="myHelp">
         <el-alert type="warning" :closable="false" :title="`已举手，等待老师处理…${myHelp.message ? '（' + myHelp.message + '）' : ''}`" />
@@ -20,7 +20,7 @@
     </div>
 
     <div v-if="group?.groupNo" class="section">
-      <div class="title">我的小组 · 第 {{ group.groupNo }} 组</div>
+      <div class="title">我的小组 · {{ group.groupLabel || `第 ${group.groupNo} 组` }}</div>
       <div class="members">
         <el-tag v-for="m in group.members" :key="m.name" size="small" class="member">{{ m.name }}<span class="pc">{{ m.pcName }}</span></el-tag>
       </div>
@@ -44,6 +44,7 @@ import { api, errMsg } from '../../api/client'
 import { useLessonChannel } from '../../api/realtime'
 import { useAuthStore } from '../../stores/auth'
 import { fmtTime } from '../../utils/format'
+import { closedFeatures } from '../../modules/consoleTabs'
 
 const props = defineProps<{ lesson: any }>()
 const auth = useAuthStore()
@@ -54,6 +55,7 @@ const message = ref('')
 const classmates = ref<any[]>([])
 const helperId = ref<number>()
 const active = computed(() => props.lesson?.status === 'ACTIVE')
+const helpOn = computed(() => !closedFeatures(props.lesson).includes('HELP'))
 let timer: number | undefined
 
 async function load() {

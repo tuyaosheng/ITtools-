@@ -14,7 +14,7 @@
           <h2>《{{ lesson.courseName }}》</h2>
           <div class="meta">{{ lesson.teacherName }} · {{ lesson.className }} · {{ fmtTime(lesson.startedAt) }} 开始</div>
           <div v-if="lesson.myAttendance" class="meta">
-            ✅ 已签到 · 机位 {{ lesson.myAttendance.pcName || '未登记' }}{{ lesson.myAttendance.groupNo ? ' · 第 ' + lesson.myAttendance.groupNo + ' 组' : '' }}
+            ✅ 已签到 · 机位 {{ lesson.myAttendance.pcName || '未登记' }}{{ lesson.myAttendance.groupNo ? ' · ' + (lesson.myAttendance.groupLabel || '第 ' + lesson.myAttendance.groupNo + ' 组') : '' }}
           </div>
           <el-button type="primary" size="large" class="go" @click="enter">{{ lesson.myAttendance?.status === 'PRESENT' ? '回到课堂' : '进入课堂' }}</el-button>
         </template>
@@ -37,6 +37,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useNoticeStore } from '../../stores/notices'
+import { useFeatureStore } from '../../stores/features'
 import { api } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 
@@ -48,12 +49,14 @@ const greeting = computed(() => {
   const h = new Date().getHours()
   return h < 5 ? '你好' : h < 11 ? '早上好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好'
 })
-const tiles = [
+const features = useFeatureStore()
+const allTiles = [
   { path: '/student/tests', icon: '📝', label: '作业与测验' },
   { path: '/student/works', icon: '🎨', label: '我的作品' },
   { path: '/student/practice', icon: '✏️', label: '刷题练习' },
   { path: '/student/typing', icon: '⌨️', label: '指法练习' }
 ]
+const tiles = computed(() => allTiles.filter(t => features.isOpen(t.path.split('/')[2])))
 
 async function load() {
   lesson.value = await api.get('/student/lessons/current')
@@ -64,6 +67,7 @@ function enter() {
 }
 
 onMounted(async () => {
+  features.load()
   await load()
   // 公开课模式：有课时直接进入课堂
   try {

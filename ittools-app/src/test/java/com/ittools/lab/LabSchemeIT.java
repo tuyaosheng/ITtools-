@@ -237,6 +237,142 @@ class LabSchemeIT extends AbstractPostgresIT {
         assertThatThrownBy(() -> network.setIp("10.72.0.12", true)).hasMessageContaining("未启用");
     }
 
+    /** 假 CTR：记录收到的请求，token 不为空时校验令牌，/api/status 报告 agentIps 都在线。 */
+    private HttpServer fakeCtr(List<String> hits, String token, String... agentIps) throws Exception {
+        HttpServer ctr = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        ctr.createContext("/", ex -> {
+            String path = ex.getRequestURI().toString();
+            hits.add(ex.getRequestMethod() + " " + path);
+            String body = "{\"ok\":true}";
+            int code = 200;
+            if (token != null && !("Bearer " + token).equals(ex.getRequestHeaders().getFirst("Authorization"))) {
+                code = 401;
+            } else if (path.startsWith("/api/status")) {
+                body = "{\"agents\":[" + Arrays.stream(agentIps)
+                        .map(ip -> "{\"ip\":\"" + ip + "\",\"hostname\":\"h\",\"net_state\":\"normal\",\"is_online\":true}")
+                        .collect(Collectors.joining(",")) + "]}";
+            }
+            byte[] b = body.getBytes(StandardCharsets.UTF_8);
+            ex.sendResponseHeaders(code, b.length);
+            try (OutputStream o = ex.getResponseBody()) {
+                o.write(b);
+            }
+        });
+        ctr.start();
+        return ctr;
+    }
+
+    private static String urlOf(HttpServer s) {
+        return "http://127.0.0.1:" + s.getAddress().getPort();
+    }
+
+    @Test
+    void eachRoomUsesItsOwnController() throws Exception {
+        List<String> hitsG = Collections.synchronizedList(new ArrayList<>());
+        List<String> hitsA = Collections.synchronizedList(new ArrayList<>());
+        List<String> hitsB = Collections.synchronizedList(new ArrayList<>());
+        HttpServer global = fakeCtr(hitsG, null, "10.73.3.1", "10.73.9.9");
+        HttpServer ctrA = fakeCtr(hitsA, "tkA", "10.73.1.1", "10.73.1.2");
+        HttpServer ctrB = fakeCtr(hitsB, null, "10.73.2.1", "10.73.2.2");
+        HttpHeaders a = admin();
+        List<Long> rooms = new ArrayList<>();
+        try {
+            call(a, HttpMethod.PUT, "/api/admin/settings", map("net.enabled", "true", "net.ctrUrl", urlOf(global), "net.ctrToken", ""));
+            long roomA = call(a, HttpMethod.POST, "/api/admin/lab/rooms/scheme", map("name", "机房A73", "prefix", "RA73-", "pad", 2,
+                    "baseIp", "10.73.1.1", "step", 1, "layoutText", "1 2")).get("id").asLong();
+            rooms.add(roomA);
+            long roomB = call(a, HttpMethod.POST, "/api/admin/lab/rooms/scheme", map("name", "机房B73", "prefix", "RB73-", "pad", 2,
+                    "baseIp", "10.73.2.1", "step", 1, "layoutText", "1 2")).get("id").asLong();
+            rooms.add(roomB);
+            long roomC = call(a, HttpMethod.POST, "/api/admin/lab/rooms/scheme", map("name", "机房C73", "prefix", "RC73-", "pad", 2,
+                    "baseIp", "10.73.3.1", "step", 1, "layoutText", "1")).get("id").asLong();
+            rooms.add(roomC);
+
+            call(a, HttpMethod.PUT, "/api/admin/lab/rooms/" + roomA + "/controller", map("ctrUrl", urlOf(ctrA), "ctrToken", "tkA"));
+            JsonNode saved = call(a, HttpMethod.PUT, "/api/admin/lab/rooms/" + roomB + "/controller", map("ctrUrl", urlOf(ctrB) + "/", "ctrToken", ""));
+            assertThat(saved.get("ctrToken").isNull()).isTrue();
+            assertThat(saved.get("conflicts")).isEmpty();
+            assertThat(raw(a, HttpMethod.PUT, "/api/admin/lab/rooms/" + roomA + "/controller", map("ctrUrl", "ftp://x", "ctrToken", ""))
+                    .getStatusCode().is4xxClientError()).isTrue();
+            JsonNode listed = call(a, HttpMethod.GET, "/api/admin/lab/rooms", null);
+            for (JsonNode r : listed) {
+                if (r.get("id").asLong() == roomA) assertThat(r.get("ctrUrl").asText()).isEqualTo(urlOf(ctrA));
+                if (r.get("id").asLong() == roomC) assertThat(r.get("ctrUrl").isNull()).isTrue();
+            }
+
+            // 测试连接：机房用自己的 CTR；令牌也是机房自己的
+            JsonNode t = call(a, HttpMethod.GET, "/api/admin/lab/rooms/" + roomA + "/controller/test", null);
+            assertThat(t.get("ok").asBoolean()).as(t.toString()).isTrue();
+            assertThat(t.get("url").asText()).isEqualTo(urlOf(ctrA));
+            assertThat(t.get("agents").asInt()).isEqualTo(2);
+            assertThat(call(a, HttpMethod.GET, "/api/admin/lab/rooms/" + roomC + "/controller/test", null).get("url").asText()).isEqualTo(urlOf(global));
+
+            // 按 IP 下发：A、B 各走自己的 CTR；没设 CTR 的机房和没放进座位图的电脑走全局
+            JsonNode batch = call(a, HttpMethod.POST, "/api/admin/lab/network/batch", map("action", "cut",
+                    "ips", new String[]{"10.73.1.1", "10.73.2.1", "10.73.3.1", "10.73.9.9"}));
+            assertThat(batch.get("count").asInt()).isEqualTo(4);
+            assertThat(hitsA).contains("POST /api/network/disable_ip?ip=10.73.1.1").noneMatch(h -> h.contains("10.73.2.") || h.contains("10.73.3."));
+            assertThat(hitsB).contains("POST /api/network/disable_ip?ip=10.73.2.1").noneMatch(h -> h.contains("10.73.1.") || h.contains("10.73.3."));
+            assertThat(hitsG).contains("POST /api/network/disable_ip?ip=10.73.3.1", "POST /api/network/disable_ip?ip=10.73.9.9");
+
+            // 状态合并所有 CTR
+            JsonNode st = call(a, HttpMethod.GET, "/api/admin/lab/network/status?roomId=" + roomB, null);
+            assertThat(st.get("reachable").asBoolean()).isTrue();
+            for (String ip : new String[]{"10.73.1.1", "10.73.2.1", "10.73.3.1"}) assertThat(st.get("status").has(ip)).as(ip).isTrue();
+
+            // 课堂座位图：教师只看到本机房，连通状态也是本机房 CTR 的
+            long yearId = call(a, HttpMethod.POST, "/api/admin/school-years", map("yearCode", "2081", "label", "2081级", "active", true)).get("id").asLong();
+            long classId = call(a, HttpMethod.POST, "/api/admin/classes", map("schoolYearId", yearId, "name", "多控班", "displayOrder", 1)).get("id").asLong();
+            call(a, HttpMethod.PUT, "/api/admin/lab/class-configs/" + classId, map("roomId", roomB, "fixedSeat", false));
+            call(a, HttpMethod.POST, "/api/admin/users", map("role", "TEACHER", "name", "多控老师", "loginName", "ctr73_t", "password", "net-pass-1"));
+            HttpHeaders teach = session("{\"loginType\":\"TEACHER\",\"loginName\":\"ctr73_t\",\"password\":\"net-pass-1\"}");
+            long courseId = call(teach, HttpMethod.POST, "/api/teacher/courses", map("name", "多控课")).get("id").asLong();
+            long lesson = call(teach, HttpMethod.POST, "/api/teacher/lessons", map("courseId", courseId, "classId", classId)).get("id").asLong();
+            String base = "/api/teacher/lessons/" + lesson + "/network";
+            JsonNode ts = call(teach, HttpMethod.GET, base + "/status", null);
+            assertThat(ts.get("reachable").asBoolean()).isTrue();
+            assertThat(ts.get("status").has("10.73.2.1")).isTrue();
+            assertThat(ts.get("status").has("10.73.1.1")).isFalse();
+
+            // B 的 CTR 挂了：B 的电脑全部失败，别的机房照常，连通状态各算各的
+            ctrB.stop(0);
+            hitsA.clear();
+            JsonNode partly = call(a, HttpMethod.POST, "/api/admin/lab/network/batch", map("action", "open",
+                    "ips", new String[]{"10.73.2.1", "10.73.2.2", "10.73.1.1"}));
+            assertThat(partly.get("count").asInt()).isEqualTo(1);
+            assertThat(partly.get("failed").toString()).isEqualTo("[\"10.73.2.1\",\"10.73.2.2\"]");
+            assertThat(hitsA).contains("POST /api/network/enable_ip?ip=10.73.1.1");
+            assertThat(call(a, HttpMethod.GET, "/api/admin/lab/network/status?roomId=" + roomB, null).get("reachable").asBoolean()).isFalse();
+            assertThat(call(teach, HttpMethod.GET, base + "/status", null).get("reachable").asBoolean()).isFalse();
+            JsonNode stA = call(a, HttpMethod.GET, "/api/admin/lab/network/status?roomId=" + roomA, null);
+            assertThat(stA.get("reachable").asBoolean()).isTrue();
+            assertThat(stA.get("status").has("10.73.1.1")).isTrue();
+            assertThat(stA.get("status").has("10.73.2.1")).isFalse();
+
+            // 同一台电脑放在两个机房：归最早建的机房，后建的机房提示冲突
+            long sharedWs = workstationsByName(a, "RA73-").get("RA73-01").get("id").asLong();
+            call(a, HttpMethod.PUT, "/api/admin/lab/rooms/" + roomC + "/layout", map("cells", Collections.singletonList(map("row", 1, "col", 1, "workstationId", sharedWs))));
+            assertThat(call(a, HttpMethod.GET, "/api/admin/lab/rooms/" + roomC + "/controller", null).get("conflicts").toString()).isEqualTo("[\"10.73.1.1\"]");
+            assertThat(call(a, HttpMethod.GET, "/api/admin/lab/rooms/" + roomA + "/controller", null).get("conflicts")).isEmpty();
+
+            // 清空地址：回到全局 CTR
+            call(a, HttpMethod.PUT, "/api/admin/lab/rooms/" + roomA + "/controller", map("ctrUrl", "", "ctrToken", "tkA"));
+            JsonNode cleared = call(a, HttpMethod.GET, "/api/admin/lab/rooms/" + roomA + "/controller", null);
+            assertThat(cleared.get("ctrUrl").isNull()).isTrue();
+            assertThat(cleared.get("ctrToken").isNull()).isTrue();
+            hitsG.clear();
+            network.setIp("10.73.1.2", true);
+            assertThat(hitsG).contains("POST /api/network/enable_ip?ip=10.73.1.2");
+        } finally {
+            call(a, HttpMethod.PUT, "/api/admin/settings", map("net.enabled", "false", "net.ctrUrl", "http://127.0.0.1:8770", "net.ctrToken", ""));
+            for (Long id : rooms) call(a, HttpMethod.DELETE, "/api/admin/lab/rooms/" + id, null);
+            jdbc.update("DELETE FROM lab_net_state WHERE ip_address LIKE '10.73.%'");
+            global.stop(0);
+            ctrA.stop(0);
+            ctrB.stop(0);
+        }
+    }
+
     // ---- 批量导入模板：下载 → 在模板里改 → 直接导入 ----
 
     private byte[] download(HttpHeaders s, String url) {

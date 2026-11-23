@@ -27,8 +27,10 @@ public class HomeworkPageExtension implements PageExtension {
 
     @Override
     public void copy(long fromPage, long toPage) {
-        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice) "
-                + "SELECT :to, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice FROM homework_config WHERE page_id = :from",
+        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice, block_editor, task_page_title, allow_history) "
+                + "SELECT :to, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice, block_editor, task_page_title, allow_history FROM homework_config WHERE page_id = :from",
+                p("from", fromPage, "to", toPage));
+        jdbc.update("INSERT INTO mpblock_starter(page_id, project) SELECT :to, project FROM mpblock_starter WHERE page_id = :from",
                 p("from", fromPage, "to", toPage));
         jdbc.update("INSERT INTO grading_rule(page_id, seq, rule_type, param1, param2, param3, score, note) "
                 + "SELECT :to, seq, rule_type, param1, param2, param3, score, note FROM grading_rule WHERE page_id = :from ORDER BY seq",
@@ -38,7 +40,7 @@ public class HomeworkPageExtension implements PageExtension {
     @Override
     public Map<String, Object> export(long pageId) {
         List<Map<String, Object>> cfg = jdbc.queryForList("SELECT allowed_exts AS \"allowedExts\", peer_review AS \"peerReview\", "
-                + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", auto_visibility AS \"autoVisibility\", practice "
+                + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", auto_visibility AS \"autoVisibility\", practice, block_editor AS \"blockEditor\", task_page_title AS \"taskPageTitle\", allow_history AS \"allowHistory\" "
                 + "FROM homework_config WHERE page_id = :p", p("p", pageId));
         List<Map<String, Object>> rules = jdbc.queryForList("SELECT seq, rule_type AS \"ruleType\", param1, param2, param3, score, note "
                 + "FROM grading_rule WHERE page_id = :p ORDER BY seq", p("p", pageId));
@@ -46,6 +48,8 @@ public class HomeworkPageExtension implements PageExtension {
         Map<String, Object> out = new LinkedHashMap<>();
         if (!cfg.isEmpty()) out.put("config", cfg.get(0));
         out.put("rules", rules);
+        List<String> starter = jdbc.queryForList("SELECT project FROM mpblock_starter WHERE page_id = :p", p("p", pageId), String.class);
+        if (!starter.isEmpty()) out.put("starterProject", starter.get(0));
         return out;
     }
 
@@ -56,11 +60,17 @@ public class HomeworkPageExtension implements PageExtension {
         if (c instanceof Map) {
             Map<String, Object> m = (Map<String, Object>) c;
             Object vis = m.get("autoVisibility");
-            jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, auto_visibility, practice) "
-                            + "VALUES (:p, :e, :pr, :sc, :ag, :v, :pc)",
+            jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, auto_visibility, practice, block_editor, task_page_title, allow_history) "
+                            + "VALUES (:p, :e, :pr, :sc, :ag, :v, :pc, :be, :tt, :ah)",
                     p("p", pageId, "e", cut(m.get("allowedExts"), 256), "pr", Boolean.TRUE.equals(m.get("peerReview")),
                             "sc", Boolean.TRUE.equals(m.get("showClassmates")), "ag", !Boolean.FALSE.equals(m.get("autoGrade")),
-                            "v", "SCORE".equals(vis) || "NONE".equals(vis) ? vis : "ALL", "pc", Boolean.TRUE.equals(m.get("practice"))));
+                            "v", "SCORE".equals(vis) || "NONE".equals(vis) ? vis : "ALL", "pc", Boolean.TRUE.equals(m.get("practice")),
+                            "be", Boolean.TRUE.equals(m.get("blockEditor")), "tt", cut(m.get("taskPageTitle"), 200), "ah", !Boolean.FALSE.equals(m.get("allowHistory"))));
+        }
+        Object sp = data.get("starterProject");
+        if (sp instanceof String && !((String) sp).isEmpty() && ((String) sp).length() <= 2 * 1024 * 1024) {
+            jdbc.update("INSERT INTO mpblock_starter(page_id, project) VALUES (:p, :j) ON CONFLICT (page_id) DO UPDATE SET project = EXCLUDED.project",
+                    p("p", pageId, "j", sp));
         }
         Object r = data.get("rules");
         if (r instanceof List) {

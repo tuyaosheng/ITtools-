@@ -411,6 +411,51 @@ public class MpyService {
         return out;
     }
 
+    // ================= 任务卡文字（教师在编辑模式里改的要求 / 步骤 / 提示） =================
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> texts(Map<String, Object> cfg) {
+        Object o = cfg.get("texts");
+        return o instanceof Map ? (Map<String, Object>) o : new LinkedHashMap<>();
+    }
+
+    @Transactional(readOnly = true)
+    public Object textsForStudent(Long studentId, Long lessonId, Long pageId) {
+        requireStudentPage(studentId, lessonId, pageId);
+        return texts(config(pageId));
+    }
+
+    @Transactional(readOnly = true)
+    public Object textsForTeacher(Long teacherId, Long lessonId, Long pageId) {
+        requireTeacherPage(teacherId, lessonId, pageId, false);
+        return texts(config(pageId));
+    }
+
+    /** 存 / 删某一关的任务卡文字（text 为 null 时恢复默认）。跟初始积木一样跟着课程走。 */
+    @Transactional
+    public Map<String, Object> saveText(Long teacherId, Long lessonId, Long pageId, Map<String, Object> body) {
+        requireTeacherPage(teacherId, lessonId, pageId, true);
+        String demo = str(body.get("demo"));
+        if (!DEMO_ID.matcher(demo).matches()) return result(false, "bad demo id");
+        Map<String, Object> cfg = config(pageId);
+        Map<String, Object> all = texts(cfg);
+        if (body.get("text") instanceof Map) {
+            Map<?, ?> t = (Map<?, ?>) body.get("text");
+            Map<String, Object> v = new LinkedHashMap<>();
+            for (String k : new String[]{"brief", "steps", "hint"}) {
+                Object x = t.get(k);
+                String sv = x == null ? "" : String.valueOf(x);
+                v.put(k, sv.length() > 4000 ? sv.substring(0, 4000) : sv);
+            }
+            all.put(demo, v);
+        } else {
+            all.remove(demo);
+        }
+        cfg.put("texts", all);
+        saveConfig(pageId, cfg);
+        return result(true, null);
+    }
+
     /** 课堂设置：这节课上哪套关卡、按组还是按人、温室填空模式。 */
     @Transactional
     public Map<String, Object> saveSettings(Long teacherId, Long lessonId, Long pageId, Map<String, Object> body) {

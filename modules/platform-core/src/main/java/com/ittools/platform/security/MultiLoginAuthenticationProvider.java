@@ -51,7 +51,7 @@ public class MultiLoginAuthenticationProvider {
                 : (u.getXjh() != null ? u.getXjh() : ("uid:" + u.getId()));
         Long classId = u.getKlass() == null ? null : u.getKlass().getId();
         return new AppUserDetails(u.getId(), uname, u.getPasswordHash(), u.getRole(), u.isEnabled(),
-                u.getName(), classId);
+                u.getName(), classId, u.isAdminAccess());
     }
 
     /** 第三方程序登录：签名已校验，按学籍号取学生（不校验密码，其余限制相同）。 */

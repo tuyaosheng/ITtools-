@@ -69,6 +69,12 @@ public class PracticeController {
         return ApiResponse.ok(practice.duplicates(CurrentUser.id()));
     }
 
+    /** ids 为空 = 合并全部重复组。 */
+    @PostMapping("/api/teacher/quiz/duplicates/merge")
+    public ApiResponse<Map<String, Object>> mergeDuplicates(@RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(practice.mergeDuplicates(CurrentUser.id(), Body.of(body).longs("ids")));
+    }
+
     // ---- 学生 ----
     @GetMapping("/api/student/quiz/practice-sets")
     public ApiResponse<List<Map<String, Object>>> available() {

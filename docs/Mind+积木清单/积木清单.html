@@ -1,0 +1,353 @@
+<!doctype html><meta charset="utf-8"><title>Mind+ 掌控板积木清单</title>
+<style>body{font-family:"Microsoft YaHei",sans-serif;margin:16px;background:#fafafa}table{border-collapse:collapse;width:100%;background:#fff}td,th{border:1px solid #ddd;padding:6px;vertical-align:top;font-size:13px}th{background:#f0f0f0;position:sticky;top:0}pre{margin:0;white-space:pre-wrap;font-size:12px;max-width:420px}img{max-width:360px}.miss{color:#c0392b}.have{color:#27ae60}h2{margin-top:28px}</style>
+<h1>Mind+ 2.0.7 上传模式 · 掌控板积木清单</h1>
+<p>来源：本机 Mind+ 2.0.7（E:\mind+），设备“掌控板”0.0.6，扩展 Wi-Fi 0.0.5、MQTT 0.0.4。2026-11-21 用隔离副本逐个放积木，导出外形截图和 Mind+ 生成的代码。共 126 个积木，ITtools 掌控板编程页现在大致有对应的 54 个。</p>
+<p>注意：Mind+ 上传模式生成的是 Arduino C（要编译后上传，会覆盖板子上的 MicroPython 固件）；ITtools 用 MicroPython（直接写进板子）。“Mind+ 代码”一栏用来对照每个积木做什么，平台里要另写 MicroPython 版本。</p>
+<p>各分类数量：控制 8，运算符 28，变量 16，掌控 17，板载传感器 9，屏幕显示 11，LED控制 5，音乐 6，MQTT 14，Wi-Fi 9，函数 3</p>
+<h2>控制（8）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/000.png"></td><td>等待 1 秒<br><small>control_wait</small></td><td>语句</td><td>DURATION：可放积木，默认 1</td><td><pre>delay(1000);</pre></td><td><span class="have">mpl_sleep</span></td></tr>
+<tr><td><img src="img/001.png"></td><td>重复执行 10 次 ▢ *<br><small>control_repeat</small></td><td>C 形（包住积木）</td><td>TIMES：可放积木，默认 10</td><td><pre>for (int index = 0; index &lt; 10; index++) {
+		yield();</pre></td><td><span class="have">controls_repeat_ext</span></td></tr>
+<tr><td><img src="img/002.png"></td><td>循环执行 ▢ *<br><small>control_forever</small></td><td>C 形（包住积木），下面不能接</td><td></td><td><pre></pre></td><td><span class="have">mpl_forever</span></td></tr>
+<tr><td><img src="img/003.png"></td><td>如果 ▢ 那么执行 ▢<br><small>control_if</small></td><td>C 形（包住积木）</td><td></td><td><pre>if (false) {</pre></td><td><span class="have">controls_if</span></td></tr>
+<tr><td><img src="img/004.png"></td><td>如果 ▢ 那么执行 ▢ 否则 ▢<br><small>control_if_else</small></td><td>E 形（两个口）</td><td></td><td><pre>if (false) {
+	else {</pre></td><td><span class="have">controls_if（带否则）</span></td></tr>
+<tr><td><img src="img/005.png"></td><td>如果 ▢ 那么 ▢ *<br><small>control_if_else_special</small></td><td>C 形（包住积木）</td><td></td><td><pre>if (false) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/006.png"></td><td>等待直到 ▢<br><small>control_wait_until</small></td><td>语句</td><td></td><td><pre>while (!false) {yield();}</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/007.png"></td><td>重复执行直到 ▢ ▢ *<br><small>control_repeat_until</small></td><td>C 形（包住积木）</td><td></td><td><pre>while (!false) {
+		yield();</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>运算符（28）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/008.png"></td><td>▢▢▢ + ▢▢▢<br><small>operator_add</small></td><td>圆角（数值/文字）</td><td>NUM1：可放积木，默认 ???<br>NUM2：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (0 + 0);</pre></td><td><span class="have">math_arithmetic</span></td></tr>
+<tr><td><img src="img/009.png"></td><td>▢▢▢ - ▢▢▢<br><small>operator_subtract</small></td><td>圆角（数值/文字）</td><td>NUM1：可放积木，默认 ???<br>NUM2：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (0 - 0);</pre></td><td><span class="have">math_arithmetic</span></td></tr>
+<tr><td><img src="img/010.png"></td><td>▢▢▢ * ▢▢▢<br><small>operator_multiply</small></td><td>圆角（数值/文字）</td><td>NUM1：可放积木，默认 ???<br>NUM2：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (0 * 0);</pre></td><td><span class="have">math_arithmetic</span></td></tr>
+<tr><td><img src="img/011.png"></td><td>▢▢▢ / ▢▢▢<br><small>operator_divide</small></td><td>圆角（数值/文字）</td><td>NUM1：可放积木，默认 ???<br>NUM2：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (0 / 0);</pre></td><td><span class="have">math_arithmetic</span></td></tr>
+<tr><td><img src="img/012.png"></td><td>在 1 和 10 之间取随机数<br><small>operator_random</small></td><td>圆角（数值/文字）</td><td>FROM：可放积木，默认 1<br>TO：可放积木，默认 10</td><td><pre>dfrobotRandomSeed();
+	mind_s_my_string_variable = (random(1, 10+1));</pre></td><td><span class="have">math_random_int</span></td></tr>
+<tr><td><img src="img/013.png"></td><td>▢▢▢ &gt; 50<br><small>operator_gt</small></td><td>六边形（真/假）</td><td>OPERAND1：可放积木，默认 ???<br>OPERAND2：可放积木，默认 50</td><td><pre>if ((0&gt;50)) {</pre></td><td><span class="have">logic_compare</span></td></tr>
+<tr><td><img src="img/014.png"></td><td>▢▢▢ &gt;= ▢▢▢<br><small>operator_gt_equals</small></td><td>六边形（真/假）</td><td>OPERAND1：可放积木，默认 ???<br>OPERAND2：可放积木，默认 ???</td><td><pre>if ((0&gt;=0)) {</pre></td><td><span class="have">logic_compare</span></td></tr>
+<tr><td><img src="img/015.png"></td><td>▢▢▢ &lt; 50<br><small>operator_lt</small></td><td>六边形（真/假）</td><td>OPERAND1：可放积木，默认 ???<br>OPERAND2：可放积木，默认 50</td><td><pre>if ((0&lt;50)) {</pre></td><td><span class="have">logic_compare</span></td></tr>
+<tr><td><img src="img/016.png"></td><td>▢▢▢ &lt;= ▢▢▢<br><small>operator_lt_equals</small></td><td>六边形（真/假）</td><td>OPERAND1：可放积木，默认 ???<br>OPERAND2：可放积木，默认 ???</td><td><pre>if ((0&lt;=0)) {</pre></td><td><span class="have">logic_compare</span></td></tr>
+<tr><td><img src="img/017.png"></td><td>▢▢▢ = 50<br><small>operator_equals</small></td><td>六边形（真/假）</td><td>OPERAND1：可放积木，默认 ???<br>OPERAND2：可放积木，默认 50</td><td><pre>if ((0==50)) {</pre></td><td><span class="have">logic_compare</span></td></tr>
+<tr><td><img src="img/018.png"></td><td>▢ 与 ▢<br><small>operator_and</small></td><td>六边形（真/假）</td><td></td><td><pre>if ((false &amp;&amp; false)) {</pre></td><td><span class="have">logic_operation</span></td></tr>
+<tr><td><img src="img/019.png"></td><td>▢ 或 ▢<br><small>operator_or</small></td><td>六边形（真/假）</td><td></td><td><pre>if ((false || false)) {</pre></td><td><span class="have">logic_operation</span></td></tr>
+<tr><td><img src="img/020.png"></td><td>非 ▢<br><small>operator_not</small></td><td>六边形（真/假）</td><td></td><td><pre>if ((!false)) {</pre></td><td><span class="have">logic_negate</span></td></tr>
+<tr><td><img src="img/021.png"></td><td>合并 苹果 香蕉<br><small>operator_join</small></td><td>圆角（数值/文字）</td><td>STRING1：可放积木，默认 苹果<br>STRING2：可放积木，默认 香蕉</td><td><pre>mind_s_my_string_variable = (String(&quot;苹果 &quot;) + String(&quot;香蕉&quot;));</pre></td><td><span class="have">text_join</span></td></tr>
+<tr><td><img src="img/022.png"></td><td>苹果 的第 1 个字符<br><small>operator_letter_of</small></td><td>圆角（数值/文字）</td><td>STRING：可放积木，默认 苹果<br>LETTER：可放积木，默认 1</td><td><pre>mind_s_my_string_variable = (String(String(&quot;苹果&quot;).charAt(1-1)));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/023.png"></td><td>苹果 的字符数<br><small>operator_length</small></td><td>圆角（数值/文字）</td><td>STRING：可放积木，默认 苹果</td><td><pre>mind_s_my_string_variable = (String(&quot;苹果&quot;).length());</pre></td><td><span class="have">text_length</span></td></tr>
+<tr><td><img src="img/024.png"></td><td>苹果 包含 果 ▢<br><small>operator_contains</small></td><td>六边形（真/假）</td><td>STRING1：可放积木，默认 苹果<br>STRING2：可放积木，默认 果</td><td><pre>if (((String(&quot;苹果&quot;).indexOf(String(&quot;果&quot;)) != -1))) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/025.png"></td><td>apple 获取 第 1 个字符到 第 2 个字符<br><small>operator_textsrobotseven</small></td><td>圆角（数值/文字）</td><td>STRING1：可放积木，默认 apple<br>LIST1：下拉 第/倒数第<br>STRING2：可放积木，默认 1<br>LIST2：下拉 第/倒数第<br>STRING3：可放积木，默认 2</td><td><pre>#include &lt;DFString.h&gt;
+	mind_s_my_string_variable = (dfstring.substring(&quot;apple&quot;,0,1,0,2));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/026.png"></td><td>查找 ap 在 apple 中 首次 出现位置<br><small>operator_textsrobotsevenNew</small></td><td>圆角（数值/文字）</td><td>STRING1：可放积木，默认 ap<br>STRING2：可放积木，默认 apple<br>LIST1：下拉 首次/最后一次</td><td><pre>#include &lt;DFString.h&gt;
+	mind_s_my_string_variable = (dfstring.indexOf(String(&quot;ap&quot;), String(&quot;apple&quot;)));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/027.png"></td><td>▢▢▢ 除以 ▢▢▢ 的余数<br><small>operator_mod</small></td><td>圆角（数值/文字）</td><td>NUM1：可放积木，默认 ???<br>NUM2：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = ((int32_t(0)) % (int32_t(0)));</pre></td><td><span class="have">math_modulo</span></td></tr>
+<tr><td><img src="img/028.png"></td><td>四舍五入 ▢▢▢<br><small>operator_round</small></td><td>圆角（数值/文字）</td><td>NUM：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (round(0));</pre></td><td><span class="have">math_round</span></td></tr>
+<tr><td><img src="img/029.png"></td><td>将字符串 123 转换为 整数<br><small>operator_stringToNum</small></td><td>圆角（数值/文字）</td><td>STRING：可放积木，默认 123<br>TYPE：下拉 整数/小数</td><td><pre>mind_s_my_string_variable = (String(&quot;123&quot;).toInt());</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/030.png"></td><td>绝对值 ▢▢▢<br><small>operator_mathop</small></td><td>圆角（数值/文字）</td><td>OPERATOR：下拉 绝对值/向下取整/向上取整/平方根/正弦(sin)/余弦(cos)/正切(tan)/ 反正弦(asin)/ 反余弦(acos)/反正切(atan)/ln/log…<br>NUM：可放积木，默认 ???</td><td><pre>mind_s_my_string_variable = (abs(0));</pre></td><td><span class="have">math_single（部分）</span></td></tr>
+<tr><td><img src="img/031.png"></td><td>将数字 0 转换为 ASCII字符串<br><small>operator_numToASCII</small></td><td>圆角（数值/文字）</td><td>NUM：可放积木，默认 0</td><td><pre>mind_s_my_string_variable = (String(char(0)));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/032.png"></td><td>将字符 a 转换为 ASCII数值<br><small>operator_stringToASCII</small></td><td>圆角（数值/文字）</td><td>STRING：可放积木，默认 a</td><td><pre>mind_s_my_string_variable = (toascii(&#x27;a&#x27;));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/033.png"></td><td>将数字 132 转换为字符串<br><small>operator_numToString</small></td><td>圆角（数值/文字）</td><td>NUM：可放积木，默认 132</td><td><pre>mind_s_my_string_variable = (String(132));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/034.png"></td><td>映射 0 从[ 0 , 1023 ] 到[ 0 , 255 ]<br><small>operator_map</small></td><td>圆角（数值/文字）</td><td>VALUE：可放积木，默认 0<br>FROMLOW：可放积木，默认 0<br>FROMHIGH：可放积木，默认 1023<br>TOLOW：可放积木，默认 0<br>TOHIGH：可放积木，默认 255</td><td><pre>mind_s_my_string_variable = (map(0, 0, 1023, 0, 255));</pre></td><td><span class="have">mpl_map</span></td></tr>
+<tr><td><img src="img/035.png"></td><td>约束 0 介于(最小值) 0 和(最大值) 100 之间<br><small>operator_constrain</small></td><td>圆角（数值/文字）</td><td>VALUE：可放积木，默认 0<br>MIN：可放积木，默认 0<br>MAX：可放积木，默认 100</td><td><pre>mind_s_my_string_variable = (constrain(0, 0, 100));</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>变量（16）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/036.png"></td><td>变量 my variable<br><small>data_variable</small></td><td>圆角（数值/文字）</td><td>VARIABLE：默认 my variable</td><td><pre>String         mind_s_my_string_variable;
+volatile float mind_n_my_variable;
+	mind_s_my_string_variable = mind_n_my_variable;</pre></td><td><span class="have">变量（Blockly 标准）</span></td></tr>
+<tr><td><img src="img/037.png"></td><td>设置 my variable 的值为 0<br><small>data_setvariableto</small></td><td>语句</td><td>VARIABLE：下拉 my variable<br>VALUE：可放积木，默认 0</td><td><pre>volatile float mind_n_my_variable;
+	mind_n_my_variable = 0;</pre></td><td><span class="have">变量（Blockly 标准）</span></td></tr>
+<tr><td><img src="img/038.png"></td><td>将 my variable 增加 1<br><small>data_changevariableby</small></td><td>语句</td><td>VARIABLE：下拉 my variable<br>VALUE：可放积木，默认 1</td><td><pre>volatile float mind_n_my_variable;
+	mind_n_my_variable += 1;</pre></td><td><span class="have">变量（Blockly 标准）</span></td></tr>
+<tr><td><img src="img/039.png"></td><td>变量 my string variable<br><small>data_string</small></td><td>圆角（数值/文字）</td><td>STRING：默认 my string variable</td><td><pre>mind_s_my_string_variable = mind_s_my_string_variable;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/040.png"></td><td>设置 my string variable 的值为 hello<br><small>data_setStringto</small></td><td>语句</td><td>STRING：下拉 my string variable<br>VALUE：可放积木，默认 hello</td><td><pre>mind_s_my_string_variable = &quot;hello&quot;;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/041.png"></td><td>my string variable 以 a 字符串开始<br><small>data_stringStartWith</small></td><td>六边形（真/假）</td><td>STRING：下拉 my string variable<br>VALUE：可放积木，默认 a</td><td><pre>if (mind_s_my_string_variable.startsWith(&quot;a&quot;)) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/042.png"></td><td>列表 my list<br><small>data_listcontents</small></td><td>圆角（数值/文字）</td><td>LIST：默认 my list</td><td><pre>#include &lt;SimpleList.h&gt;
+String             mind_s_my_string_variable;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_s_my_string_variable = mind_l_my_list;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/043.png"></td><td>将 东西 加入 my list<br><small>data_addtolist</small></td><td>语句</td><td>ITEM：可放积木，默认 东西<br>LIST：下拉 my list</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_l_my_list.push_back(&quot;东西&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/044.png"></td><td>删除 my list 的第 1 项<br><small>data_deleteoflist</small></td><td>语句</td><td>LIST：下拉 my list<br>INDEX：可放积木，默认 1</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_l_my_list.remove(1-1);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/045.png"></td><td>删除 my list 的全部项目<br><small>data_deletealloflist</small></td><td>语句</td><td>LIST：下拉 my list</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_l_my_list.clear();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/046.png"></td><td>在 my list 的第 1 项前插入 东西<br><small>data_insertatlist</small></td><td>语句</td><td>LIST：下拉 my list<br>INDEX：可放积木，默认 1<br>ITEM：可放积木，默认 东西</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_l_my_list.insert(1-1, &quot;东西&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/047.png"></td><td>将 my list 的第 1 项替换为 东西<br><small>data_replaceitemoflist</small></td><td>语句</td><td>LIST：下拉 my list<br>INDEX：可放积木，默认 1<br>ITEM：可放积木，默认 东西</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_l_my_list.replace(1-1, &quot;东西&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/048.png"></td><td>my list 的第 1 项<br><small>data_itemoflist</small></td><td>圆角（数值/文字）</td><td>LIST：下拉 my list<br>INDEX：可放积木，默认 1</td><td><pre>#include &lt;SimpleList.h&gt;
+String             mind_s_my_string_variable;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_s_my_string_variable = mind_l_my_list[1-1];</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/049.png"></td><td>my list 中第一个 东西 的编号<br><small>data_itemnumoflist</small></td><td>圆角（数值/文字）</td><td>LIST：下拉 my list<br>ITEM：可放积木，默认 东西</td><td><pre>#include &lt;SimpleList.h&gt;
+String             mind_s_my_string_variable;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_s_my_string_variable = mind_l_my_list.indexOf(&quot;东西&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/050.png"></td><td>my list 的项目数<br><small>data_lengthoflist</small></td><td>圆角（数值/文字）</td><td>LIST：下拉 my list</td><td><pre>#include &lt;SimpleList.h&gt;
+String             mind_s_my_string_variable;
+SimpleList&lt;String&gt; mind_l_my_list;
+	mind_s_my_string_variable = mind_l_my_list.size();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/051.png"></td><td>my list 包含 东西 ▢<br><small>data_listcontainsitem</small></td><td>六边形（真/假）</td><td>LIST：下拉 my list<br>ITEM：可放积木，默认 东西</td><td><pre>#include &lt;SimpleList.h&gt;
+SimpleList&lt;String&gt; mind_l_my_list;
+	if (mind_l_my_list.contains(&quot;东西&quot;)) {</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>掌控（17）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/052.png"></td><td>ESP32 主程序<br><small>dev-DFRobot-handpyEsp32@0.0.6_start</small></td><td>帽子（事件）</td><td></td><td><pre>！错误提示：程序头[ESP32 主程序]仅能同时使用一个，请删除重复定义的模块。
+/*!
+ * MindPlus
+ * DFRobot, 掌控板
+ */</pre></td><td><span class="have">mpl_main</span></td></tr>
+<tr><td><img src="img/053.png"></td><td>当 A 按钮 按下<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_buttonPress</small></td><td>帽子（事件）</td><td>REFERENCE：下拉 A/B/A+B<br>BUTTONSTATE：下拉 按下/松开</td><td><pre>#include &lt;MPython.h&gt;
+void onButtonAPressed();
+	mPython.begin();
+	buttonA.setPressedCallback(onButtonAPressed);
+void onButtonAPressed() {</pre></td><td><span class="have">mpl_on_button</span></td></tr>
+<tr><td><img src="img/054.png"></td><td>当触摸按键 P 被 接通<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_padConnected</small></td><td>帽子（事件）</td><td>REFERENCE：下拉 P/Y/T/H/O/N<br>TOUCHSTATE：下拉 接通/断开</td><td><pre>#include &lt;MPython.h&gt;
+void pin27TouchCallback();
+	mPython.begin();
+	touchPadP.setTouchedCallback(pin27TouchCallback);
+void pin27TouchCallback() {</pre></td><td><span class="have">mpl_on_touch</span></td></tr>
+<tr><td><img src="img/055.png"></td><td>当 向前倾斜<br><small>dev-DFRobot-handpyEsp32@0.0.6_onGesture</small></td><td>帽子（事件）</td><td>GESTURE：下拉 向前倾斜/向后倾斜/向左倾斜/向右倾斜/屏幕朝上/屏幕朝下/摇一摇</td><td><pre>#include &lt;MPython.h&gt;
+void TiltForwardEvent();
+	mPython.begin();
+	accelerometer.onGesture(accelerometer.TiltForward, TiltForwardEvent);
+void TiltForwardEvent() {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/056.png"></td><td>串口0 字符串输出 hello 换行<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_serialSend</small></td><td>语句</td><td>SERIAL：下拉 串口0/串口1/串口2<br>WAY：下拉 字符串输出/原始输出/十六进制输出<br>STRING：可放积木，默认 hello<br>LINE：下拉 换行/不换行</td><td><pre>Serial.begin(9600);
+	Serial.println(&quot;hello&quot;);</pre></td><td><span class="have">mpl_print（部分）</span></td></tr>
+<tr><td><img src="img/057.png"></td><td>串口0 有数据可读？<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_havenumberread</small></td><td>六边形（真/假）</td><td>SERIAL：下拉 串口0/串口1/串口2</td><td><pre>Serial.begin(9600);
+	if ((Serial.available())) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/058.png"></td><td>读取 串口0 数据<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialdata</small></td><td>圆角（数值/文字）</td><td>SERIAL：下拉 串口0/串口1/串口2</td><td><pre>Serial.begin(9600);
+	mind_s_my_string_variable = Serial.read();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/059.png"></td><td>从 串口0 读取一个 整数<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialIntfloat</small></td><td>圆角（数值/文字）</td><td>SERIAL：下拉 串口0/串口1/串口2<br>READTYPE：下拉 整数/小数/字符串</td><td><pre>Serial.begin(9600);
+	mind_s_my_string_variable = Serial.parseInt();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/060.png"></td><td>123.123 保留 0 位小数<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_getNumOfFloat</small></td><td>圆角（数值/文字）</td><td>TARGET：可放积木，默认 123.123<br>NNUMS：可放积木，默认 0</td><td><pre>mind_s_my_string_variable = String(&quot;123&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/061.png"></td><td>设置 串口0 波特率 9600<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setSerial</small></td><td>语句</td><td>BAUD：下拉 1200/2400/4800/9600/19200/38400/57600/76800/115200</td><td><pre>Serial.begin(9600);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/062.png"></td><td>设置 串口1 Rx P0 Tx P1 波特率为 9600<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_seriaRemapping</small></td><td>语句</td><td>SERIAL：下拉 串口1/串口2<br>RX：下拉 P0/P1/P2/P3/P4/P5/P6  (板载蜂鸣器)/P7/P8/P9/P10/P11…<br>TX：下拉 P0/P1/P5/P6  (板载蜂鸣器)/P7/P8/P9/P11/P13/P14/P15/P16<br>BAUD：下拉 1200/2400/4800/9600/19200/38400/57600/76800/115200</td><td><pre>Serial1.begin(9600, P0, P1);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/063.png"></td><td>设置引脚 P0 模式 OUTPUT<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_set_pinMode</small></td><td>语句</td><td>PIN：下拉 P0/P1/P2/P5/P7/P8/P9/P11/P13/P14/P15/P16…<br>PINMODE：下拉 OUTPUT/INPUT/INPUT_PULLUP</td><td><pre>pinMode(P0, OUTPUT);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/064.png"></td><td>读取数字引脚 P0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalRead</small></td><td>六边形（真/假）</td><td>PIN：下拉 P0/P1/P2/P5/P7/P8/P9/P11/P13/P14/P15/P16…</td><td><pre>pinMode(P0, INPUT);
+	if ((digitalRead(P0))) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/065.png"></td><td>读取模拟引脚 P0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_analogRead</small></td><td>圆角（数值/文字）</td><td>PIN：下拉 P0/P1/P2/P3</td><td><pre>mind_s_my_string_variable = (analogRead(P0));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/066.png"></td><td>设置数字引脚 P0 输出 低电平<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalWrite</small></td><td>语句</td><td>PIN：下拉 P0/P1/P5/P7/P8/P9/P11/P13/P14/P15/P16/P19…<br>VALUE：下拉 低电平/高电平</td><td><pre>pinMode(P0, OUTPUT);
+	digitalWrite(P0, LOW);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/067.png"></td><td>设置模拟引脚 P0 输出(PWM) 512<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_analogWrite</small></td><td>语句</td><td>PIN：下拉 P0/P1/P5/P7/P8/P9/P11/P13/P14/P15/P16/P19…<br>VALUE：可放积木，默认 512</td><td><pre>analogWrite(P0, 512);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/068.png"></td><td>系统运行时间(ms)<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_timer</small></td><td>圆角（数值/文字）</td><td></td><td><pre>mind_s_my_string_variable = millis();</pre></td><td><span class="have">mpl_ticks</span></td></tr>
+</table>
+<h2>板载传感器（9）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/069.png"></td><td>按钮 A 被 按下 ？<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_btnIsPressed</small></td><td>六边形（真/假）</td><td>BUTTON：下拉 A/B/A+B<br>BUTTONSTATE：下拉 按下/松开</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	if ((buttonA.isPressed())) {</pre></td><td><span class="have">mpl_button</span></td></tr>
+<tr><td><img src="img/070.png"></td><td>触摸按键 P 被 接通 ？<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_pinIsConnected</small></td><td>六边形（真/假）</td><td>PIN：下拉 P/Y/T/H/O/N<br>TOUCHSTATE：下拉 接通/断开</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	if ((touchPadP.isTouched())) {</pre></td><td><span class="have">mpl_touch</span></td></tr>
+<tr><td><img src="img/071.png"></td><td>设置按键 全部 触摸阈值为 35<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setTouchThreshold</small></td><td>语句</td><td>PIN：下拉 P/Y/T/H/O/N/全部<br>THRESHOLD：可放积木，默认 35</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mPython.setTouchThreshold(35);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/072.png"></td><td>读取按键 P 触摸值<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_readTouchValue</small></td><td>圆角（数值/文字）</td><td>PIN：下拉 P/Y/T/H/O/N</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mind_s_my_string_variable = (touchPadP.read());</pre></td><td><span class="have">mpl_touch_value</span></td></tr>
+<tr><td><img src="img/073.png"></td><td>当前姿态为 向前倾斜 ▢<br><small>dev-DFRobot-handpyEsp32@0.0.6_isGesture</small></td><td>六边形（真/假）</td><td>GESTURE：下拉 向前倾斜/向后倾斜/向左倾斜/向右倾斜/屏幕朝上/屏幕朝下/摇一摇</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	if ((accelerometer.isGesture(accelerometer.TiltForward))) {</pre></td><td><span class="have">mpl_shaken / mpl_angle（部分）</span></td></tr>
+<tr><td><img src="img/074.png"></td><td>读取麦克风声音强度<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_getSoundIntensity</small></td><td>圆角（数值/文字）</td><td></td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mind_s_my_string_variable = (sound.read());</pre></td><td><span class="have">mpl_sound</span></td></tr>
+<tr><td><img src="img/075.png"></td><td>读取环境光强度<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_readBrightness</small></td><td>圆角（数值/文字）</td><td></td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mind_s_my_string_variable = (light.read());</pre></td><td><span class="have">mpl_light</span></td></tr>
+<tr><td><img src="img/076.png"></td><td>加速度校准 X轴偏移 0 Y轴偏移 0 Z轴偏移 0 (m-g)<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_accelerationCalibration</small></td><td>语句</td><td>XOFFSET：可放积木，默认 0<br>YOFFSET：可放积木，默认 0<br>ZOFFSET：可放积木，默认 0</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	accelerometer.setOffset(0, 0, 0);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/077.png"></td><td>读取加速度的值(m-g) X<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_acceleration</small></td><td>圆角（数值/文字）</td><td>TYPE：下拉 X/Y/Z/强度</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mind_s_my_string_variable = (accelerometer.getX());</pre></td><td><span class="have">mpl_accel</span></td></tr>
+</table>
+<h2>屏幕显示（11）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/078.png"></td><td>屏幕显示文字 Mind+ 在第 1 行<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInLine</small></td><td>语句</td><td>TEXT：可放积木，默认 Mind+<br>LINE：可放积木，默认 1</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.setCursorLine(1);
+	display.printLine(&quot;Mind+&quot;);</pre></td><td><span class="have">mpl_gui_text</span></td></tr>
+<tr><td><img src="img/079.png"></td><td>屏幕显示清除第 1 行<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_displayClearInLine</small></td><td>语句</td><td>LINE：可放积木，默认 1</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.fillInLine(1, 0);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/080.png"></td><td>屏幕显示文字 Mind+ 在坐标 X: 42 Y: 22 预览 ▢▢▢<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInXY</small></td><td>语句</td><td>TEXT：可放积木，默认 Mind+<br>X：可放积木，默认 42<br>Y：可放积木，默认 22<br>PREVIEW：可放积木，默认 ???</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.setCursor(42, 22);
+	display.print(&quot;Mind+&quot;);</pre></td><td><span class="have">mpl_gui_text_xy</span></td></tr>
+<tr><td><img src="img/081.png"></td><td>屏幕显示图片 ▢▢▢ 在坐标 x: 39 y: 7<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_imageDrawing</small></td><td>语句</td><td>IMAGE：可放积木，默认 ???<br>X：可放积木，默认 39<br>Y：可放积木，默认 7</td><td><pre>#include &lt;MPython.h&gt;
+// 静态常量
+const uint8_t imageMatrix[] = {0x0,0x0,0x0,0x1f,0x80,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x33,0x80,0x0,0x0,0x0,0x1e,0x0,0x22,0x0,0x0,0x0,0x0,0x33,0x80,0x62,0x0,0x3c,0x0,0x0,0x60,0xc0,0x46,0x0,0xee,0x0,0x0,0x40,0xc0,0xc6,0x1,0x83,0x0,0x0,0xc0,0x40,0x86,0x1,0x1,0x80,0x0,0x40,0xc1,0x8c,0x1,0x1,0x80,0x0,0x7c,0x9f,0xff,0x1,0x1,0x80,0x0,0x37,0x98,0x3,0x81,0xa3,0x0,0x0,0x24,0x30,0x0,0x83,0x26,0x0,0x0,0x64,0x30,0x0,0xc6,0x7c,0x0,0x0,0xc7,0xff,0xff,0xf8,0x40,0x0,0x7f,0xff,0xff,0xff,0xff,0xfc,0x0,0xfe,0x0,0x0,0x0,0x1,0xff,0xc0,0xc0,0x0,0x0,0x0,0x0,0x1,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x3f,0xff,0xff,0xe0,0x1,0x80,0xdc,0x0,0x0,0x0,0x3,0xf9,0x80,0xcf,0xff,0xff,0xff,0xfc,0x5,0x80,0xcb,0xff,0xff,0xff,0xff,0xf5,0x80,0xcb,0xf8,0xff,0xff,0x9f,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x4b,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x68,0x7c,0xff,0xff,0x1f,0xf1,0x80,0x63,0x87,0xff,0xff,0xff,0x93,0x0,0x60,0x38,0x7f,0xff,0xf0,0x33,0x0,0x60,0x3,0x8f,0xfe,0xf,0x83,0x0,0x60,0x0,0x38,0x3,0xe0,0x3,0x0,0x60,0x0,0x7,0xf8,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0};
+	mPython.begin();
+	display.drawImage(39, 7, 50, 50, imageMatrix);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/082.png"></td><td>屏幕显示为 全黑 (清屏)<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_fillScreen</small></td><td>语句</td><td>COLOR：下拉 全黑/全白</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.fillScreen(0);</pre></td><td><span class="have">mpl_gui_bg / mpl_gui_clear</span></td></tr>
+<tr><td><img src="img/083.png"></td><td>屏幕旋转到 180 度<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_screenRotation</small></td><td>语句</td><td>ROTATION：下拉 0/180</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.setRotaion(eROTATION_180);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/084.png"></td><td>画点 x: 0 y: 0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_pointDrawing</small></td><td>语句</td><td>X：可放积木，默认 0<br>Y：可放积木，默认 0</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.point(0, 0);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/085.png"></td><td>设置线宽为 1<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setLineWidth</small></td><td>语句</td><td>LINEWIDTH：可放积木，默认 1</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.lineWidth(1);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/086.png"></td><td>画线 起点x1: 0 y1: 0 终点x2: 0 y2: 0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_lineDrawing</small></td><td>语句</td><td>X1：可放积木，默认 0<br>Y1：可放积木，默认 0<br>X2：可放积木，默认 0<br>Y2：可放积木，默认 0</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.line(0, 0, 0, 0);</pre></td><td><span class="have">mpl_gui_line</span></td></tr>
+<tr><td><img src="img/087.png"></td><td>画圆 填充 圆心 x: 0 y: 0 半径: 20<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_circleDrawing</small></td><td>语句</td><td>FILL：下拉 填充/不填充<br>X：可放积木，默认 0<br>Y：可放积木，默认 0<br>RADIUS：可放积木，默认 20</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.fillCircle(0, 0, 20);</pre></td><td><span class="have">mpl_gui_circle</span></td></tr>
+<tr><td><img src="img/088.png"></td><td>画矩形 填充 起点 x: 0 y: 0 宽: 0 高: 0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_rectangleDrawing</small></td><td>语句</td><td>FILL：下拉 填充/不填充<br>X：可放积木，默认 0<br>Y：可放积木，默认 0<br>WIDTH：可放积木，默认 0<br>HEIGHT：可放积木，默认 0</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	display.rect(0, 0, 0, 0, true);</pre></td><td><span class="have">mpl_gui_rect</span></td></tr>
+</table>
+<h2>LED控制（5）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/089.png"></td><td>灯号 0 显示颜色 #00f<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setLightsColor</small></td><td>语句</td><td>LIGHTS：可放积木，默认 0<br>COLOR：可放积木，默认 #00f</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	rgb.write(0, 0x0000FF);</pre></td><td><span class="have">mpl_rgb_all / mpl_rgb_one</span></td></tr>
+<tr><td><img src="img/090.png"></td><td>关闭 全部 LED<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbDisable</small></td><td>语句</td><td>INDEX：下拉 全部/0号/1号/2号</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	rgb.write(-1, 0x000000);</pre></td><td><span class="have">mpl_rgb_off</span></td></tr>
+<tr><td><img src="img/091.png"></td><td>红 255 绿 255 蓝 255<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbToColor</small></td><td>圆角（数值/文字）</td><td>RED：可放积木，默认 255<br>GREEN：可放积木，默认 255<br>BLUE：可放积木，默认 255</td><td><pre>#include &lt;MPython.h&gt;
+uint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b);
+	mPython.begin();
+	mind_s_my_string_variable = rgbToColor(round(255), round(255), round(255));
+// 静态函数
+uint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b)
+{
+	return (uint32_t)((((uint32_t)r&lt;&lt;16) | ((uint32_t)g&lt;&lt;8)) | (uint32_t)b);</pre></td><td><span class="have">mpl_rgb_mix（部分）</span></td></tr>
+<tr><td><img src="img/092.png"></td><td>设置LED灯亮度为 9<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setBrightness</small></td><td>语句</td><td>BRIGHTVALUE：可放积木，默认 9</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	rgb.brightness(round(9));</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/093.png"></td><td>读取LED灯亮度<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_getBrightness</small></td><td>圆角（数值/文字）</td><td></td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	mind_s_my_string_variable = rgb.brightness();</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>音乐（6）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/094.png"></td><td>播放音乐 DADADADUM 重复 播放一次<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_playMusic</small></td><td>语句</td><td>MUSIC：下拉 DADADADUM/ENTERTAINER/PRELUDE/ODE/NYAN/RINGTONE/FUNK/BLUES/BIRTHDAY/WEDDING/FUNERAL/PUNCHLINE…<br>REPEAT：下拉 播放一次/无限循环/在后台播放一次/在后台无限循环</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.play(DADADADUM, Once);</pre></td><td><span class="have">mpl_music_melody</span></td></tr>
+<tr><td><img src="img/095.png"></td><td>设置每一拍等同 4 分音符，每分钟节拍数 60<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_musicSetTempo</small></td><td>语句</td><td>TICKS：可放积木，默认 4<br>TEMPO：可放积木，默认 60</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.setTicksTempo(4, 60);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/096.png"></td><td>播放音符 1 低 C/C3 1 拍<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_setBuzzerFreq</small></td><td>语句</td><td>NOTE：可放积木，默认 1 低 C/C3<br>BEAT：可放积木，默认 1</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.freq(131, BEAT_1);</pre></td><td><span class="have">mpl_music_note</span></td></tr>
+<tr><td><img src="img/097.png"></td><td>后台播放音符 1 低 C/C3<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_backgroundSetBuzzerFreq</small></td><td>语句</td><td>NOTE：可放积木，默认 1 低 C/C3</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.freq(131);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/098.png"></td><td>停止后台播放<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerSwitch</small></td><td>语句</td><td></td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.stop();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/099.png"></td><td>蜂鸣器重定向到引脚 P0<br><small>dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerRedirect</small></td><td>语句</td><td>PIN：下拉 P0/P1/P7/P8/P11/P13/P14/P15/P16/P19/P20/P…</td><td><pre>#include &lt;MPython.h&gt;
+	mPython.begin();
+	buzz.redirect(P0);</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>MQTT（14）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/100.png"></td><td>MQTT消息<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_</small></td><td>圆角（数值/文字）</td><td></td><td><pre>mind_s_my_string_variable = message;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/101.png"></td><td>MQTT 初始化参数 ▢▢▢<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_initial</small></td><td>语句</td><td>SETTING：可放积木，默认 ???</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 静态常量
+const String topics[] = {&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;};
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.init(&quot;iot.dfrobot.com.cn&quot;,&quot;&quot;,&quot;9404080078718433&quot;,&quot;&quot;,topics,1883);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/102.png"></td><td>MQTT 发起连接<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnect</small></td><td>语句</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.connect();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/103.png"></td><td>MQTT 断开连接<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttDisconnect</small></td><td>语句</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.disconnect();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/104.png"></td><td>MQTT 连接成功？<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnected</small></td><td>六边形（真/假）</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	if (myIot.connected()) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/105.png"></td><td>MQTT 发送消息 hello 至 Topic_0<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend</small></td><td>语句</td><td>MSG：可放积木，默认 hello<br>TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.publish(topic_0, &quot;hello&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/106.png"></td><td>MQTT 发送消息 hello 至 Topic_0 并存数据库 (SIoT V2)<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend_save</small></td><td>语句</td><td>MSG：可放积木，默认 hello<br>TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.publish(topic_0, &quot;hello&quot;, 1);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/107.png"></td><td>当接收到 Topic_0 的 MQTT消息<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedData</small></td><td>帽子（事件）</td><td>TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4<br>MSG：可放积木，默认 MQTT消息</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+void obloqMqttEventTp384w(String&amp; message);
+	myIot.setMqttCallback(obloqMqttEventTp384w, 0);
+void obloqMqttEventTp384w(String&amp; message) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/108.png"></td><td>当接收到 Topic_0 的消息为 hello<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_meaage</small></td><td>帽子（事件）</td><td>TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4<br>MSG：可放积木，默认 hello</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+void whenTopic0Received0();
+	myIot.setMqttCallback(topic_0, &quot;hello&quot;, whenTopic0Received0);
+void whenTopic0Received0() {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/109.png"></td><td>MQTT 订阅 topic/a<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_subscribe</small></td><td>语句</td><td>TOPIC：可放积木，默认 topic/a</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.subscribeTopic(&quot;topic/a&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/110.png"></td><td>MQTT 发送消息 hello 至 topic/a<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic</small></td><td>语句</td><td>MSG：可放积木，默认 hello<br>TOPIC：可放积木，默认 topic/a</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.publish(&quot;topic/a&quot;, &quot;hello&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/111.png"></td><td>MQTT 发送消息 hello 至 topic/a 并存数据库 (SIoT V2)<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic_save</small></td><td>语句</td><td>MSG：可放积木，默认 hello<br>TOPIC：可放积木，默认 topic/a</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.publish(&quot;topic/a&quot;, &quot;hello&quot;, 1);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/112.png"></td><td>当接收到 topic/a 的 MQTT消息<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedTopicData</small></td><td>帽子（事件）</td><td>TOPIC：可放积木，默认 topic/a<br>MSG：可放积木，默认 MQTT消息</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+void obloqMqttEventTtopic47a(String&amp; message);
+	myIot.setCustomMqttCallback(obloqMqttEventTtopic47a, &quot;topic/a&quot;);
+void obloqMqttEventTtopic47a(String&amp; message) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/113.png"></td><td>当接收到 topic/a 的消息为 hello<br><small>ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_topic_meaage</small></td><td>帽子（事件）</td><td>TOPIC：可放积木，默认 topic/a<br>MSG：可放积木，默认 hello</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+void whentopic47aReceived0();
+	myIot.setCustomMqttCallback(&quot;topic/a&quot;, &quot;hello&quot;, whentopic47aReceived0);
+void whentopic47aReceived0() {</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>Wi-Fi（9）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td><img src="img/114.png"></td><td>调试信息<br><small>ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoDebug_eventHeadInner_</small></td><td>圆角（数值/文字）</td><td></td><td><pre>mind_s_my_string_variable = debugMessage;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/115.png"></td><td>错误码<br><small>ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoError_eventHeadInner_</small></td><td>圆角（数值/文字）</td><td></td><td><pre>mind_s_my_string_variable = errorCode;</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/116.png"></td><td>Wi-Fi 连接到 热点: yourSSID 密码: yourPASSWD<br><small>ext-DFRobot-WIFI@0.0.5_wifiConnectByPwd</small></td><td>语句</td><td>ACCOUNT：可放积木，默认 yourSSID<br>PASSWORD：可放积木，默认 yourPASSWD</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.wifiConnect(&quot;yourSSID&quot;, &quot;yourPASSWD&quot;);</pre></td><td><span class="have">mpl_wifi</span></td></tr>
+<tr><td><img src="img/117.png"></td><td>Wi-Fi 连接成功？<br><small>ext-DFRobot-WIFI@0.0.5_wifiConnected</small></td><td>六边形（真/假）</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	if (myIot.wifiStatus()) {</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/118.png"></td><td>Wi-Fi 断开连接<br><small>ext-DFRobot-WIFI@0.0.5_wifiDisConnected</small></td><td>语句</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.wifiDisconnect();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/119.png"></td><td>获取Wi-Fi配置 IP 地址<br><small>ext-DFRobot-WIFI@0.0.5_wifiGetLocalIP</small></td><td>圆角（数值/文字）</td><td>CONFIGURATION：下拉 IP 地址/子网掩码/网关/DNS</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	mind_s_my_string_variable = myIot.getWiFiLocalIP();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/120.png"></td><td>Wi-Fi 设置AP模式: yourSSID 密码: yourPASSWD<br><small>ext-DFRobot-WIFI@0.0.5_wifiSetSoftAP</small></td><td>语句</td><td>ACCOUNT2：可放积木，默认 yourSSID<br>PASSWORD2：可放积木，默认 yourPASSWD</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	myIot.setSoftAP(&quot;yourSSID&quot;, &quot;yourPASSWD&quot;);</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/121.png"></td><td>Wi-Fi 获取AP模式本机IP<br><small>ext-DFRobot-WIFI@0.0.5_wifiGetSoftAPIP</small></td><td>圆角（数值/文字）</td><td></td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+	mind_s_my_string_variable = myIot.getWiFiSoftIP();</pre></td><td><span class="miss">缺</span></td></tr>
+<tr><td><img src="img/122.png"></td><td>Wi-Fi 获取 调试信息 错误码<br><small>ext-DFRobot-WIFI@0.0.5_whenDebugInfo</small></td><td>帽子（事件）</td><td>DEBUG：可放积木，默认 调试信息<br>ERROR：可放积木，默认 错误码</td><td><pre>#include &lt;DFRobot_Iot.h&gt;
+// 创建对象
+DFRobot_Iot myIot;
+void iotDebugEvent(String&amp; debugMessage, int32_t errorCode);
+	myIot.setIotDebugCallback(iotDebugEvent);
+void iotDebugEvent(String&amp; debugMessage, int32_t errorCode) {</pre></td><td><span class="miss">缺</span></td></tr>
+</table>
+<h2>函数（3）</h2><table><tr><th>外形</th><th>文字 / opcode</th><th>形状</th><th>参数</th><th>Mind+ 生成代码（Arduino C）</th><th>平台现有</th></tr>
+<tr><td></td><td>定义 模块名(参数…)<br><small>procedures_definition</small></td><td>帽子（定义）</td><td>参数：数字 / 文字 / 布尔</td><td><pre>void 模块名(参数) { … }</pre></td><td><span class="have">函数（Blockly 标准）</span></td></tr>
+<tr><td></td><td>模块名(参数…)<br><small>procedures_call</small></td><td>语句</td><td></td><td><pre>模块名(参数);</pre></td><td><span class="have">函数（Blockly 标准）</span></td></tr>
+<tr><td></td><td>参数名<br><small>argument_reporter</small></td><td>圆角 / 六边形</td><td></td><td><pre>参数名</pre></td><td><span class="have">函数（Blockly 标准）</span></td></tr>
+</table>

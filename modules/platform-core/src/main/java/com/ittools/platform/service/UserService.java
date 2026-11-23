@@ -36,9 +36,11 @@ public class UserService {
     private final SchoolYearRepository years;
     private final PasswordEncoder encoder;
     private final NamedParameterJdbcTemplate jdbc;
+    private final com.ittools.platform.security.SessionTracker sessions;
 
     public UserService(UserRepository u, KlassRepository c, SchoolYearRepository y, PasswordEncoder e,
-                       NamedParameterJdbcTemplate jdbc) {
+                       NamedParameterJdbcTemplate jdbc, com.ittools.platform.security.SessionTracker sessions) {
+        this.sessions = sessions;
         this.users = u;
         this.classes = c;
         this.years = y;
@@ -52,7 +54,7 @@ public class UserService {
     private static final String LIST_FROM = " FROM users u LEFT JOIN klass k ON k.id = u.class_id "
             + "LEFT JOIN school_year sy ON sy.id = k.school_year_id";
     private static final String LIST_COLS = "SELECT u.id, u.role, u.name, u.login_name, u.student_no, u.xjh, "
-            + "u.class_id, k.name AS class_name, u.graduated, u.enabled, u.enroll_year_id";
+            + "u.class_id, k.name AS class_name, u.graduated, u.enabled, u.enroll_year_id, u.admin_access";
     /** 管理员、教师在前；学生按年级（新的在前）、班级排序、班内学号（按数值）排。 */
     private static final String LIST_ORDER = " ORDER BY CASE u.role WHEN 'ADMIN' THEN 0 WHEN 'TEACHER' THEN 1 ELSE 2 END, "
             + "sy.year_code DESC NULLS LAST, k.display_order NULLS LAST, k.name NULLS LAST, "
@@ -61,7 +63,7 @@ public class UserService {
     private static final RowMapper<UserView> VIEW_ROW = (rs, i) -> new UserView(rs.getLong("id"), rs.getString("role"),
             rs.getString("name"), rs.getString("login_name"), rs.getString("student_no"), rs.getString("xjh"),
             rs.getObject("class_id", Long.class), rs.getString("class_name"), rs.getBoolean("graduated"),
-            rs.getBoolean("enabled"), rs.getObject("enroll_year_id", Long.class));
+            rs.getBoolean("enabled"), rs.getObject("enroll_year_id", Long.class), rs.getBoolean("admin_access"));
 
     private static String where(String role, Long classId, Long yearId, String keyword, MapSqlParameterSource ps) {
         List<String> c = new ArrayList<String>();
@@ -151,6 +153,7 @@ public class UserService {
 
     @Transactional
     public void delete(Long id) {
+        guardSelfAndLastAdmin(id, "删除");
         try {
             users.deleteById(id);
             users.flush();
@@ -173,7 +176,40 @@ public class UserService {
 
     @Transactional
     public void setEnabled(Long id, boolean v) {
+        if (!v) guardSelfAndLastAdmin(id, "停用");
         users.findById(id).orElseThrow(() -> new IllegalArgumentException("用户不存在")).setEnabled(v);
+    }
+
+    /** 教师兼任管理员开关：只对教师有效，不能改自己的；改完让该教师的登录全部下线，重新登录后生效。 */
+    @Transactional
+    public UserView setAdminAccess(Long id, boolean v) {
+        User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        if (u.getRole() != Role.TEACHER) throw new IllegalArgumentException("只有教师账号可以兼任管理员");
+        if (id.equals(currentUserId())) throw new IllegalArgumentException("不能修改自己的管理员权限");
+        if (u.isAdminAccess() != v) {
+            u.setAdminAccess(v);
+            sessions.kickUser(id, "你的管理员权限已变更，请重新登录");
+        }
+        return view(u);
+    }
+
+    /** 不能停用 / 删除自己；也不能停用 / 删除最后一个可用的管理员账号，避免没人能进管理后台。 */
+    private void guardSelfAndLastAdmin(Long id, String action) {
+        if (id.equals(currentUserId())) throw new IllegalArgumentException("不能" + action + "自己的账号");
+        User u = users.findById(id).orElse(null);
+        if (u != null && u.getRole() == Role.ADMIN && u.isEnabled()) {
+            Long n = jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE role = 'ADMIN' AND enabled AND id <> :id",
+                    new MapSqlParameterSource("id", id), Long.class);
+            if (n == null || n == 0) throw new IllegalArgumentException("这是最后一个可用的管理员账号，不能" + action);
+        }
+    }
+
+    private static Long currentUserId() {
+        try {
+            return com.ittools.platform.security.CurrentUser.id();
+        } catch (RuntimeException e) {
+            return null;   // 非请求线程（如导入任务）
+        }
     }
 
     private UserView view(User u) {
@@ -181,6 +217,6 @@ public class UserService {
         return new UserView(u.getId(), u.getRole().name(), u.getName(), u.getLoginName(), u.getStudentNo(),
                 u.getXjh(), k == null ? null : k.getId(), k == null ? null : k.getName(),
                 u.isGraduated(), u.isEnabled(),
-                u.getEnrollYear() == null ? null : u.getEnrollYear().getId());
+                u.getEnrollYear() == null ? null : u.getEnrollYear().getId(), u.isAdminAccess());
     }
 }

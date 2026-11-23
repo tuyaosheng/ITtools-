@@ -21,7 +21,7 @@ import static com.ittools.platform.db.Sql.p;
 public class CourseService {
     public static final List<String> PAGE_TYPES = Arrays.asList(
             "TEXT", "FILE", "VIDEO", "LINK", "HOMEWORK", "QUIZ", "DISCUSS", "ANSWER_FIRST", "PYTHON",
-            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH", "MPYTHON");
+            "GROUPING", "GROUP_WORK", "GROUP_SHOW", "SURVEY", "TAKE_QUESTION", "STORYLINE", "SCRATCH", "MPYTHON", "MQTT");
 
     private final NamedParameterJdbcTemplate jdbc;
     private final FileStorageService storage;
@@ -42,21 +42,37 @@ public class CourseService {
     private static final String COURSE_COLS =
             "c.id, c.name, c.category, c.description, c.shared, c.term_id AS \"termId\", "
                     + "t.year_name || ' ' || t.term_name AS \"termLabel\", c.teacher_id AS \"teacherId\", u.name AS \"teacherName\", "
-                    + "c.created_at AS \"createdAt\", (SELECT COUNT(*) FROM course_page p WHERE p.course_id = c.id) AS \"pageCount\", "
+                    + "c.created_at AS \"createdAt\", c.archived_at IS NOT NULL AS archived, c.archived_at AS \"archivedAt\", (SELECT COUNT(*) FROM course_page p WHERE p.course_id = c.id) AS \"pageCount\", "
                     + "(SELECT COUNT(*) FROM lesson l WHERE l.course_id = c.id) AS \"lessonCount\" "
                     + "FROM course c LEFT JOIN teaching_term t ON t.id = c.term_id JOIN users u ON u.id = c.teacher_id ";
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> myCourses(Long teacherId, Long termId) {
+        return myCourses(teacherId, termId, false);
+    }
+
+    /** includeArchived=false 时不含已归档的课程（“我的课程”默认、开课选课程）。 */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> myCourses(Long teacherId, Long termId, boolean includeArchived) {
         MapSqlParameterSource ps = p("t", teacherId, "term", termId);
         return jdbc.queryForList("SELECT " + COURSE_COLS + "WHERE c.teacher_id = :t "
-                + (termId == null ? "" : "AND c.term_id = :term ") + "ORDER BY c.id DESC", ps);
+                + (termId == null ? "" : "AND c.term_id = :term ")
+                + (includeArchived ? "" : "AND c.archived_at IS NULL ") + "ORDER BY c.id DESC", ps);
+    }
+
+    /** 归档 / 取消归档：只改 archived_at，课程页面、上课记录、学生提交都不动。 */
+    @Transactional
+    public Map<String, Object> setArchived(Long teacherId, Long id, boolean archived) {
+        requireOwner(teacherId, id);
+        jdbc.update("UPDATE course SET archived_at = " + (archived ? "COALESCE(archived_at, now())" : "NULL")
+                + ", updated_at = now() WHERE id = :id", p("id", id));
+        return get(id);
     }
 
     /** 其他教师共享的课程（原"共享课程"）。 */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> sharedCourses(Long teacherId) {
-        return jdbc.queryForList("SELECT " + COURSE_COLS + "WHERE c.shared AND c.teacher_id <> :t ORDER BY c.id DESC",
+        return jdbc.queryForList("SELECT " + COURSE_COLS + "WHERE c.shared AND c.archived_at IS NULL AND c.teacher_id <> :t ORDER BY c.id DESC",
                 p("t", teacherId));
     }
 
@@ -121,9 +137,9 @@ public class CourseService {
                 p("t", teacherId, "term", termId != null ? termId : src.get("termId"), "src", sourceId), Long.class);
         // 逐页复制，并让各子项目复制页面的扩展设置（作品评分规则、测验方式等）
         for (Long from : jdbc.queryForList("SELECT id FROM course_page WHERE course_id = :src ORDER BY seq, id", p("src", sourceId), Long.class)) {
-            Long to = jdbc.queryForObject("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id, config) "
+            Long to = jdbc.queryForObject("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, ref_id, config, visible_roles) "
                             + "SELECT :id, seq, title, page_type, content, link_url, file_path, file_name, student_visible, score, "
-                            + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END, config FROM course_page WHERE id = :from RETURNING id",
+                            + "CASE WHEN page_type IN ('QUIZ', 'PYTHON') THEN ref_id ELSE NULL END, config, visible_roles FROM course_page WHERE id = :from RETURNING id",
                     p("id", id, "from", from), Long.class);
             for (PageExtension ext : pageExtensions()) ext.copy(from, to);
         }
@@ -134,7 +150,8 @@ public class CourseService {
 
     private static final String PAGE_COLS =
             "id, course_id AS \"courseId\", seq, title, page_type AS \"pageType\", content, link_url AS \"linkUrl\", "
-                    + "file_path AS \"filePath\", file_name AS \"fileName\", student_visible AS \"studentVisible\", score, ref_id AS \"refId\" ";
+                    + "file_path AS \"filePath\", file_name AS \"fileName\", student_visible AS \"studentVisible\", score, ref_id AS \"refId\", "
+                    + "visible_roles AS \"visibleRoles\" ";
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> pages(Long courseId) {
@@ -154,8 +171,8 @@ public class CourseService {
         String type = validType((String) f.get("pageType"));
         Integer seq = jdbc.queryForObject("SELECT COALESCE(MAX(seq), 0) + 1 FROM course_page WHERE course_id = :c", p("c", courseId), Integer.class);
         Long id = jdbc.queryForObject(
-                "INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, student_visible, score, ref_id) "
-                        + "VALUES (:c, :seq, :title, :type, :content, :link, :vis, :score, :ref) RETURNING id",
+                "INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, student_visible, score, ref_id, visible_roles) "
+                        + "VALUES (:c, :seq, :title, :type, :content, :link, :vis, :score, :ref, :roles) RETURNING id",
                 pageParams(f).addValue("c", courseId).addValue("seq", seq).addValue("type", type), Long.class);
         return page(id);
     }
@@ -166,7 +183,7 @@ public class CourseService {
         requireOwner(teacherId, ((Number) pg.get("courseId")).longValue());
         String type = validType((String) f.get("pageType"));
         jdbc.update("UPDATE course_page SET title = :title, page_type = :type, content = :content, link_url = :link, "
-                        + "student_visible = :vis, score = :score, ref_id = :ref WHERE id = :id",
+                        + "student_visible = :vis, score = :score, ref_id = :ref, visible_roles = :roles WHERE id = :id",
                 pageParams(f).addValue("type", type).addValue("id", pageId));
         return page(pageId);
     }
@@ -208,7 +225,32 @@ public class CourseService {
         return p("title", title.trim(), "content", f.get("content"), "link", f.get("linkUrl"),
                 "vis", vis == null || Boolean.TRUE.equals(vis),
                 "score", score == null || "".equals(score) ? 0 : ((Number) score).intValue(),
-                "ref", ref == null || "".equals(ref) ? null : ((Number) ref).longValue());
+                "ref", ref == null || "".equals(ref) ? null : ((Number) ref).longValue(),
+                "roles", normalizeRoles(f.get("visibleRoles")));
+    }
+
+    /**
+     * 页面可见角色：接受 "门铃,显示" 或 ["门铃","显示"]，去空白、去重；空 → null（全班都看）。
+     */
+    public static String normalizeRoles(Object v) {
+        if (v == null) return null;
+        List<String> parts = new java.util.ArrayList<>();
+        if (v instanceof java.util.Collection) {
+            for (Object o : (java.util.Collection<?>) v) if (o != null) parts.add(String.valueOf(o));
+        } else {
+            parts.addAll(Arrays.asList(String.valueOf(v).split("[,，、]")));
+        }
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        for (String s : parts) {
+            String t = s.trim();
+            if (t.isEmpty()) continue;
+            if (t.length() > 20) throw new IllegalArgumentException("角色名不超过 20 字：" + t);
+            out.add(t);
+        }
+        if (out.isEmpty()) return null;
+        String joined = String.join(",", out);
+        if (joined.length() > 100) throw new IllegalArgumentException("可见角色太多");
+        return joined;
     }
 
     private static String validType(String t) {
@@ -218,5 +260,27 @@ public class CourseService {
 
     private static void requireName(String n) {
         if (n == null || n.trim().isEmpty()) throw new IllegalArgumentException("名称不能为空");
+    }
+
+    // ---- 课程媒体（课程包 media/） ----
+
+    @Transactional(readOnly = true)
+    public String mediaPath(Long courseId, String name) {
+        List<String> l = jdbc.queryForList("SELECT file_path FROM course_media WHERE course_id = :c AND name = :n",
+                p("c", courseId, "n", name), String.class);
+        return l.isEmpty() ? null : l.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> media(Long courseId) {
+        return jdbc.queryForList("SELECT name, file_path AS \"filePath\", size FROM course_media WHERE course_id = :c ORDER BY name",
+                p("c", courseId));
+    }
+
+    @Transactional
+    public void putMedia(Long courseId, String name, String filePath, long size) {
+        jdbc.update("INSERT INTO course_media(course_id, name, file_path, size) VALUES (:c, :n, :f, :s) "
+                + "ON CONFLICT (course_id, name) DO UPDATE SET file_path = EXCLUDED.file_path, size = EXCLUDED.size",
+                p("c", courseId, "n", name, "f", filePath, "s", size));
     }
 }

@@ -46,10 +46,42 @@
       <el-button type="primary" @click="openCreate">新增用户</el-button>
     </template>
 
-    <el-table v-loading="loading" :data="users" stripe class="full-width">
+    <!-- 手机：卡片列表，重置密码放在显眼位置 -->
+    <div v-if="isMobile" v-loading="loading" class="m-list">
+      <div v-for="row in users" :key="row.id" class="m-card" :class="{ off: !row.enabled }">
+        <div class="m-who">
+          <div class="m-name">{{ row.name }} <span class="m-role">{{ roleLabel(row.role) }}</span><span v-if="row.adminAccess" class="m-role m-adm">兼管理员</span></div>
+          <div class="m-meta">
+            {{ row.role === 'STUDENT' ? `${row.className || ''} ${row.studentNo || ''} · 学号 ${row.xjh || '—'}` : `登录名 ${row.loginName || '—'}` }}
+            <template v-if="!row.enabled"> · 已停用</template><template v-if="row.graduated"> · 已毕业</template>
+          </div>
+        </div>
+        <el-button type="warning" plain @click="resetPassword(row)">重置密码</el-button>
+        <el-dropdown trigger="click" @command="(c: string) => mobileCmd(c, row)">
+          <el-button text class="m-more">⋯</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="edit">编辑</el-dropdown-item>
+              <el-dropdown-item v-if="row.role === 'TEACHER' && row.id !== auth.user?.userId" command="admin">{{ row.adminAccess ? '取消兼任管理员' : '设为兼任管理员' }}</el-dropdown-item>
+              <el-dropdown-item command="enable">{{ row.enabled ? '停用账号' : '启用账号' }}</el-dropdown-item>
+              <el-dropdown-item command="delete" divided><span style="color: var(--el-color-danger)">删除</span></el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <el-empty v-if="!users.length && !loading" description="没有符合的用户" :image-size="60" />
+    </div>
+    <el-table v-else v-loading="loading" :data="users" stripe class="full-width">
       <el-table-column prop="name" label="姓名" width="120" />
       <el-table-column label="角色" width="100">
         <template #default="{ row }: { row: any }">{{ roleLabel(row.role) }}</template>
+      </el-table-column>
+      <el-table-column width="110">
+        <template #header>兼任管理员 <Hint>勾选后，这位教师用自己的教师账号登录，就能从菜单「管理后台」进入管理功能，不用再换管理员账号。改动后该教师需要重新登录。</Hint></template>
+        <template #default="{ row }: { row: any }">
+          <el-switch v-if="row.role === 'TEACHER'" :model-value="row.adminAccess" :disabled="row.id === auth.user?.userId"
+            @change="(v: string | number | boolean) => toggleAdminAccess(row, Boolean(v))" />
+        </template>
       </el-table-column>
       <el-table-column prop="loginName" label="登录名" width="140" />
       <el-table-column prop="studentNo" label="班内学号" width="120" />
@@ -82,7 +114,9 @@
       v-model:page-size="pageSize"
       :total="total"
       :page-sizes="[20, 50, 100, 200]"
-      layout="total, sizes, prev, pager, next, jumper"
+      :layout="isMobile ? 'total, prev, pager, next' : 'total, sizes, prev, pager, next, jumper'"
+      :pager-count="isMobile ? 5 : 7"
+      :small="isMobile"
       background
       class="pager"
       @current-change="load"
@@ -148,6 +182,9 @@ import {
   type FormRules
 } from 'element-plus'
 import AdminCrudPanel from '../../components/admin/AdminCrudPanel.vue'
+import { useIsMobile } from '../../composables/useIsMobile'
+import { useAuthStore } from '../../stores/auth'
+import Hint from '../../components/Hint.vue'
 import { adminApi, type UserItem, type UserRole, type SchoolYearItem, type ClassItem } from '../../api/admin'
 
 const roleOptions: { value: UserRole; label: string }[] = [
@@ -163,6 +200,8 @@ function roleLabel(role: string) {
 const years = ref<SchoolYearItem[]>([])
 const users = ref<UserItem[]>([])
 const loading = ref(false)
+const isMobile = useIsMobile()
+const auth = useAuthStore()
 const saving = ref(false)
 
 // --- filters ---
@@ -346,12 +385,26 @@ async function remove(row: UserItem) {
   }
 }
 
+async function mobileCmd(c: string, row: UserItem) {
+  if (c === 'edit') openEdit(row)
+  else if (c === 'enable') toggleEnabled(row, !row.enabled)
+  else if (c === 'admin') toggleAdminAccess(row, !row.adminAccess)
+  else if (c === 'delete') {
+    try {
+      await ElMessageBox.confirm(`确认删除用户「${row.name}」？`, '删除', { type: 'warning' })
+    } catch {
+      return
+    }
+    remove(row)
+  }
+}
+
 async function resetPassword(row: UserItem) {
   let value: string
   try {
-    ;({ value } = await ElMessageBox.prompt(`为 ${row.name} 设置新密码`, '重置密码', {
-      inputType: 'password',
-      confirmButtonText: '确定',
+    ;({ value } = await ElMessageBox.prompt(`为 ${row.name}（${row.xjh || row.loginName || ''}）设置新密码`, '重置密码', {
+      inputValue: row.role === 'STUDENT' ? '123456' : '',
+      confirmButtonText: '重置',
       cancelButtonText: '取消',
       inputValidator: (v: string) => (!!v && v.length >= 6) || '密码至少 6 位'
     }))
@@ -361,6 +414,16 @@ async function resetPassword(row: UserItem) {
   try {
     await adminApi.users.resetPassword(row.id, value)
     ElMessage.success('密码已重置')
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '操作失败')
+  }
+}
+
+async function toggleAdminAccess(row: UserItem, value: boolean) {
+  try {
+    await adminApi.users.adminAccess(row.id, value)
+    row.adminAccess = value
+    ElMessage.success(value ? `${row.name} 已可进入管理后台（需重新登录）` : `已取消 ${row.name} 的管理员权限`)
   } catch (err: any) {
     ElMessage.error(err?.response?.data?.message || '操作失败')
   }
@@ -405,8 +468,22 @@ async function toggleEnabled(row: UserItem, value: boolean) {
   width: 200px;
 }
 
+.m-list { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+.m-card { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--hb-line); background: var(--hb-paper); }
+.m-card.off { opacity: .6; }
+.m-who { flex: 1; min-width: 0; }
+.m-name { font-weight: 800; font-size: 16px; color: var(--hb-ink-deep); }
+.m-role { white-space: nowrap; font-weight: normal; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--el-fill-color); color: var(--el-text-color-secondary); }
+.m-meta { font-size: 12px; color: var(--el-text-color-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-more { padding: 4px 6px; font-size: 18px; }
+.m-adm { margin-left: 4px; background: var(--el-color-warning-light-9); color: var(--el-color-warning-dark-2); }
+
 .pager {
   margin-top: 16px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+@media (max-width: 768px) {
+  .filter-label { display: none; }
 }
 </style>

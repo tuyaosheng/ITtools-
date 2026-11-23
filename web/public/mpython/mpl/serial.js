@@ -124,7 +124,7 @@
     // 那句 "waiting for download" 就是在这一瞬间打出来的，检测时不能把它清掉
     this._recent = "";
     this.onStatus("connected");
-    this._readLoop();
+    this._loop = this._readLoop();
   };
 
   // 设备身份，排查用：乐鑫原生 USB 跑 MicroPython 时一般是 303A:4001 一类；
@@ -193,6 +193,9 @@
           await new Promise(function (r) { setTimeout(r, GAP_MS); });
         }
       } finally {
+        // 超时时不能 abort 写通道：实测 abort 会一直挂着不返回，之后 port.close() 也跟着永远关不上，
+        // 自动修复里“关了串口重开”那一步就白做了。不 abort 的话，板子进一次下载模式把缓冲读空，
+        // 挂着的那几包自己就发出去了，close 照常能关（recover 里的说明）
         // 超时时那一包可能还挂在流里，放开锁让后面的写入至少能拿到 writer、自己超时报错，
         // 而不是在 getWriter() 上抛 “WritableStream is locked”
         try { writer.releaseLock(); } catch (e) {}
@@ -268,8 +271,12 @@
   //   松开时 DTR 是低的，芯片就正常启动、跑 main.py。
   //   USB 转串口芯片（CH340、CP210x）的自动复位电路是同一套逻辑，这个顺序同样适用。
   // Chromium 的 setSignals 一次调用里固定先改 DTR 再改 RTS，所以必须拆成三次调用来控制顺序。
+  // 板子刚复位、还在开机：这几秒里别往里发东西（见 recover 里的说明），MPL_TO_BOARD 会先问一句
+  MplSerial.prototype.booting = function () { return Date.now() < (this._bootUntil || 0); };
+
   MplSerial.prototype.hardReset = async function () {
     if (!this.port) throw new Error("还没连上掌控板。");
+    this._bootUntil = Date.now() + 3500;
     var port = this.port;
     function sig(s) {
       return Promise.race([port.setSignals(s), sleep(2000).then(function () { throw new Error("设置复位信号超时"); })]);
@@ -324,6 +331,124 @@
     step("重启板子运行新程序");
     await sleep(100);
     await this._write("\x04");
+  };
+
+  // 刷入卡住后的自动修复，学生什么都不用点。由轻到重三步，哪一步之后板子回了 ">>>" 就停：
+  //   ① 打断探：板子可能卡在粘贴模式里等结束符（上一次刷到一半被打断），Ctrl-C 就能出来；
+  //   ② 关掉串口再用同一个设备重新打开（不弹选择框）：写通道在浏览器/驱动那一层堵死时，
+  //      只有关了重开才能换一条干净的；
+  //   ③ 硬复位，并在它开机那几秒里连发 Ctrl-C：板子里的 main.py 一开机就把板子拖死
+  //      （比如死循环里狂打印、没有 sleep）的话，这样能在它跑起来之前把它掐住，回到 ">>>"；
+  //      接下来刷进去的新程序会覆盖掉那个坏的 main.py——老师原来“重刷固件才好”的那种卡死，
+  //      多数就是这一类。
+  // 返回 true = 修好了，可以重新刷。
+  MplSerial.prototype.recover = async function (onStep) {
+    var step = onStep || function () {};
+    var self = this;
+    // 原来排着的写入不管了：它们各自会超时退出，新的写入不再排在它们后面
+    this._queue = Promise.resolve();
+    function quietWrite(t) { return self._write(t).catch(function () {}); }
+    async function prompt(ms) {
+      self._recent = "";
+      await quietWrite("\r\x03\x03\r\n");
+      return self._waitPrompt(ms);
+    }
+
+    // 复位后先只听不说：开机那一两秒里发进去的字没人收，会把刚清空的接收缓冲又堵上（真机实测）。
+    // 等它开完机、打印出东西再停一会儿，才发 Ctrl-C 把它跑的程序停下来
+    async function rebootAndCatch() {
+      self._recent = "";
+      try { await self.hardReset(); } catch (e) {}
+      // 复位可能让 USB 断开重连（原生 USB 的板子），等它自己连回来
+      for (var i = 0; i < 20 && !self.connected(); i++) await sleep(250);
+      if (!self.connected()) return false;
+      var t = Date.now() + 5000;
+      while (Date.now() < t && !/boot:0x[1-9a-f]/.test(self._recent)) await sleep(100);
+      if (!/boot:0x[1-9a-f]/.test(self._recent)) return false;   // 没开机（多半还停在下载模式）
+      // "boot:0x8" 是芯片一复位就打的第一行，那时 MicroPython 还没起来；这时候发 Ctrl-C 一样会堵死。
+      // 要等固件自己打出东西来（掌控板开机打 "mpython_v3"，之后是 main.py 打印的内容），
+      // 才说明 MicroPython 已经在收数据了。开机那几行（"entry 0x…"、"boot..."）还是引导程序打的，不算
+      t = Date.now() + 6000;
+      while (Date.now() < t && !/mpython|MicroPython|@@MPL|>>>/.test(self._recent)) await sleep(100);
+      await sleep(1000);
+      var deadline = Date.now() + 4000;
+      while (Date.now() < deadline) {
+        await quietWrite("\r\x03\x03");
+        await sleep(400);
+        if (/>>> ?\s*$/.test(self._recent)) return true;
+      }
+      return prompt(1500);
+    }
+
+    step("叫醒板子");
+    if (this.connected() && await prompt(1500)) return true;
+
+    // 真机上实测到的卡死（2026-10-17，掌控板 3.0，USB 身份 303A:1001）：板子照常在跑程序、
+    // 照常往电脑打印，但电脑发过去的每一个字节都写入超时——按复位重启也一样。
+    // 原因：板子上的程序不读输入，网页发过去的字攒满了 MicroPython 的输入缓冲（两百来个字节），
+    // 再来的字就堵在芯片内置 USB 串口的接收缓冲里没人取；普通复位只重启芯片、不复位这块 USB，
+    // 那几个字节一直堵着，固件又只在“收到新数据”时才去读，于是谁也不动、永远卡着。
+    // 老师“重刷固件就好了”正是因为刷固件要进下载模式，而下载模式的引导程序会把缓冲读空。
+    // 这里照做一遍，用不着真的刷固件，固件和板子里的文件一个字节都不碰：
+    //   送进下载模式（缓冲被读空）→ 关掉串口再打开（实测不关一次的话，复位信号在下载模式下
+    //   怎么发都不起作用）→ 复位回正常模式 → 等它开完机再发 Ctrl-C。
+    if (this.port && this.deviceKind() !== "bridge") {
+      step("清空板子的接收缓冲");
+      try { await this.enterDownload(); } catch (e) {}
+      await sleep(600);
+      await quietWrite("\r\n\r\n");
+      for (var k = 0; k < 2; k++) {
+        step(k ? "再重启一次板子" : "重启板子");
+        await this._cycle();
+        if (!this.port) return false;
+        if (await rebootAndCatch()) return true;
+      }
+      return false;
+    }
+
+    // USB 转串口芯片（CH340 这类）的板子没有这种卡法，关了重开、复位一次就够
+    step("重新打开串口");
+    await this._cycle();
+    if (this.connected() && await prompt(1500)) return true;
+    if (!this.port) return false;
+    step("重启板子");
+    return rebootAndCatch();
+  };
+
+  // 进下载模式：照搬 esptool 给芯片内置 USB 串口/JTAG 用的那串信号（USBJTAGSerialReset）。
+  // 四步的先后顺序、每一步里先动哪根线都不能改——这块 USB 是按“线的变化顺序”来判断要不要复位、
+  // 复位后进哪个模式的，跟 hardReset 一样要拆成一根一根地设。
+  MplSerial.prototype.enterDownload = async function () {
+    if (!this.port) throw new Error("还没连上掌控板。");
+    var port = this.port;
+    function sig(s) {
+      return Promise.race([port.setSignals(s), sleep(2000).then(function () { throw new Error("设置复位信号超时"); })]);
+    }
+    await sig({ requestToSend: false }); await sig({ dataTerminalReady: false }); await sleep(100);
+    await sig({ dataTerminalReady: true }); await sig({ requestToSend: false }); await sleep(100);
+    await sig({ requestToSend: true }); await sig({ dataTerminalReady: false }); await sig({ requestToSend: true });
+    await sleep(100);
+    await sig({ dataTerminalReady: false }); await sig({ requestToSend: false });
+  };
+
+  // 关掉串口再用同一个设备对象打开：授权还在，不弹选择框。
+  // 关的过程中任何一步都可能因为通道堵着而挂住，所以每一步都设上限。
+  MplSerial.prototype._cycle = async function () {
+    var port = this.port;
+    if (!port) return;
+    this.port = null;   // 先摘掉：读循环看到 port 没了会自己退出
+    try { if (this.reader) await Promise.race([this.reader.cancel(), sleep(1000)]); } catch (e) {}
+    // cancel 返回时读循环还没来得及 releaseLock，这时 close 会因为“读通道还锁着”直接被拒——
+    // 端口根本没关，后面的 open 又把“已经开着”当成成功，等于什么都没做（真机上就这么白跑过两轮）
+    await Promise.race([this._loop || Promise.resolve(), sleep(1000)]);
+    try { await Promise.race([port.close(), sleep(2000).then(function () { throw new Error("关闭超时"); })]); }
+    catch (e) { this.onText("\n[重开串口时没关上：" + (e && e.message || e) + "]\n"); }
+    await sleep(300);
+    for (var i = 0; i < 3 && !this.port; i++) {
+      try { await this._open(port); return; }
+      catch (e) { this.port = null; await sleep(500); }
+    }
+    this.onStatus(this._wantConnected ? "waiting" : "disconnected");
   };
 
   MplSerial.prototype.disconnect = async function () {

@@ -9,7 +9,7 @@
         </div>
         <div class="meta">
           机位 {{ lesson.myAttendance?.pcName || '未登记' }}
-          <template v-if="lesson.myAttendance?.groupNo"> · 第 {{ lesson.myAttendance.groupNo }} 组</template>
+          <template v-if="lesson.myAttendance?.groupNo"> · {{ lesson.myAttendance.groupLabel || `第 ${lesson.myAttendance.groupNo} 组` }}</template>
         </div>
       </div>
     </el-card>
@@ -41,7 +41,7 @@
 
       <el-card shadow="never" class="tools">
         <el-tabs v-model="toolTab">
-          <el-tab-pane v-for="t in studentTools" :key="t.name" :label="t.label" :name="t.name" lazy>
+          <el-tab-pane v-for="t in tools" :key="t.name" :label="t.label" :name="t.name" lazy>
             <component :is="t.component" :lesson="lesson" />
           </el-tab-pane>
         </el-tabs>
@@ -51,12 +51,12 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { pageTypes } from '../../modules/pageTypes'
-import { studentTools } from '../../modules/consoleTabs'
+import { closedFeatures, studentTools } from '../../modules/consoleTabs'
 import PageContent from '../../components/PageContent.vue'
 
 const route = useRoute()
@@ -65,10 +65,29 @@ const lesson = ref<any>(null)
 const pages = ref<any[]>([])
 const page = ref<any>(null)
 const toolTab = ref(studentTools[0]?.name)
+// 老师设了“成绩开网”时，最前面多一个“完成情况”：自己和组员还差什么
+const hasGate = ref(false)
+const progressTool = { name: 'progress', label: '完成情况', component: defineAsyncComponent(() => import('../quiz/GroupProgress.vue')) }
+// 教师关闭的功能（如课堂论坛）不显示对应标签
+const tools = computed(() => [...(hasGate.value ? [progressTool] : []),
+  ...studentTools.filter(t => !t.feature || !closedFeatures(lesson.value).includes(t.feature))])
+async function checkGate() {
+  try {
+    const g = await api.get(`/student/lessons/${id}/net-gate/progress`)
+    if (g?.enabled && !hasGate.value) { hasGate.value = true; toolTab.value = 'progress' }
+    if (!g?.enabled) hasGate.value = false
+  } catch { /* 忽略 */ }
+}
 let timer: number | undefined
 let hbTimer: number | undefined
 
 async function loadPages() {
+  if (lesson.value?.status === 'ACTIVE') {
+    // 顺带刷新教师对本堂课功能开关的改动
+    api.get('/student/lessons/current').then((cur: any) => {
+      if (cur && cur.id === id && lesson.value) lesson.value.disabledFeatures = cur.disabledFeatures
+    }).catch(() => {})
+  }
   pages.value = await api.get(`/student/lessons/${id}/pages`)
   if (page.value && !pages.value.some(p => p.id === page.value.id)) page.value = null
 }
@@ -82,6 +101,7 @@ async function openPage(pageId: number) {
 }
 
 onMounted(async () => {
+  checkGate()
   const cur = await api.get('/student/lessons/current')
   if (cur && cur.id === id) {
     lesson.value = cur.myAttendance?.status === 'PRESENT' ? cur : await api.post(`/student/lessons/${id}/join`)
@@ -95,7 +115,7 @@ onMounted(async () => {
   // ?page= 指定打开的页面（如从“我的作品”补交入口跳转）
   const want = Number(route.query.page)
   if (pages.value.length) await openPage(pages.value.some(p => p.id === want) ? want : pages.value[0].id)
-  timer = window.setInterval(loadPages, 8000)
+  timer = window.setInterval(() => { loadPages(); checkGate() }, 8000)
   // 在线监控心跳：上报当前查看的页面（教师"在线监控"与"学情监控·页面停留时间"使用）；切换页面时立即上报
   beat()
   hbTimer = window.setInterval(beat, 20000)

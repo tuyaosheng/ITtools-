@@ -45,7 +45,7 @@ public final class GradingEngine {
         CATALOG.put("FILE_EXT", new String[]{"文件类型符合", "允许的扩展名（逗号分隔，如 docx,doc）", "", "", "*"});
         CATALOG.put("FILE_SIZE_MIN", new String[]{"文件不小于", "最小大小 KB", "", "", "*"});
         CATALOG.put("FILE_SIZE_MAX", new String[]{"文件不大于", "最大大小 KB", "", "", "*"});
-        CATALOG.put("TEXT_CONTAINS", new String[]{"文本包含关键字", "关键字（多个用 | 分隔，全部出现才得分）", "", "", "docx,pptx,xlsx,txt,html,htm,py,csv,md"});
+        CATALOG.put("TEXT_CONTAINS", new String[]{"文本包含关键字", "关键字（多个用 | 分隔，全部出现才得分）", "", "", "docx,pptx,xlsx,txt,html,htm,py,csv,md,mp,mpcode"});
         CATALOG.put("DOCX_MIN_CHARS", new String[]{"Word 字数不少于", "最少字数", "", "", "docx"});
         CATALOG.put("DOCX_MIN_IMAGES", new String[]{"Word 插入图片", "最少图片数", "", "", "docx"});
         CATALOG.put("DOCX_HAS_TABLE", new String[]{"Word 插入表格", "最少表格数", "", "", "docx"});
@@ -62,6 +62,7 @@ public final class GradingEngine {
         CATALOG.put("PPTX_HAS_TRANSITION", new String[]{"PPT 设置切换效果", "至少几张幻灯片有切换", "", "", "pptx"});
         CATALOG.put("HTML_HAS_TAG", new String[]{"网页包含标签", "标签名（如 img、table、a）", "最少个数", "", "html,htm"});
         OfficeRules.register(CATALOG);
+        MindPlusRules.register(CATALOG);
     }
 
     public static class Rule {
@@ -283,6 +284,7 @@ public final class GradingEngine {
                 return new Check(n >= num(rule.p2, 1), "<" + tag + "> 出现 " + n + " 次");
             }
             default:
+                if (rule.type.startsWith("MP_")) return MindPlusRules.check(doc.mp(), rule);
                 return OfficeRules.check(doc, rule);
         }
     }
@@ -330,6 +332,7 @@ public final class GradingEngine {
         private XMLSlideShow ppt;
         private DocxModel docx;
         private String text;
+        private MindPlusRules.Program mp;
 
         Doc(Path path, String ext) {
             this.path = path;
@@ -373,6 +376,12 @@ public final class GradingEngine {
             return ppt;
         }
 
+        MindPlusRules.Program mp() throws Exception {
+            if (!"mp".equals(ext) && !"mpcode".equals(ext)) throw new IllegalStateException("不是 Mind+ 程序（.mp / .mpcode）");
+            if (mp == null) mp = MindPlusRules.load(path);
+            return mp;
+        }
+
         Cell cell(String ref) throws Exception {
             Workbook wb = excel();
             CellReference cr = new CellReference(ref.trim());
@@ -414,6 +423,10 @@ public final class GradingEngine {
                             b.append('\n');
                         }
                     }
+                    break;
+                case "mp":
+                case "mpcode":
+                    b.append(MindPlusRules.text(mp()));
                     break;
                 default:
                     byte[] bytes = Files.readAllBytes(path);

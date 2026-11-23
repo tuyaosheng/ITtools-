@@ -36,13 +36,16 @@ public class TeacherClassroomController {
     private final com.ittools.classroom.service.EmergencyToolsService emergency;
     private final com.ittools.platform.service.ProfileService profiles;
     private final com.ittools.classroom.service.LessonNetworkService lessonNet;
+    private final com.ittools.platform.security.SessionTracker sessions;
 
     public TeacherClassroomController(CourseService courses, LessonService lessons, TermService terms,
                                       ClassBindingService bindings, TeacherToolsService tools,
                                       com.ittools.platform.service.LoginLogService loginLogService,
                                       com.ittools.classroom.service.EmergencyToolsService emergency,
                                       com.ittools.platform.service.ProfileService profiles,
-                                      com.ittools.classroom.service.LessonNetworkService lessonNet) {
+                                      com.ittools.classroom.service.LessonNetworkService lessonNet,
+                                      com.ittools.platform.security.SessionTracker sessions) {
+        this.sessions = sessions;
         this.profiles = profiles;
         this.lessonNet = lessonNet;
         this.loginLogService = loginLogService;
@@ -77,8 +80,15 @@ public class TeacherClassroomController {
 
     // ---- 课程 ----
     @GetMapping("/courses")
-    public ApiResponse<List<Map<String, Object>>> courses(@RequestParam(required = false) Long termId) {
-        return ApiResponse.ok(courses.myCourses(CurrentUser.id(), termId));
+    public ApiResponse<List<Map<String, Object>>> courses(@RequestParam(required = false) Long termId,
+                                                          @RequestParam(defaultValue = "false") boolean includeArchived) {
+        return ApiResponse.ok(courses.myCourses(CurrentUser.id(), termId, includeArchived));
+    }
+
+    /** 归档 / 取消归档课程：body {archived: true|false}。 */
+    @PostMapping("/courses/{id}/archive")
+    public ApiResponse<Map<String, Object>> archiveCourse(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return ApiResponse.ok(courses.setArchived(CurrentUser.id(), id, Body.of(body).bool("archived", true)));
     }
 
     @GetMapping("/courses/shared")
@@ -170,10 +180,24 @@ public class TeacherClassroomController {
         return ApiResponse.ok(lessons.end(CurrentUser.id(), id, Body.of(body).str("summary")));
     }
 
+    /** 重新开课：已下课的课堂还原到上课中。 */
+    @PostMapping("/lessons/{id}/reopen")
+    public ApiResponse<Map<String, Object>> reopen(@PathVariable Long id) {
+        return ApiResponse.ok(lessons.reopen(CurrentUser.id(), id));
+    }
+
     @PutMapping("/lessons/{id}/pages/{pageId}")
     public ApiResponse<Void> setPageOpen(@PathVariable Long id, @PathVariable Long pageId, @RequestBody Map<String, Object> body) {
         lessons.setPageOpen(CurrentUser.id(), id, pageId, Body.of(body).bool("open", true));
         return ApiResponse.ok(null);
+    }
+
+    /** 开关本堂课的互动功能：body 如 {"HELP": false, "FORUM": true}。 */
+    @PutMapping("/lessons/{id}/features")
+    public ApiResponse<Map<String, Object>> setFeatures(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Map<String, Boolean> enabled = new HashMap<>();
+        for (Map.Entry<String, Object> e : body.entrySet()) enabled.put(e.getKey(), Boolean.valueOf(String.valueOf(e.getValue())));
+        return ApiResponse.ok(lessons.setFeatures(CurrentUser.id(), id, enabled));
     }
 
     /** 撤销课堂（原 coursemanage“撤销”）：清除本堂课全部学习记录。 */
@@ -246,7 +270,11 @@ public class TeacherClassroomController {
 
     @GetMapping("/classes/{classId}/students")
     public ApiResponse<List<Map<String, Object>>> students(@PathVariable Long classId) {
-        return ApiResponse.ok(tools.students(CurrentUser.id(), classId));
+        List<Map<String, Object>> list = tools.students(CurrentUser.id(), classId);
+        for (Map<String, Object> m : list) {   // 在线状态：当前登录的电脑 IP，不在线为 null
+            m.put("onlineIp", sessions.onlineIp(((Number) m.get("id")).longValue()));
+        }
+        return ApiResponse.ok(list);
     }
 
     @PostMapping("/classes/{classId}/students")
@@ -259,6 +287,20 @@ public class TeacherClassroomController {
     public ApiResponse<Void> resetPassword(@PathVariable Long studentId, @RequestBody Map<String, Object> body) {
         tools.resetStudentPassword(CurrentUser.id(), studentId, Body.of(body).str("password"));
         return ApiResponse.ok(null);
+    }
+
+    /** 课堂控制台看页面：正文里的 {{MQTT项目}} 等占位符替换成本节课的值，和学生看到的一样。 */
+    @GetMapping("/lessons/{lessonId}/pages/{pageId}")
+    public ApiResponse<Map<String, Object>> lessonPage(@PathVariable Long lessonId, @PathVariable Long pageId,
+                                                       javax.servlet.http.HttpServletRequest req) {
+        return ApiResponse.ok(lessons.teacherPage(CurrentUser.id(), lessonId, pageId, com.ittools.classroom.util.ServerAddress.forBoards(req.getServerName())));
+    }
+
+    /** 强制下线：学生换电脑、或“先登录的占用”模式下账号被占住时，老师让该学生的所有登录下线。返回下线的会话数。 */
+    @PostMapping("/students/{studentId}/kick")
+    public ApiResponse<Integer> kick(@PathVariable Long studentId) {
+        tools.requireStudent(CurrentUser.id(), studentId);
+        return ApiResponse.ok(sessions.kickUser(studentId, com.ittools.platform.security.SessionTracker.MSG_TEACHER));
     }
 
     @GetMapping("/students/{studentId}/records")

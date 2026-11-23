@@ -58,6 +58,16 @@ public class ClassroomCommonController {
         return storage.download((String) pg.get("filePath"), (String) pg.get("fileName"), inline);
     }
 
+    /** 课程媒体（课程包 media/ 里的操作视频等），能看这门课的人都能看；支持分段请求，视频可以拖动进度。 */
+    @GetMapping("/api/classroom/courses/{courseId}/media/{name:.+}")
+    public ResponseEntity<Resource> courseMedia(@PathVariable Long courseId, @PathVariable String name) {
+        AppUserDetails u = CurrentUser.get();
+        if (!lessons.canReadCourse(u.userId(), u.role().name(), courseId)) throw new IllegalArgumentException("无权查看该文件");
+        String path = courses.mediaPath(courseId, name);
+        if (path == null) throw new IllegalArgumentException("文件不存在：" + name);
+        return storage.download(path, name, true);
+    }
+
     // ---- 管理员 ----
     @GetMapping("/api/admin/terms")
     public ApiResponse<List<Map<String, Object>>> terms() {

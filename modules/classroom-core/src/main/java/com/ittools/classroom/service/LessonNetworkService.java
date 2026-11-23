@@ -17,17 +17,21 @@ public class LessonNetworkService {
     private final LabQueryService lab;
     private final NetworkControlService network;
 
-    public LessonNetworkService(LessonService lessons, LabQueryService lab, NetworkControlService network) {
+    private final NetGateService gate;
+
+    public LessonNetworkService(LessonService lessons, LabQueryService lab, NetworkControlService network, NetGateService gate) {
         this.lessons = lessons;
         this.lab = lab;
         this.network = network;
+        this.gate = gate;
     }
 
     /** 网络状态总览，只保留本课堂机房里的电脑。 */
     @SuppressWarnings("unchecked")
     public Map<String, Object> status(Long teacherId, Long lessonId) {
-        Set<String> ips = roomIps(lessons.requireTeacher(teacherId, lessonId));
-        Map<String, Object> out = network.overview();
+        Map<String, Object> room = room(lessons.requireTeacher(teacherId, lessonId));
+        Set<String> ips = roomIps(room);
+        Map<String, Object> out = network.overview(room == null ? null : ((Number) room.get("id")).longValue());
         out.put("status", only((Map<String, Object>) out.get("status"), ips));
         out.put("last", only((Map<String, Object>) out.get("last"), ips));
         return out;
@@ -38,17 +42,22 @@ public class LessonNetworkService {
         Map<String, Object> l = lessons.requireTeacher(teacherId, lessonId);
         if (!"ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂已结束");
         if (ips == null || ips.isEmpty()) throw new IllegalArgumentException("请先选择电脑");
-        Set<String> room = roomIps(l);
+        Set<String> room = roomIps(room(l));
         for (String ip : ips) {
             if (!room.contains(ip)) throw new IllegalArgumentException("不是本课堂机房的电脑（" + ip + "）");
         }
-        return network.setIps(ips, on);
+        Map<String, Object> out = network.setIps(ips, on);
+        gate.onManualBatch(lessonId, ips, on);
+        return out;
+    }
+
+    private Map<String, Object> room(Map<String, Object> lesson) {
+        return lab.seatMapForClass(((Number) lesson.get("classId")).longValue());
     }
 
     @SuppressWarnings("unchecked")
-    private Set<String> roomIps(Map<String, Object> lesson) {
+    private Set<String> roomIps(Map<String, Object> room) {
         Set<String> out = new LinkedHashSet<>();
-        Map<String, Object> room = lab.seatMapForClass(((Number) lesson.get("classId")).longValue());
         if (room == null) return out;
         for (Map<String, Object> s : (List<Map<String, Object>>) room.get("seats")) {
             if (s.get("ipAddress") != null) out.add((String) s.get("ipAddress"));

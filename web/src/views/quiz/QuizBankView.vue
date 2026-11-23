@@ -310,7 +310,7 @@
     <input ref="excelInput" type="file" accept=".xlsx,.xls,.csv" hidden @change="importExcel" />
 
     <!-- 试卷编辑 -->
-    <el-dialog v-model="pVisible" :title="pForm.id ? '编辑试卷' : '新建试卷'" width="900px" top="5vh" append-to-body>
+    <el-dialog v-model="pVisible" :title="pForm.id ? '编辑试卷' : '新建试卷'" width="min(1100px, 96vw)" top="4vh" append-to-body>
       <el-form label-width="70px">
         <el-form-item label="名称"><el-input v-model="pForm.name" /></el-form-item>
         <el-form-item label="说明"><el-input v-model="pForm.description" /></el-form-item>
@@ -321,7 +321,7 @@
           <div class="sub-title">试卷题目（{{ pForm.items.length }} 题，共 {{ paperTotal }} 分）</div>
           <div v-for="(it, i) in pForm.items" :key="it.questionId" class="p-item">
             <span class="no">{{ i + 1 }}.</span>
-            <span class="p-stem">[{{ typeLabel[it.qtype] }}] {{ brief(it) }}</span>
+            <span class="p-stem" :title="plainAll(it.stem)">[{{ typeLabel[it.qtype] }}] {{ brief(it) }}</span>
             <el-input-number v-model="it.score" :min="0" :max="100" size="small" controls-position="right" class="w90" />
             <el-button link size="small" :disabled="i === 0" @click="swap(i, -1)">↑</el-button>
             <el-button link size="small" type="danger" @click="pForm.items.splice(i, 1)">移除</el-button>
@@ -346,12 +346,29 @@
           </div>
         </div>
         <div>
-          <div class="sub-title">从题库添加</div>
-          <el-input v-model="pickKeyword" size="small" placeholder="搜索" class="mb" />
+          <div class="sub-title">从题库添加 <span class="muted">（点一题加入试卷）</span></div>
+          <div class="pick-filter">
+            <el-select v-model="pickFilter.category" clearable filterable placeholder="全部分类（如 第11课）" size="small">
+              <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
+            </el-select>
+            <el-select v-model="pickFilter.qtype" clearable placeholder="全部题型" size="small">
+              <el-option v-for="(l, v) in typeLabel" :key="v" :label="l" :value="v" />
+            </el-select>
+            <el-select v-model="pickFilter.tag" clearable filterable placeholder="全部标签" size="small">
+              <el-option v-for="t in tags" :key="t.tag" :label="t.tag" :value="t.tag" />
+            </el-select>
+            <el-input v-model="pickKeyword" size="small" clearable placeholder="搜索题干" />
+          </div>
+          <div class="pick-bar">
+            <span class="muted">符合条件 {{ pickable.length }} 题</span>
+            <el-button size="small" :disabled="!pickable.length" @click="addAllToPaper">全部加入（{{ pickable.length }}）</el-button>
+          </div>
           <div class="pick-list">
-            <div v-for="q in pickable" :key="q.id" class="pick" @click="addToPaper(q)">
-              <span>[{{ typeLabel[q.qtype] }}] {{ brief(q) }}</span><span class="muted">+{{ q.score }}</span>
+            <div v-for="q in pickable" :key="q.id" class="pick" :title="plainAll(q.stem)" @click="addToPaper(q)">
+              <span class="pick-stem">[{{ typeLabel[q.qtype] }}] {{ brief(q) }}</span>
+              <span class="pick-meta"><span v-if="q.category" class="pick-cat">{{ q.category }}</span>+{{ q.score }}</span>
             </div>
+            <div v-if="!pickable.length" class="muted pick-empty">{{ pickLoading ? '加载中…' : '没有符合条件的题目' }}</div>
           </div>
         </div>
       </div>
@@ -418,8 +435,20 @@ const excelInput = ref<HTMLInputElement>()
 const importing = ref(false)
 
 const paperTotal = computed(() => pForm.items.reduce((s: number, i: any) => s + (i.score || 0), 0))
-const pickable = computed(() => questionList.value.filter(q => !q.needsAnswer &&
-  !pForm.items.some((i: any) => i.questionId === q.id) && (!pickKeyword.value || q.stem.includes(pickKeyword.value))))
+// 试卷编辑里“从题库添加”自己取一份题目，不受题库页当前筛选（回收站、某个分类）影响
+const pickPool = ref<any[]>([])
+const pickLoading = ref(false)
+const pickFilter = reactive<any>({ category: '', qtype: '', tag: '' })
+const plainAll = (h: string) => (h || '').replace(/<[^>]+>/g, '')
+const pickable = computed(() => {
+  const kw = pickKeyword.value.trim()
+  const inPaper = new Set(pForm.items.map((i: any) => i.questionId))
+  return pickPool.value.filter(q => !q.needsAnswer && !inPaper.has(q.id) &&
+    (!pickFilter.category || q.category === pickFilter.category) &&
+    (!pickFilter.qtype || q.qtype === pickFilter.qtype) &&
+    (!pickFilter.tag || (q.tags || []).includes(pickFilter.tag)) &&
+    (!kw || plainAll(q.stem).includes(kw)))
+})
 const nextDraftId = computed(() => questionList.value.find(q => q.needsAnswer && q.id !== qForm.id)?.id)
 
 function pick(e: Event): File | null { return (e.target as HTMLInputElement).files?.[0] || null }
@@ -504,10 +533,36 @@ function removeOption(i: number) {
   qForm.answer = ''
 }
 
+/** 保存前查重：题干和选项都相同的提示“重复”，仅题干相同（选项不同）的提示“相似”，确认后带 force 保存。图片题按图片去重，不走这里。 */
+async function confirmDuplicate(body: any): Promise<boolean> {
+  const r = await api.post('/teacher/quiz/questions/check-duplicate', body)
+  if (!r.same.length && !r.similar.length) return true
+  const text = (s: string) => {
+    const d = document.createElement('div')
+    d.innerHTML = s || ''
+    const t = (d.textContent || '').trim()
+    d.textContent = t.length > 60 ? t.slice(0, 60) + '…' : t
+    return d.innerHTML
+  }
+  const line = (q: any) => `<li>#${q.id} ${text(q.stem)}${q.deletedAt ? '（在回收站）' : ''}</li>`
+  const html = (r.same.length ? `<p><b>题库里已有相同的题目</b>（题干和选项都一样）：</p><ul>${r.same.map(line).join('')}</ul>` : '')
+    + (r.similar.length ? `<p>题干相同、选项不同的题目（不算重复，仅供核对）：</p><ul>${r.similar.map(line).join('')}</ul>` : '')
+  try {
+    await ElMessageBox.confirm(html, r.same.length ? '发现重复题目' : '发现相似题目', {
+      dangerouslyUseHTMLString: true, confirmButtonText: '仍然保存', cancelButtonText: '返回修改', type: r.same.length ? 'warning' : 'info'
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function saveQuestion(next: boolean) {
-  const body = { ...qForm, answer: qForm.qtype === 'FILL' ? qForm.blanks : qForm.answer }
+  const body: any = { ...qForm, answer: qForm.qtype === 'FILL' ? qForm.blanks : qForm.answer }
   const needImageFirst = !qForm.id && pendingImage.value && !String(qForm.stem || '').trim()
   try {
+    if (!qForm.hasImage && !pendingImage.value && !(await confirmDuplicate(body))) return
+    body.force = true
     let saved
     if (qForm.id) {
       if (pendingImage.value) await uploadImage(qForm.id)
@@ -654,7 +709,10 @@ async function importExcel(e: Event) {
   if (!f) return
   try {
     const r = await api.upload('/teacher/quiz/questions/import', f)
-    ElMessage.success(`导入 ${r.imported}/${r.total} 题${r.failed ? '，失败 ' + r.failed + ' 题：' + r.errors.map((x: any) => `第${x.row}行 ${x.message}`).join('；') : ''}`)
+    ElMessage({
+      type: r.failed ? 'warning' : 'success', duration: r.failed || r.skipped ? 6000 : 3000,
+      message: `导入 ${r.imported}/${r.total} 题${r.skipped ? `，跳过重复 ${r.skipped} 题` : ''}${r.failed ? '，失败 ' + r.failed + ' 题：' + r.errors.map((x: any) => `第${x.row}行 ${x.message}`).join('；') : ''}`
+    })
     await reload()
   } catch (err) {
     ElMessage.error(errMsg(err))
@@ -677,8 +735,20 @@ async function deleteTag(tag: string) {
   await reload()
 }
 
+async function loadPickPool() {
+  pickLoading.value = true
+  try {
+    pickPool.value = await api.get('/teacher/quiz/questions', { status: 'active' })
+    if (!categories.value.length) await loadMeta()
+  } finally {
+    pickLoading.value = false
+  }
+}
+
 async function openPaper(p?: any) {
-  if (!questionList.value.length) await loadQuestions()
+  pickKeyword.value = ''
+  Object.assign(pickFilter, { category: '', qtype: '', tag: '' })
+  loadPickPool().catch(err => ElMessage.error(errMsg(err)))
   if (p) {
     const full = await api.get(`/teacher/quiz/papers/${p.id}`)
     Object.assign(pForm, { id: full.id, name: full.name, description: full.description, shared: full.shared,
@@ -691,6 +761,7 @@ async function openPaper(p?: any) {
 
 function toItem(q: any) { return { questionId: q.id, qtype: q.qtype, stem: q.stem, hasImage: q.hasImage, score: q.score } }
 function addToPaper(q: any) { pForm.items.push(toItem(q)) }
+function addAllToPaper() { pickable.value.slice().forEach(addToPaper) }
 function swap(i: number, d: number) { const a = pForm.items; [a[i], a[i + d]] = [a[i + d], a[i]] }
 
 async function savePaper() {
@@ -750,13 +821,22 @@ onMounted(async () => { await reload(); await loadPapers() })
 .opt-row { display: flex; gap: 8px; align-items: center; width: 100%; }
 .fill-answers { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .col { display: flex; flex-direction: column; align-items: flex-start; }
-.paper-edit { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+/* 两栏都用 minmax(0, …)：题干不换行时也不会把左栏撑宽、挤扁右栏 */
+.paper-edit { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+.paper-edit > div { min-width: 0; }
+@media (max-width: 760px) { .paper-edit { grid-template-columns: minmax(0, 1fr); } }
+.pick-filter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.pick-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
+.pick-stem { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-meta { flex: none; margin-left: 8px; color: var(--el-text-color-secondary); white-space: nowrap; }
+.pick-cat { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 8px; background: var(--el-fill-color); font-size: 12px; }
+.pick-empty { padding: 16px; text-align: center; }
 .sub-title { font-weight: 600; margin-bottom: 8px; }
 .p-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px dashed var(--el-border-color-lighter); font-size: 13px; }
 .p-stem { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .no { width: 22px; }
 .random { margin-top: 10px; font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.pick-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; }
+.pick-list { max-height: 52vh; overflow-y: auto; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; }
 .pick { display: flex; justify-content: space-between; padding: 6px 10px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--el-fill-color-light); }
 .pick:hover { background: var(--el-color-primary-light-9); }
 .stat-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }

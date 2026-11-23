@@ -217,17 +217,25 @@ public class PracticeService {
         return l;
     }
 
-    /** 题库查重（文字题）：题型相同、去掉标签/空白/标点后题干相同的视为重复。 */
+    private static final String REFS = "(SELECT COUNT(*) FROM paper_question pq WHERE pq.question_id = q.id) AS \"paperCount\", "
+            + "((SELECT COUNT(*) FROM quiz_answer qa WHERE qa.question_id = q.id) + (SELECT COUNT(*) FROM practice_session_item pi WHERE pi.question_id = q.id)) AS \"answerCount\" ";
+    /** 合并时保留哪一道：被试卷引用最多 → 作答次数最多 → 最早建的。 */
+    private static final String KEEP_ORDER = "\"paperCount\" DESC, \"answerCount\" DESC, q.id";
+
+    /**
+     * 题库查重（文字题）：题目指纹 dup_key 相同（题型、规范化题干、选项都相同）的为一组；
+     * 每组第一道是合并时会保留的题（keep = true）。
+     */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> duplicates(Long teacherId) {
-        String norm = "regexp_replace(lower(regexp_replace(q.stem, '<[^>]+>', '', 'g')), '[[:space:][:punct:]，。；：？！、（）“”‘’《》【】]', '', 'g')";
-        List<Map<String, Object>> rows = questions.decorate(jdbc.queryForList("SELECT " + QuestionService.COLS + ", " + norm + " AS norm "
-                + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE q.teacher_id = :t AND q.deleted_at IS NULL AND q.image_path IS NULL "
-                + "AND (q.qtype, " + norm + ") IN (SELECT q.qtype, " + norm + " FROM question q WHERE q.teacher_id = :t AND q.deleted_at IS NULL "
-                + "AND q.image_path IS NULL AND " + norm + " <> '' GROUP BY 1, 2 HAVING COUNT(*) > 1) ORDER BY norm, q.id", p("t", teacherId)));
+        List<Map<String, Object>> rows = questions.decorate(jdbc.queryForList("SELECT " + QuestionService.COLS + ", q.dup_key AS \"dupKey\", " + REFS
+                + "FROM question q JOIN users u ON u.id = q.teacher_id WHERE q.teacher_id = :t AND q.deleted_at IS NULL "
+                + "AND q.dup_key IN (SELECT dup_key FROM question WHERE teacher_id = :t AND deleted_at IS NULL AND dup_key IS NOT NULL "
+                + "GROUP BY dup_key HAVING COUNT(*) > 1) ORDER BY q.dup_key, " + KEEP_ORDER, p("t", teacherId)));
         Map<String, Map<String, Object>> groups = new LinkedHashMap<>();
         for (Map<String, Object> q : rows) {
-            String key = q.get("qtype") + "|" + q.remove("norm");
+            String key = (String) q.remove("dupKey");
+            q.put("keep", !groups.containsKey(key));
             groups.computeIfAbsent(key, k -> {
                 Map<String, Object> g = new LinkedHashMap<>();
                 g.put("qtype", q.get("qtype"));
@@ -239,5 +247,53 @@ public class PracticeService {
             qs.add(q);
         }
         return new ArrayList<>(groups.values());
+    }
+
+    /**
+     * 合并重复题：ids 为空时合并全部重复组，否则只合并 ids 所在的组。每组保留一道（见 KEEP_ORDER），
+     * 其余题在试卷、测验作答、刷题记录、错题本里的引用改指向保留题，标签合并、星级取高、空的解析/分类补齐，然后移入回收站。
+     * 同一份试卷同时含两道重复题时，这份试卷及其作答保持原样（不改卷面题数和总分）。
+     */
+    @Transactional
+    public Map<String, Object> mergeDuplicates(Long teacherId, List<Long> ids) {
+        int groups = 0, merged = 0;
+        for (Map<String, Object> g : duplicates(teacherId)) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> qs = (List<Map<String, Object>>) g.get("questions");
+            boolean hit = ids == null || ids.isEmpty();
+            for (Map<String, Object> q : qs) hit |= ids != null && ids.contains(((Number) q.get("id")).longValue());
+            if (!hit) continue;
+            Long keep = ((Number) qs.get(0).get("id")).longValue();
+            for (Map<String, Object> q : qs.subList(1, qs.size())) {
+                mergeInto(keep, ((Number) q.get("id")).longValue());
+                merged++;
+            }
+            groups++;
+        }
+        Map<String, Object> r = new HashMap<>();
+        r.put("groups", groups);
+        r.put("merged", merged);
+        return r;
+    }
+
+    private void mergeInto(Long k, Long d) {
+        Map<String, Object> ps = new HashMap<>();
+        ps.put("k", k);
+        ps.put("d", d);
+        jdbc.update("UPDATE paper_question x SET question_id = :k WHERE x.question_id = :d "
+                + "AND NOT EXISTS (SELECT 1 FROM paper_question y WHERE y.paper_id = x.paper_id AND y.question_id = :k)", ps);
+        jdbc.update("UPDATE quiz_answer x SET question_id = :k WHERE x.question_id = :d "
+                + "AND NOT EXISTS (SELECT 1 FROM quiz_answer y WHERE y.attempt_id = x.attempt_id AND y.question_id = :k)", ps);
+        jdbc.update("UPDATE practice_session_item x SET question_id = :k WHERE x.question_id = :d "
+                + "AND NOT EXISTS (SELECT 1 FROM practice_session_item y WHERE y.session_id = x.session_id AND y.question_id = :k)", ps);
+        jdbc.update("UPDATE practice_log SET question_id = :k WHERE question_id = :d", ps);
+        jdbc.update("INSERT INTO wrong_mastered(student_id, question_id, created_at) SELECT student_id, :k, created_at FROM wrong_mastered "
+                + "WHERE question_id = :d ON CONFLICT DO NOTHING", ps);
+        jdbc.update("DELETE FROM wrong_mastered WHERE question_id = :d", ps);
+        jdbc.update("INSERT INTO question_tag(question_id, tag) SELECT :k, tag FROM question_tag WHERE question_id = :d ON CONFLICT DO NOTHING", ps);
+        jdbc.update("UPDATE question k SET stars = GREATEST(k.stars, d.stars), shared = k.shared OR d.shared, "
+                + "analysis = COALESCE(NULLIF(k.analysis, ''), d.analysis), category = COALESCE(NULLIF(k.category, ''), d.category) "
+                + "FROM question d WHERE k.id = :k AND d.id = :d", ps);
+        jdbc.update("UPDATE question SET deleted_at = now() WHERE id = :d", ps);
     }
 }

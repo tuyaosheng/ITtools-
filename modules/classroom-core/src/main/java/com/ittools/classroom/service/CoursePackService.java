@@ -68,7 +68,7 @@ public class CoursePackService {
     public void export(Long teacherId, Long courseId, OutputStream out) throws IOException {
         Map<String, Object> c = courses.getReadable(teacherId, courseId);
         List<Map<String, Object>> pages = jdbc.queryForList("SELECT p.id, p.seq, p.title, p.page_type, p.content, p.link_url, p.file_path, p.file_name, "
-                + "p.student_visible, p.score, p.ref_id, p.config, "
+                + "p.student_visible, p.score, p.ref_id, p.config, p.visible_roles, "
                 + "CASE WHEN p.page_type = 'QUIZ' THEN (SELECT name FROM paper WHERE id = p.ref_id) "
                 + "     WHEN p.page_type = 'PYTHON' THEN (SELECT title FROM py_problem WHERE id = p.ref_id) END AS ref_title "
                 + "FROM course_page p WHERE p.course_id = :c ORDER BY p.seq, p.id", p("c", courseId));
@@ -93,6 +93,7 @@ public class CoursePackService {
             m.put("content", pg.get("content"));
             m.put("linkUrl", pg.get("link_url"));
             m.put("studentVisible", pg.get("student_visible"));
+            if (pg.get("visible_roles") != null) m.put("visibleRoles", pg.get("visible_roles"));
             m.put("score", pg.get("score"));
             if (pg.get("ref_id") != null) {
                 m.put("refId", pg.get("ref_id"));
@@ -121,6 +122,11 @@ public class CoursePackService {
             outPages.add(m);
         }
         manifest.put("pages", outPages);
+        for (Map<String, Object> md : courses.media(courseId)) {
+            if (Files.isRegularFile(storage.resolve((String) md.get("filePath")))) {
+                files.add(new String[]{"media/" + md.get("name"), (String) md.get("filePath")});
+            }
+        }
 
         ZipOutputStream z = new ZipOutputStream(out, StandardCharsets.UTF_8);
         z.putNextEntry(new ZipEntry("course.json"));
@@ -264,10 +270,11 @@ public class CoursePackService {
                     }
                     Object score = pg.get("score");
                     Long pageId = jdbc.queryForObject("INSERT INTO course_page(course_id, seq, title, page_type, content, link_url, file_path, file_name, "
-                                    + "student_visible, score, ref_id, config) VALUES (:c, :s, :t, :ty, :ct, :l, :fp, :fn, :v, :sc, :r, :cfg) RETURNING id",
+                                    + "student_visible, score, ref_id, config, visible_roles) VALUES (:c, :s, :t, :ty, :ct, :l, :fp, :fn, :v, :sc, :r, :cfg, :roles) RETURNING id",
                             p("c", courseId, "s", seq, "t", title, "ty", type, "ct", pg.get("content") == null ? null : String.valueOf(pg.get("content")),
                                     "l", str(pg.get("linkUrl"), 500), "fp", filePath, "fn", fileName, "v", !Boolean.FALSE.equals(pg.get("studentVisible")),
-                                    "sc", score instanceof Number ? Math.max(0, Math.min(1000, ((Number) score).intValue())) : 0, "r", ref, "cfg", config), Long.class);
+                                    "sc", score instanceof Number ? Math.max(0, Math.min(1000, ((Number) score).intValue())) : 0, "r", ref, "cfg", config,
+                                    "roles", CourseService.normalizeRoles(pg.get("visibleRoles"))), Long.class);
                     Map<String, Object> ext = pg.get("extensions") instanceof Map ? (Map<String, Object>) pg.get("extensions") : null;
                     if (ext != null) {
                         for (PageExtension e : courses.pageExtensions()) {
@@ -275,9 +282,22 @@ public class CoursePackService {
                         }
                     }
                 }
+                // 课程媒体：media/ 下的文件（操作视频等），页面正文用 {{媒体:文件名}} 引用
+                int media = 0;
+                for (Map.Entry<String, ZipEntry> e : entries.entrySet()) {
+                    if (!e.getKey().startsWith("media/") || e.getValue().isDirectory()) continue;
+                    String mname = e.getKey().substring(e.getKey().lastIndexOf('/') + 1);
+                    if (mname.isEmpty() || mname.length() > 200) continue;
+                    try (InputStream in = zf.getInputStream(e.getValue())) {
+                        StoredFile sf = storage.store(in, e.getValue().getSize(), "course", mname);
+                        courses.putMedia(courseId, mname, sf.getRelPath(), sf.getSize());
+                        media++;
+                    }
+                }
                 Map<String, Object> out = new LinkedHashMap<>();
                 out.put("course", courses.get(courseId));
                 out.put("pages", seq);
+                out.put("media", media);
                 out.put("warnings", warnings);
                 createdDirs.clear();
                 return out;

@@ -33,10 +33,14 @@
           <template v-if="row.id">
             <div v-if="row.title" class="w-title">《{{ row.title }}》<span v-if="row.selfScore != null" class="muted">自评 {{ row.selfScore }}</span></div>
             <el-link type="primary" @click="download(row)">{{ row.fileName }}</el-link>
+            <el-button v-if="/\.(mpcode|mp)$/i.test(row.fileName || '')" link type="success" size="small" class="ml" @click="viewBlocks(row)">看积木</el-button>
             <el-tag v-if="row.returned" size="small" type="danger" class="ml">已发回重做</el-tag>
             <div class="muted">{{ fmtTime(row.submittedAt) }} · {{ row.pcName || '' }}{{ row.late ? ' · 补交' : '' }}{{ row.submitCount > 1 ? ` · 交${row.submitCount}次` : '' }}</div>
           </template>
-          <el-tag v-else size="small" type="info">未交</el-tag>
+          <template v-else>
+            <el-tag size="small" type="info">未交</el-tag>
+            <el-button v-if="blockPage" link type="success" size="small" class="ml" @click="viewDraft(row)">看拼到哪了</el-button>
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="自动分" width="90">
@@ -143,6 +147,17 @@ const rows = computed(() => {
 })
 const rubricTotal = computed(() => Object.values(rubricScores).reduce((a, b) => a + (Number(b) || 0), 0))
 const base = () => `/teacher/homework/lessons/${props.lessonId}/pages/${props.page.id}`
+// Mind+ / 平台图形化编程交的 .mpcode：在图形化编程里只读打开
+function viewBlocks(row: any) {
+  const q = new URLSearchParams({ file: `/api/homework/submissions/${row.id}/file`, readonly: '1', title: `${row.studentName} 的作品` })
+  window.open(`/mpblocks/index.html?${q}`, '_blank')
+}
+const blockPage = ref(false)
+api.get(`/teacher/homework/pages/${props.page.id}/config`).then((c: any) => { blockPage.value = !!c?.blockEditor }).catch(() => {})
+// 还没交：看学生自动保存的积木
+function viewDraft(row: any) {
+  window.open(`/mpblocks/index.html?lesson=${props.lessonId}&page=${props.page.id}&student=${row.studentId}`, '_blank')
+}
 
 async function load() {
   data.value = await api.get(base())

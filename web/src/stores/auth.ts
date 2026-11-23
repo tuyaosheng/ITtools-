@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { http } from '../api/http'
+import { useFeatureStore } from './features'
 
 interface User {
   userId: number
@@ -8,6 +9,8 @@ interface User {
   classId?: number | null
   role: string
   permissions: string[]
+  /** 能进管理后台：管理员，或兼任管理员的教师 */
+  canAdmin?: boolean
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -28,10 +31,12 @@ export const useAuthStore = defineStore('auth', {
     async login(payload: Record<string, unknown>) {
       const { data } = await http.post('/auth/login', payload)
       this.user = data.data
+      useFeatureStore().reset()
     },
     async logout() {
       await http.post('/auth/logout')
       this.user = null
+      useFeatureStore().reset()
     }
   }
 })

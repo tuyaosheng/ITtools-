@@ -38,3 +38,7 @@ data/
 # Brython runtime copied from node_modules at dev/build time
 web/public/pyrunner/brython*.js
 scripts/demo/samples/
+
+# Python
+__pycache__/
+*.pyc

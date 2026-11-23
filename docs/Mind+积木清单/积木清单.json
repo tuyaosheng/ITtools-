@@ -1,0 +1,1555 @@
+[
+ {
+  "分类": "控制",
+  "opcode": "control_wait",
+  "文字": "等待 1 秒",
+  "形状": "语句",
+  "参数": [
+   "DURATION：可放积木，默认 1"
+  ],
+  "Mind+代码": "delay(1000);",
+  "平台现有": "mpl_sleep",
+  "图": "000.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_repeat",
+  "文字": "重复执行 10 次 ▢ *",
+  "形状": "C 形（包住积木）",
+  "参数": [
+   "TIMES：可放积木，默认 10"
+  ],
+  "Mind+代码": "for (int index = 0; index < 10; index++) {\n\t\tyield();",
+  "平台现有": "controls_repeat_ext",
+  "图": "001.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_forever",
+  "文字": "循环执行 ▢ *",
+  "形状": "C 形（包住积木），下面不能接",
+  "参数": [],
+  "Mind+代码": "",
+  "平台现有": "mpl_forever",
+  "图": "002.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_if",
+  "文字": "如果 ▢ 那么执行 ▢",
+  "形状": "C 形（包住积木）",
+  "参数": [],
+  "Mind+代码": "if (false) {",
+  "平台现有": "controls_if",
+  "图": "003.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_if_else",
+  "文字": "如果 ▢ 那么执行 ▢ 否则 ▢",
+  "形状": "E 形（两个口）",
+  "参数": [],
+  "Mind+代码": "if (false) {\n\telse {",
+  "平台现有": "controls_if（带否则）",
+  "图": "004.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_if_else_special",
+  "文字": "如果 ▢ 那么 ▢ *",
+  "形状": "C 形（包住积木）",
+  "参数": [],
+  "Mind+代码": "if (false) {",
+  "平台现有": "",
+  "图": "005.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_wait_until",
+  "文字": "等待直到 ▢",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "while (!false) {yield();}",
+  "平台现有": "",
+  "图": "006.png"
+ },
+ {
+  "分类": "控制",
+  "opcode": "control_repeat_until",
+  "文字": "重复执行直到 ▢ ▢ *",
+  "形状": "C 形（包住积木）",
+  "参数": [],
+  "Mind+代码": "while (!false) {\n\t\tyield();",
+  "平台现有": "",
+  "图": "007.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_add",
+  "文字": "▢▢▢ + ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM1：可放积木，默认 ???",
+   "NUM2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (0 + 0);",
+  "平台现有": "math_arithmetic",
+  "图": "008.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_subtract",
+  "文字": "▢▢▢ - ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM1：可放积木，默认 ???",
+   "NUM2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (0 - 0);",
+  "平台现有": "math_arithmetic",
+  "图": "009.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_multiply",
+  "文字": "▢▢▢ * ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM1：可放积木，默认 ???",
+   "NUM2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (0 * 0);",
+  "平台现有": "math_arithmetic",
+  "图": "010.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_divide",
+  "文字": "▢▢▢ / ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM1：可放积木，默认 ???",
+   "NUM2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (0 / 0);",
+  "平台现有": "math_arithmetic",
+  "图": "011.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_random",
+  "文字": "在 1 和 10 之间取随机数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "FROM：可放积木，默认 1",
+   "TO：可放积木，默认 10"
+  ],
+  "Mind+代码": "dfrobotRandomSeed();\n\tmind_s_my_string_variable = (random(1, 10+1));",
+  "平台现有": "math_random_int",
+  "图": "012.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_gt",
+  "文字": "▢▢▢ > 50",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "OPERAND1：可放积木，默认 ???",
+   "OPERAND2：可放积木，默认 50"
+  ],
+  "Mind+代码": "if ((0>50)) {",
+  "平台现有": "logic_compare",
+  "图": "013.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_gt_equals",
+  "文字": "▢▢▢ >= ▢▢▢",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "OPERAND1：可放积木，默认 ???",
+   "OPERAND2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "if ((0>=0)) {",
+  "平台现有": "logic_compare",
+  "图": "014.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_lt",
+  "文字": "▢▢▢ < 50",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "OPERAND1：可放积木，默认 ???",
+   "OPERAND2：可放积木，默认 50"
+  ],
+  "Mind+代码": "if ((0<50)) {",
+  "平台现有": "logic_compare",
+  "图": "015.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_lt_equals",
+  "文字": "▢▢▢ <= ▢▢▢",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "OPERAND1：可放积木，默认 ???",
+   "OPERAND2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "if ((0<=0)) {",
+  "平台现有": "logic_compare",
+  "图": "016.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_equals",
+  "文字": "▢▢▢ = 50",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "OPERAND1：可放积木，默认 ???",
+   "OPERAND2：可放积木，默认 50"
+  ],
+  "Mind+代码": "if ((0==50)) {",
+  "平台现有": "logic_compare",
+  "图": "017.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_and",
+  "文字": "▢ 与 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [],
+  "Mind+代码": "if ((false && false)) {",
+  "平台现有": "logic_operation",
+  "图": "018.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_or",
+  "文字": "▢ 或 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [],
+  "Mind+代码": "if ((false || false)) {",
+  "平台现有": "logic_operation",
+  "图": "019.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_not",
+  "文字": "非 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [],
+  "Mind+代码": "if ((!false)) {",
+  "平台现有": "logic_negate",
+  "图": "020.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_join",
+  "文字": "合并 苹果 香蕉",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING1：可放积木，默认 苹果",
+   "STRING2：可放积木，默认 香蕉"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(\"苹果 \") + String(\"香蕉\"));",
+  "平台现有": "text_join",
+  "图": "021.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_letter_of",
+  "文字": "苹果 的第 1 个字符",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING：可放积木，默认 苹果",
+   "LETTER：可放积木，默认 1"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(String(\"苹果\").charAt(1-1)));",
+  "平台现有": "",
+  "图": "022.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_length",
+  "文字": "苹果 的字符数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING：可放积木，默认 苹果"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(\"苹果\").length());",
+  "平台现有": "text_length",
+  "图": "023.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_contains",
+  "文字": "苹果 包含 果 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "STRING1：可放积木，默认 苹果",
+   "STRING2：可放积木，默认 果"
+  ],
+  "Mind+代码": "if (((String(\"苹果\").indexOf(String(\"果\")) != -1))) {",
+  "平台现有": "",
+  "图": "024.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_textsrobotseven",
+  "文字": "apple 获取 第 1 个字符到 第 2 个字符",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING1：可放积木，默认 apple",
+   "LIST1：下拉 第/倒数第",
+   "STRING2：可放积木，默认 1",
+   "LIST2：下拉 第/倒数第",
+   "STRING3：可放积木，默认 2"
+  ],
+  "Mind+代码": "#include <DFString.h>\n\tmind_s_my_string_variable = (dfstring.substring(\"apple\",0,1,0,2));",
+  "平台现有": "",
+  "图": "025.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_textsrobotsevenNew",
+  "文字": "查找 ap 在 apple 中 首次 出现位置",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING1：可放积木，默认 ap",
+   "STRING2：可放积木，默认 apple",
+   "LIST1：下拉 首次/最后一次"
+  ],
+  "Mind+代码": "#include <DFString.h>\n\tmind_s_my_string_variable = (dfstring.indexOf(String(\"ap\"), String(\"apple\")));",
+  "平台现有": "",
+  "图": "026.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_mod",
+  "文字": "▢▢▢ 除以 ▢▢▢ 的余数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM1：可放积木，默认 ???",
+   "NUM2：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = ((int32_t(0)) % (int32_t(0)));",
+  "平台现有": "math_modulo",
+  "图": "027.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_round",
+  "文字": "四舍五入 ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (round(0));",
+  "平台现有": "math_round",
+  "图": "028.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_stringToNum",
+  "文字": "将字符串 123 转换为 整数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING：可放积木，默认 123",
+   "TYPE：下拉 整数/小数"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(\"123\").toInt());",
+  "平台现有": "",
+  "图": "029.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_mathop",
+  "文字": "绝对值 ▢▢▢",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "OPERATOR：下拉 绝对值/向下取整/向上取整/平方根/正弦(sin)/余弦(cos)/正切(tan)/ 反正弦(asin)/ 反余弦(acos)/反正切(atan)/ln/log…",
+   "NUM：可放积木，默认 ???"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (abs(0));",
+  "平台现有": "math_single（部分）",
+  "图": "030.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_numToASCII",
+  "文字": "将数字 0 转换为 ASCII字符串",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM：可放积木，默认 0"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(char(0)));",
+  "平台现有": "",
+  "图": "031.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_stringToASCII",
+  "文字": "将字符 a 转换为 ASCII数值",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING：可放积木，默认 a"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (toascii('a'));",
+  "平台现有": "",
+  "图": "032.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_numToString",
+  "文字": "将数字 132 转换为字符串",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "NUM：可放积木，默认 132"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (String(132));",
+  "平台现有": "",
+  "图": "033.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_map",
+  "文字": "映射 0 从[ 0 , 1023 ] 到[ 0 , 255 ]",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "VALUE：可放积木，默认 0",
+   "FROMLOW：可放积木，默认 0",
+   "FROMHIGH：可放积木，默认 1023",
+   "TOLOW：可放积木，默认 0",
+   "TOHIGH：可放积木，默认 255"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (map(0, 0, 1023, 0, 255));",
+  "平台现有": "mpl_map",
+  "图": "034.png"
+ },
+ {
+  "分类": "运算符",
+  "opcode": "operator_constrain",
+  "文字": "约束 0 介于(最小值) 0 和(最大值) 100 之间",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "VALUE：可放积木，默认 0",
+   "MIN：可放积木，默认 0",
+   "MAX：可放积木，默认 100"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (constrain(0, 0, 100));",
+  "平台现有": "",
+  "图": "035.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_variable",
+  "文字": "变量 my variable",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "VARIABLE：默认 my variable"
+  ],
+  "Mind+代码": "String         mind_s_my_string_variable;\nvolatile float mind_n_my_variable;\n\tmind_s_my_string_variable = mind_n_my_variable;",
+  "平台现有": "变量（Blockly 标准）",
+  "图": "036.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_setvariableto",
+  "文字": "设置 my variable 的值为 0",
+  "形状": "语句",
+  "参数": [
+   "VARIABLE：下拉 my variable",
+   "VALUE：可放积木，默认 0"
+  ],
+  "Mind+代码": "volatile float mind_n_my_variable;\n\tmind_n_my_variable = 0;",
+  "平台现有": "变量（Blockly 标准）",
+  "图": "037.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_changevariableby",
+  "文字": "将 my variable 增加 1",
+  "形状": "语句",
+  "参数": [
+   "VARIABLE：下拉 my variable",
+   "VALUE：可放积木，默认 1"
+  ],
+  "Mind+代码": "volatile float mind_n_my_variable;\n\tmind_n_my_variable += 1;",
+  "平台现有": "变量（Blockly 标准）",
+  "图": "038.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_string",
+  "文字": "变量 my string variable",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "STRING：默认 my string variable"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = mind_s_my_string_variable;",
+  "平台现有": "",
+  "图": "039.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_setStringto",
+  "文字": "设置 my string variable 的值为 hello",
+  "形状": "语句",
+  "参数": [
+   "STRING：下拉 my string variable",
+   "VALUE：可放积木，默认 hello"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = \"hello\";",
+  "平台现有": "",
+  "图": "040.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_stringStartWith",
+  "文字": "my string variable 以 a 字符串开始",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "STRING：下拉 my string variable",
+   "VALUE：可放积木，默认 a"
+  ],
+  "Mind+代码": "if (mind_s_my_string_variable.startsWith(\"a\")) {",
+  "平台现有": "",
+  "图": "041.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_listcontents",
+  "文字": "列表 my list",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "LIST：默认 my list"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\tmind_s_my_string_variable = mind_l_my_list;",
+  "平台现有": "",
+  "图": "042.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_addtolist",
+  "文字": "将 东西 加入 my list",
+  "形状": "语句",
+  "参数": [
+   "ITEM：可放积木，默认 东西",
+   "LIST：下拉 my list"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tmind_l_my_list.push_back(\"东西\");",
+  "平台现有": "",
+  "图": "043.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_deleteoflist",
+  "文字": "删除 my list 的第 1 项",
+  "形状": "语句",
+  "参数": [
+   "LIST：下拉 my list",
+   "INDEX：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tmind_l_my_list.remove(1-1);",
+  "平台现有": "",
+  "图": "044.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_deletealloflist",
+  "文字": "删除 my list 的全部项目",
+  "形状": "语句",
+  "参数": [
+   "LIST：下拉 my list"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tmind_l_my_list.clear();",
+  "平台现有": "",
+  "图": "045.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_insertatlist",
+  "文字": "在 my list 的第 1 项前插入 东西",
+  "形状": "语句",
+  "参数": [
+   "LIST：下拉 my list",
+   "INDEX：可放积木，默认 1",
+   "ITEM：可放积木，默认 东西"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tmind_l_my_list.insert(1-1, \"东西\");",
+  "平台现有": "",
+  "图": "046.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_replaceitemoflist",
+  "文字": "将 my list 的第 1 项替换为 东西",
+  "形状": "语句",
+  "参数": [
+   "LIST：下拉 my list",
+   "INDEX：可放积木，默认 1",
+   "ITEM：可放积木，默认 东西"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tmind_l_my_list.replace(1-1, \"东西\");",
+  "平台现有": "",
+  "图": "047.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_itemoflist",
+  "文字": "my list 的第 1 项",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "LIST：下拉 my list",
+   "INDEX：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\tmind_s_my_string_variable = mind_l_my_list[1-1];",
+  "平台现有": "",
+  "图": "048.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_itemnumoflist",
+  "文字": "my list 中第一个 东西 的编号",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "LIST：下拉 my list",
+   "ITEM：可放积木，默认 东西"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\tmind_s_my_string_variable = mind_l_my_list.indexOf(\"东西\");",
+  "平台现有": "",
+  "图": "049.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_lengthoflist",
+  "文字": "my list 的项目数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "LIST：下拉 my list"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nString             mind_s_my_string_variable;\nSimpleList<String> mind_l_my_list;\n\tmind_s_my_string_variable = mind_l_my_list.size();",
+  "平台现有": "",
+  "图": "050.png"
+ },
+ {
+  "分类": "变量",
+  "opcode": "data_listcontainsitem",
+  "文字": "my list 包含 东西 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "LIST：下拉 my list",
+   "ITEM：可放积木，默认 东西"
+  ],
+  "Mind+代码": "#include <SimpleList.h>\nSimpleList<String> mind_l_my_list;\n\tif (mind_l_my_list.contains(\"东西\")) {",
+  "平台现有": "",
+  "图": "051.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_start",
+  "文字": "ESP32 主程序",
+  "形状": "帽子（事件）",
+  "参数": [],
+  "Mind+代码": "！错误提示：程序头[ESP32 主程序]仅能同时使用一个，请删除重复定义的模块。\n/*!\n * MindPlus\n * DFRobot, 掌控板\n */",
+  "平台现有": "mpl_main",
+  "图": "052.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buttonPress",
+  "文字": "当 A 按钮 按下",
+  "形状": "帽子（事件）",
+  "参数": [
+   "REFERENCE：下拉 A/B/A+B",
+   "BUTTONSTATE：下拉 按下/松开"
+  ],
+  "Mind+代码": "#include <MPython.h>\nvoid onButtonAPressed();\n\tmPython.begin();\n\tbuttonA.setPressedCallback(onButtonAPressed);\nvoid onButtonAPressed() {",
+  "平台现有": "mpl_on_button",
+  "图": "053.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_padConnected",
+  "文字": "当触摸按键 P 被 接通",
+  "形状": "帽子（事件）",
+  "参数": [
+   "REFERENCE：下拉 P/Y/T/H/O/N",
+   "TOUCHSTATE：下拉 接通/断开"
+  ],
+  "Mind+代码": "#include <MPython.h>\nvoid pin27TouchCallback();\n\tmPython.begin();\n\ttouchPadP.setTouchedCallback(pin27TouchCallback);\nvoid pin27TouchCallback() {",
+  "平台现有": "mpl_on_touch",
+  "图": "054.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_onGesture",
+  "文字": "当 向前倾斜",
+  "形状": "帽子（事件）",
+  "参数": [
+   "GESTURE：下拉 向前倾斜/向后倾斜/向左倾斜/向右倾斜/屏幕朝上/屏幕朝下/摇一摇"
+  ],
+  "Mind+代码": "#include <MPython.h>\nvoid TiltForwardEvent();\n\tmPython.begin();\n\taccelerometer.onGesture(accelerometer.TiltForward, TiltForwardEvent);\nvoid TiltForwardEvent() {",
+  "平台现有": "",
+  "图": "055.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_serialSend",
+  "文字": "串口0 字符串输出 hello 换行",
+  "形状": "语句",
+  "参数": [
+   "SERIAL：下拉 串口0/串口1/串口2",
+   "WAY：下拉 字符串输出/原始输出/十六进制输出",
+   "STRING：可放积木，默认 hello",
+   "LINE：下拉 换行/不换行"
+  ],
+  "Mind+代码": "Serial.begin(9600);\n\tSerial.println(\"hello\");",
+  "平台现有": "mpl_print（部分）",
+  "图": "056.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_havenumberread",
+  "文字": "串口0 有数据可读？",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "SERIAL：下拉 串口0/串口1/串口2"
+  ],
+  "Mind+代码": "Serial.begin(9600);\n\tif ((Serial.available())) {",
+  "平台现有": "",
+  "图": "057.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialdata",
+  "文字": "读取 串口0 数据",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "SERIAL：下拉 串口0/串口1/串口2"
+  ],
+  "Mind+代码": "Serial.begin(9600);\n\tmind_s_my_string_variable = Serial.read();",
+  "平台现有": "",
+  "图": "058.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readserialIntfloat",
+  "文字": "从 串口0 读取一个 整数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "SERIAL：下拉 串口0/串口1/串口2",
+   "READTYPE：下拉 整数/小数/字符串"
+  ],
+  "Mind+代码": "Serial.begin(9600);\n\tmind_s_my_string_variable = Serial.parseInt();",
+  "平台现有": "",
+  "图": "059.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getNumOfFloat",
+  "文字": "123.123 保留 0 位小数",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "TARGET：可放积木，默认 123.123",
+   "NNUMS：可放积木，默认 0"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = String(\"123\");",
+  "平台现有": "",
+  "图": "060.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setSerial",
+  "文字": "设置 串口0 波特率 9600",
+  "形状": "语句",
+  "参数": [
+   "BAUD：下拉 1200/2400/4800/9600/19200/38400/57600/76800/115200"
+  ],
+  "Mind+代码": "Serial.begin(9600);",
+  "平台现有": "",
+  "图": "061.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_seriaRemapping",
+  "文字": "设置 串口1 Rx P0 Tx P1 波特率为 9600",
+  "形状": "语句",
+  "参数": [
+   "SERIAL：下拉 串口1/串口2",
+   "RX：下拉 P0/P1/P2/P3/P4/P5/P6  (板载蜂鸣器)/P7/P8/P9/P10/P11…",
+   "TX：下拉 P0/P1/P5/P6  (板载蜂鸣器)/P7/P8/P9/P11/P13/P14/P15/P16",
+   "BAUD：下拉 1200/2400/4800/9600/19200/38400/57600/76800/115200"
+  ],
+  "Mind+代码": "Serial1.begin(9600, P0, P1);",
+  "平台现有": "",
+  "图": "062.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_set_pinMode",
+  "文字": "设置引脚 P0 模式 OUTPUT",
+  "形状": "语句",
+  "参数": [
+   "PIN：下拉 P0/P1/P2/P5/P7/P8/P9/P11/P13/P14/P15/P16…",
+   "PINMODE：下拉 OUTPUT/INPUT/INPUT_PULLUP"
+  ],
+  "Mind+代码": "pinMode(P0, OUTPUT);",
+  "平台现有": "",
+  "图": "063.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalRead",
+  "文字": "读取数字引脚 P0",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "PIN：下拉 P0/P1/P2/P5/P7/P8/P9/P11/P13/P14/P15/P16…"
+  ],
+  "Mind+代码": "pinMode(P0, INPUT);\n\tif ((digitalRead(P0))) {",
+  "平台现有": "",
+  "图": "064.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_analogRead",
+  "文字": "读取模拟引脚 P0",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "PIN：下拉 P0/P1/P2/P3"
+  ],
+  "Mind+代码": "mind_s_my_string_variable = (analogRead(P0));",
+  "平台现有": "",
+  "图": "065.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_digitalWrite",
+  "文字": "设置数字引脚 P0 输出 低电平",
+  "形状": "语句",
+  "参数": [
+   "PIN：下拉 P0/P1/P5/P7/P8/P9/P11/P13/P14/P15/P16/P19…",
+   "VALUE：下拉 低电平/高电平"
+  ],
+  "Mind+代码": "pinMode(P0, OUTPUT);\n\tdigitalWrite(P0, LOW);",
+  "平台现有": "",
+  "图": "066.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_analogWrite",
+  "文字": "设置模拟引脚 P0 输出(PWM) 512",
+  "形状": "语句",
+  "参数": [
+   "PIN：下拉 P0/P1/P5/P7/P8/P9/P11/P13/P14/P15/P16/P19…",
+   "VALUE：可放积木，默认 512"
+  ],
+  "Mind+代码": "analogWrite(P0, 512);",
+  "平台现有": "",
+  "图": "067.png"
+ },
+ {
+  "分类": "掌控",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_timer",
+  "文字": "系统运行时间(ms)",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "mind_s_my_string_variable = millis();",
+  "平台现有": "mpl_ticks",
+  "图": "068.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_btnIsPressed",
+  "文字": "按钮 A 被 按下 ？",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "BUTTON：下拉 A/B/A+B",
+   "BUTTONSTATE：下拉 按下/松开"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tif ((buttonA.isPressed())) {",
+  "平台现有": "mpl_button",
+  "图": "069.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_pinIsConnected",
+  "文字": "触摸按键 P 被 接通 ？",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "PIN：下拉 P/Y/T/H/O/N",
+   "TOUCHSTATE：下拉 接通/断开"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tif ((touchPadP.isTouched())) {",
+  "平台现有": "mpl_touch",
+  "图": "070.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setTouchThreshold",
+  "文字": "设置按键 全部 触摸阈值为 35",
+  "形状": "语句",
+  "参数": [
+   "PIN：下拉 P/Y/T/H/O/N/全部",
+   "THRESHOLD：可放积木，默认 35"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmPython.setTouchThreshold(35);",
+  "平台现有": "",
+  "图": "071.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readTouchValue",
+  "文字": "读取按键 P 触摸值",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "PIN：下拉 P/Y/T/H/O/N"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmind_s_my_string_variable = (touchPadP.read());",
+  "平台现有": "mpl_touch_value",
+  "图": "072.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_isGesture",
+  "文字": "当前姿态为 向前倾斜 ▢",
+  "形状": "六边形（真/假）",
+  "参数": [
+   "GESTURE：下拉 向前倾斜/向后倾斜/向左倾斜/向右倾斜/屏幕朝上/屏幕朝下/摇一摇"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tif ((accelerometer.isGesture(accelerometer.TiltForward))) {",
+  "平台现有": "mpl_shaken / mpl_angle（部分）",
+  "图": "073.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getSoundIntensity",
+  "文字": "读取麦克风声音强度",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmind_s_my_string_variable = (sound.read());",
+  "平台现有": "mpl_sound",
+  "图": "074.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_readBrightness",
+  "文字": "读取环境光强度",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmind_s_my_string_variable = (light.read());",
+  "平台现有": "mpl_light",
+  "图": "075.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_accelerationCalibration",
+  "文字": "加速度校准 X轴偏移 0 Y轴偏移 0 Z轴偏移 0 (m-g)",
+  "形状": "语句",
+  "参数": [
+   "XOFFSET：可放积木，默认 0",
+   "YOFFSET：可放积木，默认 0",
+   "ZOFFSET：可放积木，默认 0"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\taccelerometer.setOffset(0, 0, 0);",
+  "平台现有": "",
+  "图": "076.png"
+ },
+ {
+  "分类": "板载传感器",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_acceleration",
+  "文字": "读取加速度的值(m-g) X",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "TYPE：下拉 X/Y/Z/强度"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmind_s_my_string_variable = (accelerometer.getX());",
+  "平台现有": "mpl_accel",
+  "图": "077.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInLine",
+  "文字": "屏幕显示文字 Mind+ 在第 1 行",
+  "形状": "语句",
+  "参数": [
+   "TEXT：可放积木，默认 Mind+",
+   "LINE：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.setCursorLine(1);\n\tdisplay.printLine(\"Mind+\");",
+  "平台现有": "mpl_gui_text",
+  "图": "078.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayClearInLine",
+  "文字": "屏幕显示清除第 1 行",
+  "形状": "语句",
+  "参数": [
+   "LINE：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.fillInLine(1, 0);",
+  "平台现有": "",
+  "图": "079.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_displayInXY",
+  "文字": "屏幕显示文字 Mind+ 在坐标 X: 42 Y: 22 预览 ▢▢▢",
+  "形状": "语句",
+  "参数": [
+   "TEXT：可放积木，默认 Mind+",
+   "X：可放积木，默认 42",
+   "Y：可放积木，默认 22",
+   "PREVIEW：可放积木，默认 ???"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.setCursor(42, 22);\n\tdisplay.print(\"Mind+\");",
+  "平台现有": "mpl_gui_text_xy",
+  "图": "080.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_imageDrawing",
+  "文字": "屏幕显示图片 ▢▢▢ 在坐标 x: 39 y: 7",
+  "形状": "语句",
+  "参数": [
+   "IMAGE：可放积木，默认 ???",
+   "X：可放积木，默认 39",
+   "Y：可放积木，默认 7"
+  ],
+  "Mind+代码": "#include <MPython.h>\n// 静态常量\nconst uint8_t imageMatrix[] = {0x0,0x0,0x0,0x1f,0x80,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x40,0x20,0x0,0x0,0x0,0x0,0x0,0x60,0x60,0x0,0x0,0x0,0x0,0x0,0x30,0xc0,0x0,0x0,0x0,0x0,0x0,0x33,0x80,0x0,0x0,0x0,0x1e,0x0,0x22,0x0,0x0,0x0,0x0,0x33,0x80,0x62,0x0,0x3c,0x0,0x0,0x60,0xc0,0x46,0x0,0xee,0x0,0x0,0x40,0xc0,0xc6,0x1,0x83,0x0,0x0,0xc0,0x40,0x86,0x1,0x1,0x80,0x0,0x40,0xc1,0x8c,0x1,0x1,0x80,0x0,0x7c,0x9f,0xff,0x1,0x1,0x80,0x0,0x37,0x98,0x3,0x81,0xa3,0x0,0x0,0x24,0x30,0x0,0x83,0x26,0x0,0x0,0x64,0x30,0x0,0xc6,0x7c,0x0,0x0,0xc7,0xff,0xff,0xf8,0x40,0x0,0x7f,0xff,0xff,0xff,0xff,0xfc,0x0,0xfe,0x0,0x0,0x0,0x1,0xff,0xc0,0xc0,0x0,0x0,0x0,0x0,0x1,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x0,0x0,0x0,0x0,0x0,0xc0,0xc0,0x3f,0xff,0xff,0xe0,0x1,0x80,0xdc,0x0,0x0,0x0,0x3,0xf9,0x80,0xcf,0xff,0xff,0xff,0xfc,0x5,0x80,0xcb,0xff,0xff,0xff,0xff,0xf5,0x80,0xcb,0xf8,0xff,0xff,0x9f,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xf9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0xcb,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x4b,0xf8,0x7f,0xff,0xf,0xe9,0x80,0x68,0x7c,0xff,0xff,0x1f,0xf1,0x80,0x63,0x87,0xff,0xff,0xff,0x93,0x0,0x60,0x38,0x7f,0xff,0xf0,0x33,0x0,0x60,0x3,0x8f,0xfe,0xf,0x83,0x0,0x60,0x0,0x38,0x3,0xe0,0x3,0x0,0x60,0x0,0x7,0xf8,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x3,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x60,0x0,0x0,0x0,0x0,0x6,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0,0x7f,0xff,0xff,0xff,0xff,0xfe,0x0};\n\tmPython.begin();\n\tdisplay.drawImage(39, 7, 50, 50, imageMatrix);",
+  "平台现有": "",
+  "图": "081.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_fillScreen",
+  "文字": "屏幕显示为 全黑 (清屏)",
+  "形状": "语句",
+  "参数": [
+   "COLOR：下拉 全黑/全白"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.fillScreen(0);",
+  "平台现有": "mpl_gui_bg / mpl_gui_clear",
+  "图": "082.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_screenRotation",
+  "文字": "屏幕旋转到 180 度",
+  "形状": "语句",
+  "参数": [
+   "ROTATION：下拉 0/180"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.setRotaion(eROTATION_180);",
+  "平台现有": "",
+  "图": "083.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_pointDrawing",
+  "文字": "画点 x: 0 y: 0",
+  "形状": "语句",
+  "参数": [
+   "X：可放积木，默认 0",
+   "Y：可放积木，默认 0"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.point(0, 0);",
+  "平台现有": "",
+  "图": "084.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setLineWidth",
+  "文字": "设置线宽为 1",
+  "形状": "语句",
+  "参数": [
+   "LINEWIDTH：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.lineWidth(1);",
+  "平台现有": "",
+  "图": "085.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_lineDrawing",
+  "文字": "画线 起点x1: 0 y1: 0 终点x2: 0 y2: 0",
+  "形状": "语句",
+  "参数": [
+   "X1：可放积木，默认 0",
+   "Y1：可放积木，默认 0",
+   "X2：可放积木，默认 0",
+   "Y2：可放积木，默认 0"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.line(0, 0, 0, 0);",
+  "平台现有": "mpl_gui_line",
+  "图": "086.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_circleDrawing",
+  "文字": "画圆 填充 圆心 x: 0 y: 0 半径: 20",
+  "形状": "语句",
+  "参数": [
+   "FILL：下拉 填充/不填充",
+   "X：可放积木，默认 0",
+   "Y：可放积木，默认 0",
+   "RADIUS：可放积木，默认 20"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.fillCircle(0, 0, 20);",
+  "平台现有": "mpl_gui_circle",
+  "图": "087.png"
+ },
+ {
+  "分类": "屏幕显示",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rectangleDrawing",
+  "文字": "画矩形 填充 起点 x: 0 y: 0 宽: 0 高: 0",
+  "形状": "语句",
+  "参数": [
+   "FILL：下拉 填充/不填充",
+   "X：可放积木，默认 0",
+   "Y：可放积木，默认 0",
+   "WIDTH：可放积木，默认 0",
+   "HEIGHT：可放积木，默认 0"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tdisplay.rect(0, 0, 0, 0, true);",
+  "平台现有": "mpl_gui_rect",
+  "图": "088.png"
+ },
+ {
+  "分类": "LED控制",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setLightsColor",
+  "文字": "灯号 0 显示颜色 #00f",
+  "形状": "语句",
+  "参数": [
+   "LIGHTS：可放积木，默认 0",
+   "COLOR：可放积木，默认 #00f"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\trgb.write(0, 0x0000FF);",
+  "平台现有": "mpl_rgb_all / mpl_rgb_one",
+  "图": "089.png"
+ },
+ {
+  "分类": "LED控制",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbDisable",
+  "文字": "关闭 全部 LED",
+  "形状": "语句",
+  "参数": [
+   "INDEX：下拉 全部/0号/1号/2号"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\trgb.write(-1, 0x000000);",
+  "平台现有": "mpl_rgb_off",
+  "图": "090.png"
+ },
+ {
+  "分类": "LED控制",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_rgbToColor",
+  "文字": "红 255 绿 255 蓝 255",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "RED：可放积木，默认 255",
+   "GREEN：可放积木，默认 255",
+   "BLUE：可放积木，默认 255"
+  ],
+  "Mind+代码": "#include <MPython.h>\nuint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b);\n\tmPython.begin();\n\tmind_s_my_string_variable = rgbToColor(round(255), round(255), round(255));\n// 静态函数\nuint32_t rgbToColor(uint8_t r, uint8_t g, uint8_t b)\n{\n\treturn (uint32_t)((((uint32_t)r<<16) | ((uint32_t)g<<8)) | (uint32_t)b);",
+  "平台现有": "mpl_rgb_mix（部分）",
+  "图": "091.png"
+ },
+ {
+  "分类": "LED控制",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setBrightness",
+  "文字": "设置LED灯亮度为 9",
+  "形状": "语句",
+  "参数": [
+   "BRIGHTVALUE：可放积木，默认 9"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\trgb.brightness(round(9));",
+  "平台现有": "",
+  "图": "092.png"
+ },
+ {
+  "分类": "LED控制",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_getBrightness",
+  "文字": "读取LED灯亮度",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tmind_s_my_string_variable = rgb.brightness();",
+  "平台现有": "",
+  "图": "093.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_playMusic",
+  "文字": "播放音乐 DADADADUM 重复 播放一次",
+  "形状": "语句",
+  "参数": [
+   "MUSIC：下拉 DADADADUM/ENTERTAINER/PRELUDE/ODE/NYAN/RINGTONE/FUNK/BLUES/BIRTHDAY/WEDDING/FUNERAL/PUNCHLINE…",
+   "REPEAT：下拉 播放一次/无限循环/在后台播放一次/在后台无限循环"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.play(DADADADUM, Once);",
+  "平台现有": "mpl_music_melody",
+  "图": "094.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_musicSetTempo",
+  "文字": "设置每一拍等同 4 分音符，每分钟节拍数 60",
+  "形状": "语句",
+  "参数": [
+   "TICKS：可放积木，默认 4",
+   "TEMPO：可放积木，默认 60"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.setTicksTempo(4, 60);",
+  "平台现有": "",
+  "图": "095.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_setBuzzerFreq",
+  "文字": "播放音符 1 低 C/C3 1 拍",
+  "形状": "语句",
+  "参数": [
+   "NOTE：可放积木，默认 1 低 C/C3",
+   "BEAT：可放积木，默认 1"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.freq(131, BEAT_1);",
+  "平台现有": "mpl_music_note",
+  "图": "096.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_backgroundSetBuzzerFreq",
+  "文字": "后台播放音符 1 低 C/C3",
+  "形状": "语句",
+  "参数": [
+   "NOTE：可放积木，默认 1 低 C/C3"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.freq(131);",
+  "平台现有": "",
+  "图": "097.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerSwitch",
+  "文字": "停止后台播放",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.stop();",
+  "平台现有": "",
+  "图": "098.png"
+ },
+ {
+  "分类": "音乐",
+  "opcode": "dev-DFRobot-handpyEsp32@0.0.6_esp32_buzzerRedirect",
+  "文字": "蜂鸣器重定向到引脚 P0",
+  "形状": "语句",
+  "参数": [
+   "PIN：下拉 P0/P1/P7/P8/P11/P13/P14/P15/P16/P19/P20/P…"
+  ],
+  "Mind+代码": "#include <MPython.h>\n\tmPython.begin();\n\tbuzz.redirect(P0);",
+  "平台现有": "",
+  "图": "099.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_argumentReporterStringNumber_eventHeadInner_",
+  "文字": "MQTT消息",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "mind_s_my_string_variable = message;",
+  "平台现有": "",
+  "图": "100.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_initial",
+  "文字": "MQTT 初始化参数 ▢▢▢",
+  "形状": "语句",
+  "参数": [
+   "SETTING：可放积木，默认 ???"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 静态常量\nconst String topics[] = {\"\",\"\",\"\",\"\",\"\"};\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.init(\"iot.dfrobot.com.cn\",\"\",\"9404080078718433\",\"\",topics,1883);",
+  "平台现有": "",
+  "图": "101.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnect",
+  "文字": "MQTT 发起连接",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.connect();",
+  "平台现有": "",
+  "图": "102.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttDisconnect",
+  "文字": "MQTT 断开连接",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.disconnect();",
+  "平台现有": "",
+  "图": "103.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttConnected",
+  "文字": "MQTT 连接成功？",
+  "形状": "六边形（真/假）",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tif (myIot.connected()) {",
+  "平台现有": "",
+  "图": "104.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend",
+  "文字": "MQTT 发送消息 hello 至 Topic_0",
+  "形状": "语句",
+  "参数": [
+   "MSG：可放积木，默认 hello",
+   "TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.publish(topic_0, \"hello\");",
+  "平台现有": "",
+  "图": "105.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSend_save",
+  "文字": "MQTT 发送消息 hello 至 Topic_0 并存数据库 (SIoT V2)",
+  "形状": "语句",
+  "参数": [
+   "MSG：可放积木，默认 hello",
+   "TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.publish(topic_0, \"hello\", 1);",
+  "平台现有": "",
+  "图": "106.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedData",
+  "文字": "当接收到 Topic_0 的 MQTT消息",
+  "形状": "帽子（事件）",
+  "参数": [
+   "TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4",
+   "MSG：可放积木，默认 MQTT消息"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\nvoid obloqMqttEventTp384w(String& message);\n\tmyIot.setMqttCallback(obloqMqttEventTp384w, 0);\nvoid obloqMqttEventTp384w(String& message) {",
+  "平台现有": "",
+  "图": "107.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_meaage",
+  "文字": "当接收到 Topic_0 的消息为 hello",
+  "形状": "帽子（事件）",
+  "参数": [
+   "TOPIC：下拉 Topic_0/Topic_1/Topic_2/Topic_3/Topic_4",
+   "MSG：可放积木，默认 hello"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\nvoid whenTopic0Received0();\n\tmyIot.setMqttCallback(topic_0, \"hello\", whenTopic0Received0);\nvoid whenTopic0Received0() {",
+  "平台现有": "",
+  "图": "108.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_subscribe",
+  "文字": "MQTT 订阅 topic/a",
+  "形状": "语句",
+  "参数": [
+   "TOPIC：可放积木，默认 topic/a"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.subscribeTopic(\"topic/a\");",
+  "平台现有": "",
+  "图": "109.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic",
+  "文字": "MQTT 发送消息 hello 至 topic/a",
+  "形状": "语句",
+  "参数": [
+   "MSG：可放积木，默认 hello",
+   "TOPIC：可放积木，默认 topic/a"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.publish(\"topic/a\", \"hello\");",
+  "平台现有": "",
+  "图": "110.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_mqttSendToTopic_save",
+  "文字": "MQTT 发送消息 hello 至 topic/a 并存数据库 (SIoT V2)",
+  "形状": "语句",
+  "参数": [
+   "MSG：可放积木，默认 hello",
+   "TOPIC：可放积木，默认 topic/a"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.publish(\"topic/a\", \"hello\", 1);",
+  "平台现有": "",
+  "图": "111.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_whenReceivedTopicData",
+  "文字": "当接收到 topic/a 的 MQTT消息",
+  "形状": "帽子（事件）",
+  "参数": [
+   "TOPIC：可放积木，默认 topic/a",
+   "MSG：可放积木，默认 MQTT消息"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\nvoid obloqMqttEventTtopic47a(String& message);\n\tmyIot.setCustomMqttCallback(obloqMqttEventTtopic47a, \"topic/a\");\nvoid obloqMqttEventTtopic47a(String& message) {",
+  "平台现有": "",
+  "图": "112.png"
+ },
+ {
+  "分类": "MQTT",
+  "opcode": "ext-DFRobot-MQTT@0.0.4_mqtt_acceptance_topic_meaage",
+  "文字": "当接收到 topic/a 的消息为 hello",
+  "形状": "帽子（事件）",
+  "参数": [
+   "TOPIC：可放积木，默认 topic/a",
+   "MSG：可放积木，默认 hello"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\nvoid whentopic47aReceived0();\n\tmyIot.setCustomMqttCallback(\"topic/a\", \"hello\", whentopic47aReceived0);\nvoid whentopic47aReceived0() {",
+  "平台现有": "",
+  "图": "113.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoDebug_eventHeadInner_",
+  "文字": "调试信息",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "mind_s_my_string_variable = debugMessage;",
+  "平台现有": "",
+  "图": "114.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifi_whenDebugInfoError_eventHeadInner_",
+  "文字": "错误码",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "mind_s_my_string_variable = errorCode;",
+  "平台现有": "",
+  "图": "115.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiConnectByPwd",
+  "文字": "Wi-Fi 连接到 热点: yourSSID 密码: yourPASSWD",
+  "形状": "语句",
+  "参数": [
+   "ACCOUNT：可放积木，默认 yourSSID",
+   "PASSWORD：可放积木，默认 yourPASSWD"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.wifiConnect(\"yourSSID\", \"yourPASSWD\");",
+  "平台现有": "mpl_wifi",
+  "图": "116.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiConnected",
+  "文字": "Wi-Fi 连接成功？",
+  "形状": "六边形（真/假）",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tif (myIot.wifiStatus()) {",
+  "平台现有": "",
+  "图": "117.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiDisConnected",
+  "文字": "Wi-Fi 断开连接",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.wifiDisconnect();",
+  "平台现有": "",
+  "图": "118.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiGetLocalIP",
+  "文字": "获取Wi-Fi配置 IP 地址",
+  "形状": "圆角（数值/文字）",
+  "参数": [
+   "CONFIGURATION：下拉 IP 地址/子网掩码/网关/DNS"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmind_s_my_string_variable = myIot.getWiFiLocalIP();",
+  "平台现有": "",
+  "图": "119.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiSetSoftAP",
+  "文字": "Wi-Fi 设置AP模式: yourSSID 密码: yourPASSWD",
+  "形状": "语句",
+  "参数": [
+   "ACCOUNT2：可放积木，默认 yourSSID",
+   "PASSWORD2：可放积木，默认 yourPASSWD"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmyIot.setSoftAP(\"yourSSID\", \"yourPASSWD\");",
+  "平台现有": "",
+  "图": "120.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_wifiGetSoftAPIP",
+  "文字": "Wi-Fi 获取AP模式本机IP",
+  "形状": "圆角（数值/文字）",
+  "参数": [],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\n\tmind_s_my_string_variable = myIot.getWiFiSoftIP();",
+  "平台现有": "",
+  "图": "121.png"
+ },
+ {
+  "分类": "Wi-Fi",
+  "opcode": "ext-DFRobot-WIFI@0.0.5_whenDebugInfo",
+  "文字": "Wi-Fi 获取 调试信息 错误码",
+  "形状": "帽子（事件）",
+  "参数": [
+   "DEBUG：可放积木，默认 调试信息",
+   "ERROR：可放积木，默认 错误码"
+  ],
+  "Mind+代码": "#include <DFRobot_Iot.h>\n// 创建对象\nDFRobot_Iot myIot;\nvoid iotDebugEvent(String& debugMessage, int32_t errorCode);\n\tmyIot.setIotDebugCallback(iotDebugEvent);\nvoid iotDebugEvent(String& debugMessage, int32_t errorCode) {",
+  "平台现有": "",
+  "图": "122.png"
+ },
+ {
+  "opcode": "procedures_definition",
+  "文字": "定义 模块名(参数…)",
+  "形状": "帽子（定义）",
+  "参数": [
+   "参数：数字 / 文字 / 布尔"
+  ],
+  "Mind+代码": "void 模块名(参数) { … }",
+  "分类": "函数",
+  "平台现有": "函数（Blockly 标准）",
+  "图": ""
+ },
+ {
+  "opcode": "procedures_call",
+  "文字": "模块名(参数…)",
+  "形状": "语句",
+  "参数": [],
+  "Mind+代码": "模块名(参数);",
+  "分类": "函数",
+  "平台现有": "函数（Blockly 标准）",
+  "图": ""
+ },
+ {
+  "opcode": "argument_reporter",
+  "文字": "参数名",
+  "形状": "圆角 / 六边形",
+  "参数": [],
+  "Mind+代码": "参数名",
+  "分类": "函数",
+  "平台现有": "函数（Blockly 标准）",
+  "图": ""
+ }
+]

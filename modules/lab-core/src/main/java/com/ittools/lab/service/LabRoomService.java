@@ -27,7 +27,7 @@ public class LabRoomService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> list() {
         return jdbc.queryForList(
-                "SELECT r.id, r.name, r.rows_count AS \"rows\", r.cols_count AS \"cols\", "
+                "SELECT r.id, r.name, r.rows_count AS \"rows\", r.cols_count AS \"cols\", r.ctr_url AS \"ctrUrl\", "
                         + "(SELECT COUNT(*) FROM lab_seat s WHERE s.room_id = r.id AND s.workstation_id IS NOT NULL) AS \"assigned\" "
                         + "FROM lab_room r ORDER BY r.id", p());
     }

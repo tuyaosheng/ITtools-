@@ -16,6 +16,8 @@
           <el-checkbox-group v-else-if="it.qtype === 'MULTI'" v-model="answers[it.id]" class="col">
             <el-checkbox v-for="(o, j) in it.options" :key="j" :value="letter(j)">{{ letter(j) }}. {{ o }}</el-checkbox>
           </el-checkbox-group>
+          <el-input v-else-if="it.numeric" v-model="answers[it.id]" class="num" maxlength="12" placeholder="只能填数字"
+            @input="(v: string) => (answers[it.id] = onlyNumber(v))" />
           <el-input v-else v-model="answers[it.id]" type="textarea" :rows="2" maxlength="500" show-word-limit />
         </el-form-item>
         <el-button type="primary" :loading="sending" :disabled="!active" @click="submit">{{ data.submitted ? '保存修改' : '提交调查' }}</el-button>
@@ -31,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import SurveyResults from './SurveyResults.vue'
@@ -44,6 +46,8 @@ const sending = ref(false)
 const active = computed(() => props.lesson?.status !== 'ENDED')
 const letter = (j: number) => String.fromCharCode(65 + j)
 const url = () => `/student/activity/lessons/${props.lessonId}/pages/${props.page.id}/survey`
+// 只留数字和一个小数点
+const onlyNumber = (v: string) => v.replace(/[^\d.]/g, '').replace(/\./, '#').replace(/\./g, '').replace('#', '.')
 
 function fill(d: any) {
   data.value = d
@@ -63,11 +67,18 @@ async function submit() {
   }
 }
 
-onMounted(async () => fill(await api.get(url())))
+async function load() {
+  editing.value = false
+  fill(await api.get(url()))
+}
+
+watch(() => props.page.id, load)
+onMounted(load)
 </script>
 
 <style scoped>
 .form { max-width: 720px; }
+.num { width: 180px; }
 .col { display: flex; flex-direction: column; align-items: flex-start; }
 .mb { margin-bottom: 12px; }
 .muted { color: var(--el-text-color-secondary); font-size: 12px; }

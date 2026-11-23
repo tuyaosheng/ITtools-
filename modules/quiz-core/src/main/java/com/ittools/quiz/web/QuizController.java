@@ -68,6 +68,13 @@ public class QuizController {
         return ApiResponse.ok(questions.save(CurrentUser.id(), null, body));
     }
 
+    /** 保存前查重：body 同保存题目，可带 id（编辑时排除自己）。 */
+    @PostMapping("/api/teacher/quiz/questions/check-duplicate")
+    public ApiResponse<Map<String, Object>> checkDuplicate(@RequestBody Map<String, Object> body) {
+        Object id = body.get("id");
+        return ApiResponse.ok(questions.checkDuplicate(CurrentUser.id(), id == null ? null : ((Number) id).longValue(), body));
+    }
+
     @PutMapping("/api/teacher/quiz/questions/{id}")
     public ApiResponse<Map<String, Object>> updateQuestion(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return ApiResponse.ok(questions.save(CurrentUser.id(), id, body));

@@ -208,7 +208,7 @@
   }
 
   var S = null;   // 这一组的店：{score, idx, done, stack, passed}
-  function storeKey() { return "mpl-burger-g" + MplKit.seed(); }
+  function storeKey() { return "mpl-burger-g" + MplKit.seed() + ((window.MPL_RUNTIME && window.MPL_RUNTIME.run) || ""); }
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(storeKey()) || "null");
@@ -269,7 +269,7 @@
 
   var aiMode = false;
   var L = null;         // {stage, idx, cnt, run:[菜名], flashes:[每级刷了几次], times:[[每单毫秒]], stack, at}
-  function ladderKey() { return "mpl-burger-ai-g" + MplKit.seed(); }
+  function ladderKey() { return "mpl-burger-ai-g" + MplKit.seed() + ((window.MPL_RUNTIME && window.MPL_RUNTIME.run) || ""); }
   function ladderLoad() {
     try {
       var s = JSON.parse(localStorage.getItem(ladderKey()) || "null");

@@ -58,7 +58,8 @@ public class HomeworkService {
         List<Map<String, Object>> l = jdbc.queryForList(
                 "SELECT page_id AS \"pageId\", allowed_exts AS \"allowedExts\", peer_review AS \"peerReview\", "
                         + "show_classmates AS \"showClassmates\", auto_grade AS \"autoGrade\", rubric_id AS \"rubricId\", "
-                        + "auto_visibility AS \"autoVisibility\", practice "
+                        + "auto_visibility AS \"autoVisibility\", practice, block_editor AS \"blockEditor\", task_page_title AS \"taskPageTitle\", allow_history AS \"allowHistory\", "
+                        + "EXISTS (SELECT 1 FROM mpblock_starter s WHERE s.page_id = homework_config.page_id) AS \"hasStarter\" "
                         + "FROM homework_config WHERE page_id = :p", p("p", pageId));
         if (!l.isEmpty()) return l.get(0);
         Map<String, Object> d = new HashMap<>();
@@ -70,6 +71,10 @@ public class HomeworkService {
         d.put("rubricId", null);
         d.put("autoVisibility", "ALL");
         d.put("practice", false);
+        d.put("blockEditor", false);
+        d.put("taskPageTitle", null);
+        d.put("allowHistory", true);
+        d.put("hasStarter", jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM mpblock_starter WHERE page_id = :p)", p("p", pageId), Boolean.class));
         return d;
     }
 
@@ -80,12 +85,19 @@ public class HomeworkService {
         Object vis = f.get("autoVisibility");
         String visibility = vis == null ? "ALL" : String.valueOf(vis);
         if (!Arrays.asList("ALL", "SCORE", "NONE").contains(visibility)) throw new IllegalArgumentException("成绩显示设置无效");
-        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice) "
-                        + "VALUES (:p, :e, :pr, :sc, :ag, :r, :v, :pc) ON CONFLICT (page_id) DO UPDATE SET allowed_exts = EXCLUDED.allowed_exts, "
+        boolean blockEditor = Boolean.TRUE.equals(f.get("blockEditor"));
+        String exts = normalizeExts((String) f.get("allowedExts"));
+        // 用平台图形化编程交作品时，作品是 .mpcode（和 Mind+ 一样），允许的类型里要有它
+        if (blockEditor && exts != null && !exts.isEmpty() && !Arrays.asList(exts.split(",")).contains("mpcode")) exts = exts + ",mpcode";
+        Object tp = f.get("taskPageTitle");
+        String taskTitle = tp == null || String.valueOf(tp).trim().isEmpty() ? null : String.valueOf(tp).trim();
+        if (taskTitle != null && taskTitle.length() > 200) taskTitle = taskTitle.substring(0, 200);
+        jdbc.update("INSERT INTO homework_config(page_id, allowed_exts, peer_review, show_classmates, auto_grade, rubric_id, auto_visibility, practice, block_editor, task_page_title, allow_history) "
+                        + "VALUES (:p, :e, :pr, :sc, :ag, :r, :v, :pc, :be, :tt, :ah) ON CONFLICT (page_id) DO UPDATE SET allowed_exts = EXCLUDED.allowed_exts, "
                         + "peer_review = EXCLUDED.peer_review, show_classmates = EXCLUDED.show_classmates, "
                         + "auto_grade = EXCLUDED.auto_grade, rubric_id = EXCLUDED.rubric_id, auto_visibility = EXCLUDED.auto_visibility, "
-                        + "practice = EXCLUDED.practice",
-                p("p", pageId, "e", normalizeExts((String) f.get("allowedExts")), "pr", Boolean.TRUE.equals(f.get("peerReview")),
+                        + "practice = EXCLUDED.practice, block_editor = EXCLUDED.block_editor, task_page_title = EXCLUDED.task_page_title, allow_history = EXCLUDED.allow_history",
+                p("p", pageId, "e", exts, "be", blockEditor, "tt", blockEditor ? taskTitle : null, "ah", !Boolean.FALSE.equals(f.get("allowHistory")), "pr", Boolean.TRUE.equals(f.get("peerReview")),
                         "sc", Boolean.TRUE.equals(f.get("showClassmates")), "ag", !Boolean.FALSE.equals(f.get("autoGrade")),
                         "r", rubric == null ? null : ((Number) rubric).longValue(), "v", visibility, "pc", Boolean.TRUE.equals(f.get("practice"))));
         return config(pageId);
@@ -168,7 +180,7 @@ public class HomeworkService {
         StoredFile sf = storage.store(file, "homework");
         Map<String, Object> auto = null;
         if (!Boolean.FALSE.equals(cfg.get("autoGrade"))) {
-            auto = grading.evaluate(pageId, storage.resolve(sf.getRelPath()), sf.getOriginalName());
+            auto = grading.evaluate(pageId, storage.resolve(sf.getRelPath()), sf.getOriginalName(), lessons.gradingVars(lessonId, studentId));
         }
         List<Map<String, Object>> old = jdbc.queryForList(
                 "SELECT id, file_path FROM submission WHERE lesson_id = :l AND page_id = :p AND student_id = :s",
@@ -400,8 +412,9 @@ public class HomeworkService {
         lessons.requireTeacher(teacherId, lessonId);
         int n = 0;
         for (Map<String, Object> s : jdbc.queryForList(
-                "SELECT id, file_path, file_name FROM submission WHERE lesson_id = :l AND page_id = :p", p("l", lessonId, "p", pageId))) {
-            Map<String, Object> auto = grading.evaluate(pageId, storage.resolve((String) s.get("file_path")), (String) s.get("file_name"));
+                "SELECT id, file_path, file_name, student_id FROM submission WHERE lesson_id = :l AND page_id = :p", p("l", lessonId, "p", pageId))) {
+            Map<String, Object> auto = grading.evaluate(pageId, storage.resolve((String) s.get("file_path")), (String) s.get("file_name"),
+                    lessons.gradingVars(lessonId, ((Number) s.get("student_id")).longValue()));
             jdbc.update("UPDATE submission SET auto_score = :as, auto_max = :am, auto_detail = :ad WHERE id = :id",
                     p("as", auto == null ? null : auto.get("score"), "am", auto == null ? null : auto.get("max"),
                             "ad", auto == null ? null : auto.get("detail"), "id", s.get("id")));

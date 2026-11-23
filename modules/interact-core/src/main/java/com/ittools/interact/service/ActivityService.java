@@ -138,6 +138,7 @@ public class ActivityService {
             item.put("qtype", qtype);
             item.put("stem", stem);
             if (!opts.isEmpty()) item.put("options", opts);
+            if ("FILL".equals(qtype) && Boolean.TRUE.equals(m.get("numeric"))) item.put("numeric", true);
             out.add(item);
         }
         for (String a : answered) if (!seen.contains(a)) throw new IllegalArgumentException("已有学生作答的题目不能删除");
@@ -216,6 +217,9 @@ public class ActivityService {
                     String txt = a == null ? "" : String.valueOf(a).trim();
                     if (txt.isEmpty()) throw new IllegalArgumentException("请完成第 " + (its.indexOf(it) + 1) + " 题");
                     if (txt.length() > 500) throw new IllegalArgumentException("填空内容不超过 500 字");
+                    if (Boolean.TRUE.equals(it.get("numeric")) && !txt.matches("\\d+(\\.\\d+)?")) {
+                        throw new IllegalArgumentException("第 " + (its.indexOf(it) + 1) + " 题只能填数字");
+                    }
                     norm = txt;
             }
             try {
@@ -386,27 +390,101 @@ public class ActivityService {
 
     // ================= 随机点名（原 stu_dianming） =================
 
-    /** 从本堂课出席的学生中随机点一人；repeat=false 时本堂课已点过的不再点（全部点完后重新开始一轮）。 */
-    @Transactional
-    public Map<String, Object> rollCall(Long teacherId, Long lessonId, boolean repeat) {
+    private List<Map<String, Object>> presentStudents(Long teacherId, Long lessonId) {
         Map<String, Object> l = lessons.requireTeacher(teacherId, lessonId);
         if (!"ACTIVE".equals(l.get("status"))) throw new IllegalArgumentException("课堂已结束，不能点名");
-        List<Map<String, Object>> present = jdbc.queryForList("SELECT u.id AS \"studentId\", u.name, u.student_no AS \"studentNo\", a.pc_name AS \"pcName\" "
+        List<Map<String, Object>> present = jdbc.queryForList("SELECT u.id AS \"studentId\", u.name, u.student_no AS \"studentNo\", a.pc_name AS \"pcName\", "
+                + "COALESCE(a.group_no, 0) AS \"groupNo\" "
                 + "FROM lesson_attendance a JOIN users u ON u.id = a.student_id WHERE a.lesson_id = :l AND a.status = 'PRESENT'", p("l", lessonId));
         if (present.isEmpty()) throw new IllegalArgumentException("还没有学生进入课堂");
-        List<Map<String, Object>> pool = new ArrayList<>(present);
-        if (!repeat) {
-            Set<Long> called = new HashSet<>(jdbc.queryForList("SELECT student_id FROM roll_call WHERE lesson_id = :l", p("l", lessonId), Long.class));
-            pool.removeIf(s -> called.contains(((Number) s.get("studentId")).longValue()));
-            if (pool.isEmpty()) {
-                jdbc.update("DELETE FROM roll_call WHERE lesson_id = :l", p("l", lessonId));
-                pool = new ArrayList<>(present);
-            }
+        return present;
+    }
+
+    private static int groupOf(Map<String, Object> s) {
+        return ((Number) s.get("groupNo")).intValue();
+    }
+
+    /**
+     * 从候选人中抽 count 人（同一次不重复）；repeat=false 时本堂课已点过的不再点，候选人都点过后重新开始一轮
+     * （只重置候选人的记录，因此按组抽时不影响其他组）。
+     */
+    private List<Map<String, Object>> draw(Long lessonId, List<Map<String, Object>> cand, Set<Long> called, boolean repeat, int count,
+                                           java.security.SecureRandom rnd) {
+        int n = Math.max(1, Math.min(count, cand.size()));
+        List<Map<String, Object>> pool = new ArrayList<>(cand);
+        if (!repeat) pool.removeIf(s -> called.contains(((Number) s.get("studentId")).longValue()));
+        java.util.Collections.shuffle(pool, rnd);
+        List<Map<String, Object>> picks = new ArrayList<>(pool.subList(0, Math.min(n, pool.size())));
+        if (picks.size() < n) {
+            // 本轮剩余不够：开启新一轮，从其余人里补足
+            List<Long> ids = new ArrayList<>();
+            for (Map<String, Object> s : cand) ids.add(((Number) s.get("studentId")).longValue());
+            jdbc.update("DELETE FROM roll_call WHERE lesson_id = :l AND student_id IN (:ids)", p("l", lessonId, "ids", ids));
+            List<Map<String, Object>> rest = new ArrayList<>(cand);
+            rest.removeAll(picks);
+            java.util.Collections.shuffle(rest, rnd);
+            picks.addAll(rest.subList(0, n - picks.size()));
         }
-        Map<String, Object> pick = pool.get(new java.security.SecureRandom().nextInt(pool.size()));
-        jdbc.update("INSERT INTO roll_call(lesson_id, student_id) VALUES (:l, :s)", p("l", lessonId, "s", pick.get("studentId")));
-        Map<String, Object> out = new LinkedHashMap<>(pick);
+        for (Map<String, Object> pk : picks)
+            jdbc.update("INSERT INTO roll_call(lesson_id, student_id) VALUES (:l, :s)", p("l", lessonId, "s", pk.get("studentId")));
+        return picks;
+    }
+
+    /**
+     * 随机点名。scope：ALL 全班出席学生；GROUP 只在 groupNo 这一组里抽 count 人；EACH 每个小组各抽 count 人。
+     * 返回 picks（本次抽中的全部人）；EACH 另带 groups（按组分开）。
+     */
+    @Transactional
+    public Map<String, Object> rollCall(Long teacherId, Long lessonId, boolean repeat, int count, String scope, Integer groupNo) {
+        List<Map<String, Object>> present = presentStudents(teacherId, lessonId);
+        Set<Long> called = new HashSet<>(repeat ? new ArrayList<Long>()
+                : jdbc.queryForList("SELECT student_id FROM roll_call WHERE lesson_id = :l", p("l", lessonId), Long.class));
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        List<Map<String, Object>> picks = new ArrayList<>();
+        Map<String, Object> out = new LinkedHashMap<>();
+        if ("EACH".equals(scope)) {
+            java.util.TreeMap<Integer, List<Map<String, Object>>> byGroup = new java.util.TreeMap<>();
+            for (Map<String, Object> s : present) if (groupOf(s) > 0) byGroup.computeIfAbsent(groupOf(s), k -> new ArrayList<>()).add(s);
+            if (byGroup.isEmpty()) throw new IllegalArgumentException("出席的学生还没有分组");
+            List<Map<String, Object>> groups = new ArrayList<>();
+            for (Map.Entry<Integer, List<Map<String, Object>>> e : byGroup.entrySet()) {
+                List<Map<String, Object>> g = draw(lessonId, e.getValue(), called, repeat, count, rnd);
+                picks.addAll(g);
+                Map<String, Object> gm = new LinkedHashMap<>();
+                gm.put("groupNo", e.getKey());
+                gm.put("picks", g);
+                groups.add(gm);
+            }
+            out.put("groups", groups);
+        } else {
+            List<Map<String, Object>> cand = present;
+            if ("GROUP".equals(scope)) {
+                if (groupNo == null || groupNo <= 0) throw new IllegalArgumentException("请选择小组");
+                cand = new ArrayList<>();
+                for (Map<String, Object> s : present) if (groupOf(s) == groupNo) cand.add(s);
+                if (cand.isEmpty()) throw new IllegalArgumentException("第 " + groupNo + " 组还没有出席的学生");
+            }
+            picks.addAll(draw(lessonId, cand, called, repeat, count, rnd));
+        }
+        out.putAll(new LinkedHashMap<>(picks.get(0)));
+        out.put("picks", picks);
         out.put("candidates", present);
+        return out;
+    }
+
+    /** 随机抽一个小组（只在有出席学生的小组里抽），返回组号和组员。 */
+    @Transactional(readOnly = true)
+    public Map<String, Object> rollCallGroup(Long teacherId, Long lessonId) {
+        List<Map<String, Object>> present = presentStudents(teacherId, lessonId);
+        java.util.TreeMap<Integer, List<Map<String, Object>>> byGroup = new java.util.TreeMap<>();
+        for (Map<String, Object> s : present) if (groupOf(s) > 0) byGroup.computeIfAbsent(groupOf(s), k -> new ArrayList<>()).add(s);
+        if (byGroup.isEmpty()) throw new IllegalArgumentException("出席的学生还没有分组");
+        List<Integer> nos = new ArrayList<>(byGroup.keySet());
+        int g = nos.get(new java.security.SecureRandom().nextInt(nos.size()));
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("groupNo", g);
+        out.put("members", byGroup.get(g));
+        out.put("groupNos", nos);
         return out;
     }
 
@@ -416,7 +494,7 @@ public class ActivityService {
         lessons.requireTeacher(teacherId, lessonId);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("students", jdbc.queryForList("SELECT u.id AS \"studentId\", u.name, u.student_no AS \"studentNo\", "
-                + "COALESCE(a.status, 'ABSENT') AS status, a.pc_name AS \"pcName\", a.leave_reason AS \"leaveReason\" "
+                + "COALESCE(a.status, 'ABSENT') AS status, a.pc_name AS \"pcName\", a.leave_reason AS \"leaveReason\", COALESCE(a.group_no, 0) AS \"groupNo\" "
                 + "FROM lesson l JOIN users u ON u.class_id = l.class_id AND u.role = 'STUDENT' AND NOT u.graduated "
                 + "LEFT JOIN lesson_attendance a ON a.lesson_id = l.id AND a.student_id = u.id WHERE l.id = :l "
                 + "ORDER BY u.student_no NULLS LAST, u.name", p("l", lessonId)));

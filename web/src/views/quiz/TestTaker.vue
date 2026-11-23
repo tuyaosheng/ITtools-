@@ -26,6 +26,25 @@
       <el-alert v-else-if="submitted && !data.answerRevealed" type="success" :closable="false" class="mb"
         title="已交卷" />
 
+      <template v-if="data.netGate">
+        <el-alert v-if="data.netGate.passed && data.netGate.missingPrograms?.length" type="warning" :closable="false" show-icon class="mb"
+          :title="`测验已达标（≥ ${data.netGate.passScore} 分），还差：${data.netGate.missingPrograms.join('、')}，都完成后自动开放网络`" />
+        <el-alert v-else-if="data.netGate.passed && data.netGate.requireGroup && !data.netGate.groupNo" type="warning" :closable="false" show-icon class="mb"
+          title="你已经完成了，但还没有加入小组，进组后全组都完成才开放网络" />
+        <el-alert v-else-if="data.netGate.passed && data.netGate.requireGroup && !data.netGate.open" type="warning" :closable="false" show-icon class="mb"
+          :title="`你已经完成了，还在等第 ${data.netGate.groupNo} 组：${groupWaitText}，全组都完成后一起开放网络`" />
+        <el-alert v-else-if="data.netGate.passed" type="success" :closable="false" show-icon class="mb"
+          :title="`已达标（≥ ${data.netGate.passScore} 分），网络已开放`" />
+        <el-alert v-else-if="submitted" :type="data.netGate.left > 0 ? 'warning' : 'error'" :closable="false" show-icon class="mb"
+          :title="data.netGate.left > 0
+            ? `还没达标（需要 ≥ ${data.netGate.passScore} 分），你还有 ${data.netGate.left} 次机会`
+            : `没达标（需要 ≥ ${data.netGate.passScore} 分），机会用完了，请找老师`">
+          <el-button v-if="data.netGate.left > 0" type="primary" size="small" :loading="saving" @click="retake">重新作答</el-button>
+        </el-alert>
+        <el-alert v-else type="info" :closable="false" class="mb"
+          :title="`达标分数 ${data.netGate.passScore} 分，达标后开放网络；共 ${data.netGate.allowed} 次机会，已用 ${data.netGate.tries} 次`" />
+      </template>
+
       <QuestionItem v-for="(q, i) in data.questions" :key="q.id" v-model="answers[q.id]" :q="q" :index="i"
         :readonly="!data.canEdit" :show-key="data.answerRevealed" />
 
@@ -54,6 +73,12 @@ let timer: number | undefined
 let poll: number | undefined
 
 const submitted = computed(() => data.value?.attempt?.status === 'SUBMITTED')
+const waitingText = computed(() => (data.value?.netGate?.waiting || []).map((w: any) => `${w.name}（差${w.missing.join('、') || '老师确认'}）`).join('、'))
+// 作品组内共享时，组里任何一人交了就算，单独列出本组还差的作品
+const groupWaitText = computed(() => {
+  const gm: string[] = data.value?.netGate?.groupMissing || []
+  return [waitingText.value && `组员 ${waitingText.value}`, gm.length && `本组还差作品 ${gm.join('、')}（组里任何一人交了都算）`].filter(Boolean).join('；') || '老师确认'
+})
 const waiting = computed(() => data.value?.test.status === 'STANDBY' && !data.value?.attempt)
 const answeredCount = computed(() => Object.values(answers).filter(v => (Array.isArray(v) ? v.some(x => x) : v)).length)
 const remainMs = computed(() => {
@@ -92,6 +117,17 @@ async function save(submit: boolean) {
   }
 }
 
+async function retake() {
+  saving.value = true
+  try {
+    apply(await api.post(`/student/quiz/tests/${data.value.test.id}/retake`))
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  } finally {
+    saving.value = false
+  }
+}
+
 async function submit() {
   const left = data.value.questions.length - answeredCount.value
   try {
@@ -114,7 +150,9 @@ onMounted(async () => {
   poll = window.setInterval(() => {
     const d = data.value
     if (!d || d.test.finalizedAt || (submitted.value && d.test.status === 'CLOSED')) return
-    if (d.test.status === 'STANDBY' || (d.test.mode === 'CONTROL' && now.value % 15000 < 3000)) load(true)
+    // 成绩开网：已交卷未达标时，及时看到老师加的机会 / 放行
+    const gateWaiting = d.netGate && (!d.netGate.passed || (d.netGate.requireGroup && !d.netGate.open)) && submitted.value
+    if (d.test.status === 'STANDBY' || (d.test.mode === 'CONTROL' && now.value % 15000 < 3000) || (gateWaiting && now.value % 6000 < 3000)) load(true)
   }, 3000)
 })
 onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(poll) })

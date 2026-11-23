@@ -57,8 +57,16 @@ public class ActivityController {
     }
 
     @PostMapping("/api/teacher/activity/lessons/{lessonId}/roll-call")
-    public ApiResponse<Map<String, Object>> rollCall(@PathVariable Long lessonId, @RequestParam(defaultValue = "false") boolean repeat) {
-        return ApiResponse.ok(svc.rollCall(CurrentUser.id(), lessonId, repeat));
+    public ApiResponse<Map<String, Object>> rollCall(@PathVariable Long lessonId, @RequestParam(defaultValue = "false") boolean repeat,
+                                                @RequestParam(defaultValue = "1") int count,
+                                                @RequestParam(defaultValue = "ALL") String scope,
+                                                @RequestParam(required = false) Integer groupNo) {
+        return ApiResponse.ok(svc.rollCall(CurrentUser.id(), lessonId, repeat, count, scope, groupNo));
+    }
+
+    @PostMapping("/api/teacher/activity/lessons/{lessonId}/roll-call/group")
+    public ApiResponse<Map<String, Object>> rollCallGroup(@PathVariable Long lessonId) {
+        return ApiResponse.ok(svc.rollCallGroup(CurrentUser.id(), lessonId));
     }
 
     // ---- 学生 ----

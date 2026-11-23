@@ -222,7 +222,7 @@ class QuizFlowIT extends AbstractPostgresIT {
         JsonNode rates = call(t, HttpMethod.GET, "/api/teacher/quiz/error-rates?minCount=1", null);
         assertThat(rates.size()).isEqualTo(3);
         call(t, HttpMethod.POST, qs, map("qtype", "JUDGE", "stem", "CPU 是中央处理器。", "answer", "T"));
-        call(t, HttpMethod.POST, qs, map("qtype", "JUDGE", "stem", "<p>CPU是 中央处理器</p>", "answer", "T"));
+        call(t, HttpMethod.POST, qs, map("qtype", "JUDGE", "stem", "<p>CPU是 中央处理器</p>", "answer", "T", "force", true));
         JsonNode dup = call(t, HttpMethod.GET, "/api/teacher/quiz/duplicates", null);
         assertThat(dup.size()).isEqualTo(1);
         assertThat(dup.get(0).get("questions").size()).isEqualTo(2);

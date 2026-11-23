@@ -1,0 +1,294 @@
+{
+ "name": "Wi-Fi",
+ "color": [
+  "#8B92E8",
+  "#6E78E6",
+  "#3E46A7"
+ ],
+ "blocks": [
+  {
+   "opcode": "wifiConnectByPwd",
+   "blockType": "command",
+   "text": "Wi-Fi 连接到 热点:[ACCOUNT] 密码:[PASSWORD]",
+   "arguments": {
+    "ACCOUNT": {
+     "type": "string",
+     "defaultValue": "yourSSID",
+     "inputTypes": [
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    },
+    "PASSWORD": {
+     "type": "string",
+     "defaultValue": "yourPASSWD",
+     "inputTypes": [
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    }
+   },
+   "code": "myIot.wifiConnect(yourSSID, yourPASSWD);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "wifiConnected",
+   "blockType": "Boolean",
+   "text": "Wi-Fi 连接成功？",
+   "arguments": {},
+   "outputTypes": [
+    "bool"
+   ],
+   "code": [
+    "myIot.wifiStatus()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "wifiDisConnected",
+   "blockType": "command",
+   "text": "Wi-Fi 断开连接",
+   "arguments": {},
+   "code": "myIot.wifiDisconnect();",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "wifiGetLocalIP",
+   "blockType": "reporter",
+   "text": "获取Wi-Fi配置 [CONFIGURATION]",
+   "arguments": {
+    "CONFIGURATION": {
+     "type": "string",
+     "menu": "configurationMenu",
+     "defaultValue": "getWiFiLocalIP"
+    }
+   },
+   "outputTypes": [
+    "string"
+   ],
+   "code": [
+    "myIot.getWiFiLocalIP()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "sep": "---"
+  },
+  {
+   "opcode": "wifiSetSoftAP",
+   "blockType": "command",
+   "text": "Wi-Fi 设置AP模式:[ACCOUNT2] 密码:[PASSWORD2]",
+   "arguments": {
+    "ACCOUNT2": {
+     "type": "string",
+     "defaultValue": "yourSSID",
+     "inputTypes": [
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    },
+    "PASSWORD2": {
+     "type": "string",
+     "defaultValue": "yourPASSWD",
+     "inputTypes": [
+      "string"
+     ],
+     "inputParams": {
+      "symbol": "\"\""
+     }
+    }
+   },
+   "code": "myIot.setSoftAP(yourSSID, yourPASSWD);",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "wifiGetSoftAPIP",
+   "blockType": "reporter",
+   "text": "Wi-Fi 获取AP模式本机IP",
+   "arguments": {},
+   "outputTypes": [
+    "string"
+   ],
+   "code": [
+    "myIot.getWiFiSoftIP()",
+    null
+   ],
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "whenDebugInfo",
+   "blockType": "hat",
+   "text": "Wi-Fi 获取 [DEBUG] [ERROR]",
+   "arguments": {
+    "DEBUG": {
+     "type": "specialBlock_eventHead_origin",
+     "name": "VALUE",
+     "specialType": "string",
+     "inputParams": {
+      "parent": "whenDebugInfo",
+      "block": "wifi_whenDebugInfoDebug_eventHeadInner_",
+      "refuseEnter": true
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    },
+    "ERROR": {
+     "type": "specialBlock_eventHead_origin",
+     "name": "VALUE",
+     "specialType": "string",
+     "inputParams": {
+      "parent": "whenDebugInfo",
+      "block": "wifi_whenDebugInfoError_eventHeadInner_",
+      "refuseEnter": true
+     },
+     "inputTypes": [
+      "int32_t",
+      "uint32_t",
+      "float",
+      "bool",
+      "string"
+     ]
+    }
+   },
+   "code": "void iotDebugEvent(String& debugMessage, int32_t errorCode)",
+   "gen": {
+    "inc": [
+     "DFRobot_Iot.h"
+    ],
+    "setup": [
+     " => myIot.setIotDebugCallback(iotDebugEvent);"
+    ],
+    "decl": [],
+    "other": [
+     "addObject(myIot, DFRobot_Iot myIot;)"
+    ]
+   }
+  },
+  {
+   "opcode": "wifi_whenDebugInfoDebug_eventHeadInner_",
+   "blockType": "reporter",
+   "text": "调试信息",
+   "outputTypes": [
+    "string"
+   ],
+   "code": [
+    "debugMessage",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  },
+  {
+   "opcode": "wifi_whenDebugInfoError_eventHeadInner_",
+   "blockType": "reporter",
+   "text": "错误码",
+   "outputTypes": [
+    "int32_t"
+   ],
+   "code": [
+    "errorCode",
+    null
+   ],
+   "gen": {
+    "inc": [],
+    "setup": [],
+    "decl": [],
+    "other": []
+   }
+  }
+ ],
+ "menus": {
+  "configurationMenu": [
+   {
+    "text": "IP 地址",
+    "value": "getWiFiLocalIP"
+   },
+   {
+    "text": "子网掩码",
+    "value": "getWiFiNetmask"
+   },
+   {
+    "text": "网关",
+    "value": "getGateway"
+   },
+   {
+    "text": "DNS",
+    "value": "getDNS"
+   }
+  ]
+ },
+ "extraPrims": [
+  "runtime"
+ ]
+}

@@ -101,6 +101,12 @@ export const pageTypes: Record<string, PageTypeDef> = {
     student: defineAsyncComponent(() => import('../views/mpython/StudentMpythonPage.vue')),
     teacher: defineAsyncComponent(() => import('../views/mpython/TeacherMpythonPanel.vue')),
     settings: defineAsyncComponent(() => import('../views/mpython/MpythonSettings.vue'))
+  },
+  MQTT: {
+    label: '物联网消息',
+    desc: '显示掌控板等设备发到平台内置 MQTT 服务器的消息（本节课的项目自动生成），本组设备排在最前',
+    student: defineAsyncComponent(() => import('../views/activity/MqttMessages.vue')),
+    teacher: defineAsyncComponent(() => import('../views/activity/MqttMessages.vue'))
   }
 }
 

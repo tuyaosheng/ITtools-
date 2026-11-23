@@ -38,10 +38,18 @@ public class UserDtos {
         private final boolean graduated;
         private final boolean enabled;
         private final Long enrollYearId;
+        private final boolean adminAccess;
 
         public UserView(Long id, String role, String name, String loginName, String studentNo,
                          String xjh, Long classId, String className, boolean graduated, boolean enabled,
                          Long enrollYearId) {
+            this(id, role, name, loginName, studentNo, xjh, classId, className, graduated, enabled, enrollYearId, false);
+        }
+
+        public UserView(Long id, String role, String name, String loginName, String studentNo,
+                         String xjh, Long classId, String className, boolean graduated, boolean enabled,
+                         Long enrollYearId, boolean adminAccess) {
+            this.adminAccess = adminAccess;
             this.id = id;
             this.role = role;
             this.name = name;
@@ -66,6 +74,7 @@ public class UserDtos {
         public boolean isGraduated() { return graduated; }
         public boolean isEnabled() { return enabled; }
         public Long getEnrollYearId() { return enrollYearId; }
+        public boolean isAdminAccess() { return adminAccess; }
     }
 
     /** One page of the admin user list, plus the total matching rows. */

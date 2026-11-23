@@ -8,13 +8,22 @@
             {{ lesson.className }} · {{ fmtTime(lesson.startedAt) }}{{ lesson.endedAt ? ' ~ ' + fmtTime(lesson.endedAt) : '' }}
             · 分组模型：{{ lesson.groupModelName || '不分组' }}
           </div>
+          <div v-if="active" class="feat">
+            学生功能：
+            <span v-for="f in features" :key="f.key" class="feat-item">
+              {{ f.label }}
+              <el-switch :model-value="featureOn(f.key)" size="small" inline-prompt active-text="开" inactive-text="关"
+                @change="(v: any) => setFeature(f.key, !!v)" />
+            </span>
+          </div>
         </div>
         <div class="stats">
           <div class="stat"><b>{{ present }}</b><span>出席</span></div>
           <div class="stat"><b>{{ notYet }}</b><span>未到</span></div>
           <div class="stat"><b>{{ leave }}</b><span>请假</span></div>
           <el-button v-if="active" type="danger" @click="endLesson">下课</el-button>
-          <el-button v-else @click="router.push('/teacher/lessons')">返回记录</el-button>
+          <el-button v-if="!active" type="success" @click="reopenLesson">重新开课</el-button>
+          <el-button v-if="!active" @click="router.push('/teacher/lessons')">返回记录</el-button>
         </div>
       </div>
     </el-card>
@@ -22,7 +31,7 @@
     <el-card shadow="never">
       <el-tabs v-model="tab">
         <el-tab-pane label="学生与考勤" name="students">
-          <div class="tab-ops">
+          <div v-if="!isMobile" class="tab-ops">
             <el-select v-model="groupModelId" clearable placeholder="不分组" size="small" class="w180">
               <el-option v-for="g in groupModels" :key="g.id" :label="g.name" :value="g.id" />
             </el-select>
@@ -30,7 +39,57 @@
             <el-button size="small" @click="refresh">刷新</el-button>
             
           </div>
-          <el-table :data="attendance" size="small" stripe>
+          <!-- 手机：卡片列表，便于上课时快速评价 -->
+          <div v-if="isMobile" class="m-list">
+            <el-input v-model="kw" clearable placeholder="搜索姓名 / 学号" size="large" class="m-search" />
+            <div class="m-filter">
+              <span v-for="f in mFilters" :key="f.key" class="m-chip" :class="{ on: mFilter === f.key }" @click="mFilter = f.key">
+                {{ f.label }} {{ f.count }}
+              </span>
+            </div>
+            <div v-for="row in mRows" :key="row.studentId" class="m-card" :class="'st-' + (row.status || 'NONE')">
+              <div class="m-top">
+                <UserAvatar :user-id="row.hasAvatar ? row.studentId : undefined" :name="row.name" :size="34" />
+                <div class="m-who">
+                  <div class="m-name">{{ row.name }} <span class="m-no">{{ row.studentNo }}</span></div>
+                  <div class="m-meta">{{ row.pcName || '未上机' }}{{ row.groupNo ? ` · ${row.groupLabel || `第${row.groupNo}组`}` : '' }}</div>
+                </div>
+                <el-radio-group :model-value="row.status" size="small" @change="(v: any) => patch(row, { status: v })">
+                  <el-radio-button value="PRESENT">到</el-radio-button>
+                  <el-radio-button value="ABSENT">缺</el-radio-button>
+                  <el-radio-button value="LEAVE">假</el-radio-button>
+                </el-radio-group>
+                <el-dropdown trigger="click" @command="(c: string) => c === 'pwd' ? resetPwd(row) : kickStudent(row)">
+                  <el-button text class="m-more">⋯</el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="pwd">重置密码</el-dropdown-item>
+                      <el-dropdown-item command="kick">强制下线</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+              <div class="m-score">
+                <el-input-number :model-value="row.score" :min="0" :max="100" :step="5" size="default" class="m-num" placeholder="得分"
+                  @change="(v: number) => patch(row, { score: v })" />
+                <span v-for="v in quickScores" :key="v" class="m-q" :class="{ on: row.score === v }" @click="patch(row, { score: v })">{{ v }}</span>
+              </div>
+              <el-input :model-value="row.comment" placeholder="评语（回车保存）" @change="(v: string) => patch(row, { comment: v })">
+                <template #append>
+                  <el-dropdown trigger="click" @command="(c: string) => patch(row, { comment: row.comment ? row.comment + '，' + c : c })">
+                    <span class="m-quick">常用</span>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item v-for="c in quickComments" :key="c" :command="c">{{ c }}</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </template>
+              </el-input>
+            </div>
+            <el-empty v-if="!mRows.length" description="没有符合的学生" :image-size="60" />
+          </div>
+          <el-table v-else :data="attendance" size="small" stripe>
             <el-table-column prop="studentNo" label="班内学号" width="84" />
             <el-table-column prop="name" label="姓名" width="90" />
             <el-table-column label="考勤" width="130">
@@ -46,10 +105,11 @@
             <el-table-column label="进课时间" width="140">
               <template #default="{ row }: { row: any }">{{ fmtTime(row.joinedAt) }}</template>
             </el-table-column>
-            <el-table-column label="小组" width="110">
+            <el-table-column label="小组" width="130">
               <template #default="{ row }: { row: any }">
                 <el-input-number :model-value="row.groupNo" :min="0" :max="50" size="small" controls-position="right"
                   class="w90" @change="(v: number) => patch(row, { groupNo: v })" />
+                <div v-if="row.groupLabel && row.groupLabel !== `第${row.groupNo}组`" class="muted">{{ row.groupLabel }}</div>
               </template>
             </el-table-column>
             <el-table-column label="课堂得分" width="120">
@@ -62,6 +122,12 @@
               <template #default="{ row }: { row: any }">
                 <el-input :model-value="row.comment" size="small" placeholder="课堂评语"
                   @change="(v: string) => patch(row, { comment: v })" />
+              </template>
+            </el-table-column>
+            <el-table-column label="账号" width="150">
+              <template #default="{ row }: { row: any }">
+                <el-button link type="primary" size="small" @click="resetPwd(row)">重置密码</el-button>
+                <el-button link type="warning" size="small" @click="kickStudent(row)">强制下线</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -111,7 +177,7 @@
                       </div>
                       <div class="sub">
                         <span>{{ seatAt(r, c).pcName }}</span>
-                        <span v-if="studentAt(seatAt(r, c).pcName).groupNo" class="grp">第{{ studentAt(seatAt(r, c).pcName).groupNo }}组</span>
+                        <span v-if="studentAt(seatAt(r, c).pcName).groupNo" class="grp">{{ studentAt(seatAt(r, c).pcName).groupLabel || `第${studentAt(seatAt(r, c).pcName).groupNo}组` }}</span>
                       </div>
                       <div class="flags">
                         <template v-if="flagOf(studentAt(seatAt(r, c).pcName))">
@@ -138,7 +204,7 @@
               <span class="fl top">前10</span>课堂总分前 10 <span class="fl ess">精品</span>有精华作品
               <span class="fl todo">待阅</span>有作品未批阅 <span class="fl read">已阅</span>已全部批阅 <span class="star on">★</span>关注
               <template v-if="net.enabled">· 🌐已开 ⛔已断 —没下发过</template>
-              <Hint>灰色虚线的座位还没有学生登录；点 ★ 切换关注。<template v-if="net.enabled">网络状态是本平台最后一次给这台电脑下发的指令，不是实时探测；上课中点“管理”可以批量暂停 / 恢复网络。</template></Hint>
+              <Hint>灰色虚线的座位还没有学生登录；点 ★ 切换关注。<template v-if="net.enabled">网络状态每 5 秒向控制器读取一次实际状态（电脑不在线时显示本平台最后下发的指令）；上课中点“管理”可以批量暂停 / 恢复网络。</template></Hint>
             </div>
             <div v-if="seatAbsent.length" class="absent">
               <b>缺席 / 请假（{{ seatAbsent.length }}）：</b>
@@ -199,8 +265,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { api, errMsg } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 import { pageTypes } from '../../modules/pageTypes'
-import { consoleTabs } from '../../modules/consoleTabs'
+import { closedFeatures, consoleTabs } from '../../modules/consoleTabs'
 import PageContent from '../../components/PageContent.vue'
+import { useIsMobile } from '../../composables/useIsMobile'
 
 const route = useRoute()
 const router = useRouter()
@@ -214,10 +281,46 @@ const tab = ref('students')
 const currentPage = ref<any>(null)
 let timer: number | undefined
 
+// ---- 手机端课堂评价 ----
+const isMobile = useIsMobile()
+const kw = ref('')
+const mFilter = ref('ALL')
+const quickScores = [60, 80, 90, 100]
+const quickComments = ['认真专注', '积极发言', '作品有创意', '乐于助人', '进步明显', '需要更专心', '注意课堂纪律']
+const mFilters = computed(() => [
+  { key: 'ALL', label: '全部', count: attendance.value.length },
+  { key: 'PRESENT', label: '出席', count: present.value },
+  { key: 'NONE', label: '未到', count: notYet.value },
+  { key: 'LEAVE', label: '请假', count: leave.value },
+  { key: 'UNSCORED', label: '未评分', count: attendance.value.filter(a => a.score == null).length },
+])
+const mRows = computed(() => {
+  const k = kw.value.trim()
+  return attendance.value.filter(a => {
+    if (k && !(String(a.name || '').includes(k) || String(a.studentNo || '').includes(k))) return false
+    if (mFilter.value === 'PRESENT') return a.status === 'PRESENT'
+    if (mFilter.value === 'NONE') return !a.status || a.status === 'ABSENT'
+    if (mFilter.value === 'LEAVE') return a.status === 'LEAVE'
+    if (mFilter.value === 'UNSCORED') return a.score == null
+    return true
+  })
+})
+
 const active = computed(() => lesson.value?.status === 'ACTIVE')
 const present = computed(() => attendance.value.filter(a => a.status === 'PRESENT').length)
 const leave = computed(() => attendance.value.filter(a => a.status === 'LEAVE').length)
 const notYet = computed(() => attendance.value.filter(a => !a.status || a.status === 'ABSENT').length)
+
+// 本堂课可开关的学生互动功能（对应后端 LessonService.FEATURES）
+const features = [{ key: 'HELP', label: '举手求助' }, { key: 'FORUM', label: '课堂论坛' }]
+const featureOn = (key: string) => !closedFeatures(lesson.value).includes(key)
+async function setFeature(key: string, on: boolean) {
+  try {
+    Object.assign(lesson.value, await api.put(`/teacher/lessons/${id}/features`, { [key]: on }))
+  } catch (err) {
+    ElMessage.error(errMsg(err))
+  }
+}
 
 async function loadLesson() {
   lesson.value = await api.get(`/teacher/lessons/${id}`)
@@ -243,6 +346,30 @@ async function toggleAttention(a: any) {
   await patch(a, { attention: !a.attention })
 }
 
+// 手机上课时也能直接给学生重置密码（原来要切到电脑版“我的班级”）
+async function resetPwd(row: any) {
+  try {
+    const { value } = await ElMessageBox.prompt(`为 ${row.name} 设置新密码`, '重置密码',
+      { inputValue: '123456', confirmButtonText: '重置', inputValidator: (v: string) => !!v?.trim() || '密码不能为空' })
+    await api.post(`/teacher/students/${row.studentId}/reset-password`, { password: value })
+    ElMessage.success('密码已重置')
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
+}
+
+// 强制下线：学生要换电脑、或账号被别的电脑占住登不上时用
+async function kickStudent(row: any) {
+  try {
+    await ElMessageBox.confirm(`让 ${row.name} 的账号在所有电脑上下线？下线后他可以在任意一台电脑重新登录。`, '强制下线',
+      { type: 'warning', confirmButtonText: '下线' })
+    const n = await api.post(`/teacher/students/${row.studentId}/kick`, {})
+    ElMessage.success(n ? `${row.name} 已下线` : `${row.name} 当前不在线`)
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
+}
+
 async function patch(row: any, body: any) {
   try {
     await api.put(`/teacher/lessons/${id}/attendance/${row.studentId}`, body)
@@ -264,8 +391,21 @@ async function togglePage(p: any, open: boolean) {
 }
 
 async function openPage(p: any) {
-  const full = await api.get(`/teacher/courses/${lesson.value.courseId}`)
-  currentPage.value = full.pages.find((x: any) => x.id === p.id)
+  // 走课堂接口：正文里的 {{MQTT项目}}、{{媒体:…}} 等占位符替换成本节课的值，和学生看到的一样
+  currentPage.value = await api.get(`/teacher/lessons/${id}/pages/${p.id}`)
+}
+
+// 重新开课：已下课的课堂还原到上课中（下课时自动记的缺席撤回，成绩开网规则恢复）
+async function reopenLesson() {
+  try {
+    await ElMessageBox.confirm('把这节课还原到“上课中”？页面、分组、学生交的东西和成绩都保留，下课时自动记的缺席会撤回，成绩开网规则会恢复。', '重新开课',
+      { type: 'warning', confirmButtonText: '重新开课' })
+    await api.post(`/teacher/lessons/${id}/reopen`)
+    ElMessage.success('已重新开课')
+    await loadLesson()
+  } catch (err: any) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errMsg(err))
+  }
 }
 
 async function endLesson() {
@@ -294,6 +434,9 @@ const net = reactive<{ enabled: boolean; reachable: boolean; status: Record<stri
   { enabled: false, reachable: false, status: {}, last: {} })
 const seatPowered = computed(() => seatList.value.filter(s => net.status[s.ipAddress]?.online).length)
 function netOf(s: any): 'on' | 'off' | 'unk' {
+  // 优先用控制器实测状态（normal = 网络正常，其余 = 已断开）；电脑不在线时退回本平台最后下发的指令
+  const a = net.status[s?.ipAddress]
+  if (a?.online && a.netState) return a.netState === 'normal' ? 'on' : 'off'
   const v = net.last[s?.ipAddress]
   return v === true ? 'on' : v === false ? 'off' : 'unk'
 }
@@ -355,12 +498,40 @@ onMounted(async () => {
   await loadSeats()
   await refresh()
   await loadNet()
-  timer = window.setInterval(() => { if (active.value) refresh() }, 5000)
+  timer = window.setInterval(() => { if (active.value) { refresh(); if (net.enabled && tab.value === 'seats') loadNet() } }, 5000)
 })
 onBeforeUnmount(() => window.clearInterval(timer))
 </script>
 
 <style scoped>
+.m-list { display: flex; flex-direction: column; gap: 10px; }
+.m-filter { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.m-chip { flex: none; font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--el-fill-color); color: var(--el-text-color-regular); cursor: pointer; }
+.m-chip.on { background: var(--hb-ink-deep); color: var(--hb-paper); font-weight: 700; }
+.m-card { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--hb-paper);
+  border: 1.5px solid var(--hb-line); border-left: 5px solid var(--el-border-color); }
+.m-card.st-PRESENT { border-left-color: var(--el-color-success); }
+.m-card.st-ABSENT { border-left-color: var(--el-color-danger); }
+.m-card.st-LEAVE { border-left-color: var(--el-color-warning); }
+.m-top { display: flex; align-items: center; gap: 10px; }
+.m-who { flex: 1; min-width: 0; }
+.m-name { font-weight: 800; font-size: 16px; color: var(--hb-ink-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-no { font-weight: normal; font-size: 12px; color: var(--el-text-color-secondary); }
+.m-meta { font-size: 12px; color: var(--el-text-color-secondary); }
+.m-score { display: flex; align-items: center; gap: 5px; }
+.m-lbl { font-size: 12px; color: var(--el-text-color-secondary); }
+.m-num { width: 112px; flex: none; }
+.m-q { flex: 1; min-width: 0; text-align: center; padding: 5px 0; border-radius: 8px; border: 1px solid var(--el-border-color); font-size: 13px; cursor: pointer; background: var(--hb-paper); }
+.m-q.on { background: var(--el-color-primary); border-color: var(--el-color-primary); color: #fff; font-weight: 700; }
+.m-quick { cursor: pointer; font-size: 13px; }
+@media (max-width: 768px) {
+  .head-row { align-items: flex-start; }
+  .title { font-size: 16px; }
+  .stats { width: 100%; justify-content: space-between; gap: 8px; }
+  .feat-item { display: inline-flex; align-items: center; gap: 4px; margin: 4px 10px 0 0; }
+  .console :deep(.el-card__body) { padding: 12px; }
+  .seatgrid { padding: 8px; }
+}
 .console { display: flex; flex-direction: column; gap: 16px; }
 .head-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .title { font-size: 18px; font-weight: 600; }
@@ -386,6 +557,8 @@ onBeforeUnmount(() => window.clearInterval(timer))
 .chip { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--el-fill-color); color: var(--el-text-color-regular); }
 .chip.ok { background: var(--el-color-success-light-9); color: var(--el-color-success-dark-2); }
 .chip.bad { background: var(--el-color-danger-light-9); color: var(--el-color-danger); }
+.feat { margin-top: 6px; font-size: 13px; color: var(--el-text-color-secondary); }
+.feat-item { margin-right: 14px; }
 .seatbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .seatbar .el-button + .el-button { margin-left: 0; }
 .grow { flex: 1; }

@@ -82,6 +82,12 @@ public class AdminUserController {
         return ApiResponse.ok(null);
     }
 
+    /** 教师兼任管理员（value=true/false）。 */
+    @PostMapping("/{id}/admin-access")
+    public ApiResponse<UserView> adminAccess(@PathVariable Long id, @RequestParam boolean value) {
+        return ApiResponse.ok(svc.setAdminAccess(id, value));
+    }
+
     @PostMapping("/{id}/enabled")
     public ApiResponse<Void> enabled(@PathVariable Long id, @RequestParam boolean value) {
         svc.setEnabled(id, value);

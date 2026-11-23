@@ -3,8 +3,9 @@
     <template #header><span>系统参数设置</span></template>
     <el-form v-loading="loading" :model="form" label-width="140px" class="form">
       <el-divider content-position="left">基本</el-divider>
-      <el-form-item label="学校名称">
-        <el-input v-model="form['school.name']" />
+      <el-form-item label="平台名称">
+        <el-input v-model="form['school.name']" maxlength="30" show-word-limit placeholder="信息科技教学辅助平台" />
+        <Hint>显示在登录页标题、左侧栏和浏览器标签上，保存后刷新页面生效。</Hint>
       </el-form-item>
       <el-form-item label="工作模式">
         <el-radio-group v-model="form['login.mode']">
@@ -30,6 +31,14 @@
 
       <el-form-item label="学生单处登录">
         <el-switch v-model="singleLogin" />
+      </el-form-item>
+      <el-form-item v-if="singleLogin" label="重复登录时">
+        <el-radio-group v-model="form['login.singleMode']">
+          <el-radio value="KICK_OLD">新登录让旧电脑下线</el-radio>
+          <el-radio value="KEEP_FIRST">先登录的占用，别的电脑登不上</el-radio>
+        </el-radio-group>
+        <Hint>“先登录的占用”：账号在一台电脑上登录后，别的电脑用这个账号登录会被拒绝；同一台电脑关了浏览器或重启后可以重新登录。
+          学生要换电脑时，老师在“我的班级”或课堂控制台点“强制下线”；学生点“退出”、或关掉浏览器约 30 分钟后也会自动放开。</Hint>
       </el-form-item>
       <el-divider content-position="left">教学</el-divider>
       <el-form-item label="允许作业补交">
@@ -74,7 +83,7 @@
       </el-form-item>
       <el-form-item label="控制器地址">
         <el-input v-model="form['net.ctrUrl']" placeholder="http://127.0.0.1:8770" class="w420" />
-        <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。</Hint>
+        <Hint>网络控制器主控端的 HTTP 接口地址。本平台与控制器在同一台电脑时用 127.0.0.1；不在同一台时，控制器的 api_host 要设为 0.0.0.0，这里填教师机 IP。这是全局控制器，每个机房有自己的控制器时，到“机房模型”里给机房单独设置，没设置的机房用这里的。</Hint>
       </el-form-item>
       <el-form-item label="访问令牌">
         <el-input v-model="form['net.ctrToken']" type="password" show-password placeholder="未设置可留空" class="w420" />
@@ -84,6 +93,26 @@
         <span v-if="netResult" class="tip inline" :class="netResult.ok ? 'ok' : 'bad'">
           {{ netResult.ok ? `连接成功：${netResult.agents} 台被控端，在线 ${netResult.online} 台` : (netResult.error || '连接失败') }}
         </span>
+      </el-form-item>
+
+      <el-divider content-position="left">内置 MQTT 服务器（代替 SIoT）</el-divider>
+      <el-form-item label="启用">
+        <el-switch v-model="mqttEnabled" />
+        <span v-if="mqtt" class="tip inline" :class="mqtt.running ? 'ok' : 'bad'">
+          {{ mqtt.running ? `运行中，端口 ${mqtt.port}，在线设备 ${mqtt.clients} 个` : (mqtt.error || '未运行') }}
+        </span>
+        <Hint>掌控板在 Mind+ 里物联网平台选 SIoT，服务器地址填本机 IP，端口、账号、密码填下面的。每节课开课时自动生成一个项目名（如 B81_1115_2029），
+          课程页面里写 {{ '{' + '{MQTT项目}' + '}' }} 会显示成本节课的项目名；消息按课堂分开保存，不用下课清理。学生和老师在“物联网消息”页面、课堂控制台“物联网消息”里看。
+          本机还开着 SIoT 时会占用 1883 端口，先关掉 SIoT。</Hint>
+      </el-form-item>
+      <el-form-item label="端口">
+        <el-input v-model="form['mqtt.port']" class="w200" />
+      </el-form-item>
+      <el-form-item label="账号">
+        <el-input v-model="form['mqtt.username']" class="w200" />
+      </el-form-item>
+      <el-form-item label="密码">
+        <el-input v-model="form['mqtt.password']" class="w200" />
       </el-form-item>
 
       <el-form-item>
@@ -121,6 +150,11 @@ const studentAvatar = bool('student.allowAvatarChange')
 const ssoEnabled = bool('sso.enabled')
 const origin = window.location.origin
 const netEnabled = bool('net.enabled')
+const mqttEnabled = bool('mqtt.enabled')
+const mqtt = ref<any>(null)
+async function loadMqtt() {
+  try { mqtt.value = await api.get('/admin/mqtt/status') } catch { mqtt.value = null }
+}
 const testing = ref(false)
 const netResult = ref<any>(null)
 
@@ -159,6 +193,7 @@ async function load() {
   } finally {
     loading.value = false
   }
+  loadMqtt()
 }
 
 async function save() {
@@ -166,6 +201,7 @@ async function save() {
   try {
     Object.assign(form, await api.put('/admin/settings', { ...form }))
     ElMessage.success('设置已保存')
+    loadMqtt()
   } catch (err) {
     ElMessage.error(errMsg(err))
   } finally {
@@ -181,6 +217,7 @@ onMounted(load)
 .tip { font-size: 12px; color: var(--el-text-color-secondary); line-height: 1.6; margin-top: 4px; }
 .tip.inline { margin: 0 0 0 10px; }
 .w420 { width: 420px; }
+.w200 { width: 200px; }
 .ok { color: var(--el-color-success); }
 .bad { color: var(--el-color-danger); }
 .doc { font-size: 12px; line-height: 1.8; color: var(--el-text-color-regular); }

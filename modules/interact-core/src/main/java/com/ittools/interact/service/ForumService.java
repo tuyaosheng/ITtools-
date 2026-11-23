@@ -26,6 +26,7 @@ public class ForumService {
 
     public void requireAccess(Long userId, String role, Long courseId) {
         if (!lessons.canReadCourse(userId, role, courseId)) throw new IllegalArgumentException("无权访问该课程论坛");
+        if ("STUDENT".equals(role) && lessons.featureClosedForStudent(userId, courseId, "FORUM")) throw new IllegalArgumentException("老师已关闭课堂论坛");
     }
 
     @Transactional(readOnly = true)

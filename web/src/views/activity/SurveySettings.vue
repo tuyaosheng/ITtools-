@@ -16,6 +16,7 @@
           <el-button type="danger" :disabled="locked(it)" @click="items.splice(i, 1)">删除</el-button>
         </el-button-group>
       </div>
+      <el-checkbox v-if="it.qtype === 'FILL'" v-model="it.numeric" class="numeric">只能填数字</el-checkbox>
       <div v-if="it.qtype === 'SINGLE' || it.qtype === 'MULTI'" class="opts">
         <div v-for="(o, j) in it.options" :key="j" class="opt">
           <span class="letter">{{ String.fromCharCode(65 + j) }}.</span>
@@ -35,12 +36,13 @@
         </template>
       </el-dropdown>
     </el-form-item>
-    <el-form-item label="填空显示名字">
+    <el-form-item label="显示名字">
       <el-radio-group v-model="nameMode">
         <el-radio value="NONE">不显示</el-radio>
         <el-radio value="TEACHER">仅教师端显示</el-radio>
         <el-radio value="ALL">全部显示</el-radio>
       </el-radio-group>
+      <Hint>只针对填空题：学生填写的每条回答旁是否显示作答者姓名。“不显示”为匿名；“仅教师端显示”教师能看到是谁写的，学生看结果时仍匿名；“全部显示”学生看结果时也能看到名字。</Hint>
     </el-form-item>
     <el-form-item label="学生看结果">
       <el-switch v-model="showResult" />
@@ -90,7 +92,7 @@ async function save() {
     await api.put(`/teacher/activity/pages/${props.page.id}/survey`, {
       nameMode: nameMode.value,
       showResult: showResult.value,
-      items: items.value.map(x => ({ id: x.id, qtype: x.qtype, stem: x.stem, options: x.qtype === 'SINGLE' || x.qtype === 'MULTI' ? x.options : undefined }))
+      items: items.value.map(x => ({ id: x.id, qtype: x.qtype, stem: x.stem, options: x.qtype === 'SINGLE' || x.qtype === 'MULTI' ? x.options : undefined, numeric: x.qtype === 'FILL' ? !!x.numeric : undefined }))
     })
     ElMessage.success('调查题目已保存')
     await load()

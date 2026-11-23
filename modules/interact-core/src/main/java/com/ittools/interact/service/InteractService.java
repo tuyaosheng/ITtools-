@@ -47,6 +47,7 @@ public class InteractService {
     @Transactional
     public Map<String, Object> raiseHand(Long studentId, Long lessonId, String message, String ip) {
         requireActive(lessons.requireStudent(studentId, lessonId));
+        lessons.requireFeature(lessonId, "HELP", "老师已关闭举手功能");
         Long open = jdbc.queryForObject("SELECT COUNT(*) FROM help_request WHERE lesson_id = :l AND student_id = :s AND status = 'OPEN'",
                 p("l", lessonId, "s", studentId), Long.class);
         if (open != null && open > 0) throw new IllegalArgumentException("你已经举手了，请等待老师处理");
@@ -401,6 +402,7 @@ public class InteractService {
         int g = lessons.groupNoOf(lessonId, studentId);
         Map<String, Object> out = new HashMap<>();
         out.put("groupNo", g);
+        out.put("groupLabel", lessons.groupLabel(lessonId, g));
         out.put("members", g == 0 ? new ArrayList<>() : jdbc.queryForList(
                 "SELECT u.name, a.pc_name AS \"pcName\" FROM lesson_attendance a JOIN users u ON u.id = a.student_id "
                         + "WHERE a.lesson_id = :l AND a.group_no = :g ORDER BY u.student_no", p("l", lessonId, "g", g)));

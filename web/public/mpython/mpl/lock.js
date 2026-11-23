@@ -76,6 +76,28 @@
     callback: function (scope) { MplLock.set(scope.block, !isLocked(scope.block)); }
   });
 
+  // Blockly 自带的“复制”要求 isDeletable()+isMovable() 都为真才会出现——锁住的积木两项都是
+  // false，菜单里直接不给看。这在学生那边是故意的（复制一份能改的出来，等于绕开了锁）；
+  // 但老师在编辑模式（?edit=1）里摆初始积木时，经常想复制一块已经锁好的骨架去接着改坐标，
+  // 没有这条就得每次从头重新搭、重新锁。只在编辑模式单独加这一项，复制出来的那块照样锁住
+  // （不是变成能拖能删的），不会把“锁住的积木不能复制”这条规矩在学生那边打开一个口子。
+  Blockly.ContextMenuRegistry.registry.register({
+    id: "mpl_lock_duplicate",
+    scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
+    weight: 0,
+    displayText: function () { return "⧉ 复制这块积木（保持锁定）"; },
+    preconditionFn: function (scope) {
+      var b = scope.block;
+      return window.MPL_EDIT && !b.isInFlyout && isLocked(b) && b.isDuplicatable() ? "enabled" : "hidden";
+    },
+    callback: function (scope) {
+      var data = scope.block.toCopyData();
+      if (!data) return;
+      var copy = Blockly.clipboard.paste(data, scope.block.workspace);
+      if (copy && copy.setMovable) MplLock.set(copy, true);
+    }
+  });
+
   window.MplLock = MplLock;
 
   // ---- 让锁住的积木之间也能插入新积木 ----
