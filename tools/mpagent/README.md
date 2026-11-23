@@ -12,6 +12,7 @@ python -m PyInstaller --onefile --noconsole --name "ITtools掌控板助手" mpag
 
 成品 `dist\ITtools掌控板助手.exe` 放进交付包 `学生机脚本\`。
 
+- 后台运行：勾“开机在后台自动运行”会在 `HKCU\...\Run` 写入 `"<exe>" --background`，开机后只显示托盘图标（ctypes 调 Shell_NotifyIcon，无第三方依赖）；关窗口=藏到托盘，托盘右键“退出助手”才退出；已运行时再启动会通过隐藏窗口类 `ITtoolsMpAgentTray` 把窗口叫出来。旧版写的不带 `--background` 的自启项启动时会自动改写。
 - 配置：`%LOCALAPPDATA%\ITtools掌控板助手\config.json`（`server` = 教师机地址:端口）；也可 `ITtools掌控板助手.exe --server 192.168.1.10:8300`。
 - 找 Mind+：卸载信息里登记的安装目录和常见位置下的 `apps\deps\mind-link\tool\arduino-cli.exe`；编译包在 `%LOCALAPPDATA%\mind+\Arduino\packages\mindplus\hardware\esp32`。
 - 找掌控板：注册表里 VID 为 1A86/10C4/303A/0403 的 USB 串口。

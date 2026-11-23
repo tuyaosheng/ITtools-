@@ -159,7 +159,8 @@ onMounted(async () => {
 .user { display: flex; align-items: center; gap: 10px; }
 .name { font-weight: 700; color: var(--hb-ink-deep); }
 .extra { font-size: 12px; color: var(--el-text-color-secondary); background: var(--el-fill-color); padding: 2px 8px; border-radius: 10px; }
-.role-layout__main { background: transparent; padding: 22px; }
+/* el-main 默认 overflow:auto，但滚动的其实是整个窗口；它会让里面的 position:sticky（如课堂左侧“学习环节”）失效 */
+.role-layout__main { background: transparent; padding: 22px; overflow: visible; }
 .role-layout__main.mobile { padding: 12px 10px 24px; overflow-x: hidden; }
 .avatar { cursor: pointer; margin-right: 6px; }
 </style>

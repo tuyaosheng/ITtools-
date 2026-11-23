@@ -20,7 +20,7 @@ import urllib.parse
 import urllib.request
 import winreg
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 APP = 'ITtools掌控板助手'
 FQBN = 'mindplus:esp32:mpython:FlashMode=dio,FlashFreq=80,UploadSpeed=1500000,DebugLevel=none'
 MINDPLUS_FILES = {
@@ -58,12 +58,22 @@ def norm_server(s):
     return s
 
 
+BACKGROUND_ARG = '--background'
+RUN_KEY = r'Software\Microsoft\Windows\CurrentVersion\Run'
+
+
+def autostart_command():
+    """开机自启的命令行：带 --background，开机后只在托盘里运行，不弹窗口。"""
+    if getattr(sys, 'frozen', False):
+        return '"%s" %s' % (sys.executable, BACKGROUND_ARG)
+    return '"%s" "%s" %s' % (sys.executable, os.path.abspath(__file__), BACKGROUND_ARG)
+
+
 def set_autostart(on):
-    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Run', 0, winreg.KEY_SET_VALUE)
+    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY, 0, winreg.KEY_SET_VALUE)
     try:
         if on:
-            exe = sys.executable if getattr(sys, 'frozen', False) else '"%s" "%s"' % (sys.executable, os.path.abspath(__file__))
-            winreg.SetValueEx(key, APP, 0, winreg.REG_SZ, '"%s"' % exe if getattr(sys, 'frozen', False) else exe)
+            winreg.SetValueEx(key, APP, 0, winreg.REG_SZ, autostart_command())
         else:
             try:
                 winreg.DeleteValue(key, APP)
@@ -73,16 +83,228 @@ def set_autostart(on):
         winreg.CloseKey(key)
 
 
-def get_autostart():
+def get_autostart_value():
     try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Run')
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY)
         try:
-            winreg.QueryValueEx(key, APP)
-            return True
+            return winreg.QueryValueEx(key, APP)[0]
         finally:
             winreg.CloseKey(key)
     except OSError:
-        return False
+        return None
+
+
+def get_autostart():
+    return get_autostart_value() is not None
+
+
+def refresh_autostart():
+    """旧版写的自启项没有 --background，或 exe 被挪了位置：改成当前的命令行。"""
+    v = get_autostart_value()
+    if v is not None and v != autostart_command():
+        try:
+            set_autostart(True)
+        except OSError:
+            pass
+
+
+# ---------------- 托盘图标（只用 ctypes 调 Win32） ----------------
+class Tray:
+    """右下角通知区域的图标：单击/双击打开窗口，右键菜单“打开窗口 / 退出”。
+    在自己的线程里跑 Win32 消息循环；点了什么通过 on_show / on_quit 回调交给窗口线程。"""
+    WM_TRAY = 0x8000 + 1      # WM_APP + 1：托盘图标回调
+    WM_SHOW = 0x8000 + 2      # WM_APP + 2：第二次启动时让已运行的助手打开窗口
+    CLASS = 'ITtoolsMpAgentTray'
+    ID_SHOW, ID_QUIT = 1, 2
+
+    def __init__(self, on_show, on_quit):
+        self.on_show, self.on_quit = on_show, on_quit
+        self.hwnd = None
+        self.ok = threading.Event()
+        self.failed = False
+        self.tip = APP
+        self._lock = threading.Lock()
+        threading.Thread(target=self._run, daemon=True).start()
+        self.ok.wait(5)
+
+    # --- Win32 声明 ---
+    def _api(self):
+        import ctypes
+        from ctypes import wintypes as w
+        self.ct, self.w = ctypes, w
+        u32, s32, k32 = ctypes.windll.user32, ctypes.windll.shell32, ctypes.windll.kernel32
+        LRESULT = ctypes.c_ssize_t
+        self.WNDPROC = ctypes.WINFUNCTYPE(LRESULT, w.HWND, w.UINT, w.WPARAM, w.LPARAM)
+
+        class WNDCLASSW(ctypes.Structure):
+            _fields_ = [('style', w.UINT), ('lpfnWndProc', self.WNDPROC), ('cbClsExtra', ctypes.c_int),
+                        ('cbWndExtra', ctypes.c_int), ('hInstance', w.HINSTANCE), ('hIcon', w.HICON),
+                        ('hCursor', w.HANDLE), ('hbrBackground', w.HBRUSH), ('lpszMenuName', w.LPCWSTR),
+                        ('lpszClassName', w.LPCWSTR)]
+
+        class NOTIFYICONDATAW(ctypes.Structure):
+            _fields_ = [('cbSize', w.DWORD), ('hWnd', w.HWND), ('uID', w.UINT), ('uFlags', w.UINT),
+                        ('uCallbackMessage', w.UINT), ('hIcon', w.HICON), ('szTip', w.WCHAR * 128),
+                        ('dwState', w.DWORD), ('dwStateMask', w.DWORD), ('szInfo', w.WCHAR * 256),
+                        ('uVersion', w.UINT), ('szInfoTitle', w.WCHAR * 64), ('dwInfoFlags', w.DWORD),
+                        ('guidItem', ctypes.c_byte * 16), ('hBalloonIcon', w.HICON)]
+
+        self.WNDCLASSW, self.NID = WNDCLASSW, NOTIFYICONDATAW
+        u32.DefWindowProcW.restype = LRESULT
+        u32.DefWindowProcW.argtypes = [w.HWND, w.UINT, w.WPARAM, w.LPARAM]
+        u32.CreateWindowExW.restype = w.HWND
+        u32.CreateWindowExW.argtypes = [w.DWORD, w.LPCWSTR, w.LPCWSTR, w.DWORD, ctypes.c_int, ctypes.c_int,
+                                        ctypes.c_int, ctypes.c_int, w.HWND, w.HMENU, w.HINSTANCE, w.LPVOID]
+        u32.RegisterClassW.argtypes = [ctypes.POINTER(WNDCLASSW)]
+        u32.RegisterWindowMessageW.restype = w.UINT
+        u32.LoadIconW.restype = w.HICON
+        u32.LoadIconW.argtypes = [w.HINSTANCE, w.LPVOID]
+        u32.CreatePopupMenu.restype = w.HMENU
+        u32.AppendMenuW.argtypes = [w.HMENU, w.UINT, ctypes.c_size_t, w.LPCWSTR]
+        u32.TrackPopupMenu.argtypes = [w.HMENU, w.UINT, ctypes.c_int, ctypes.c_int, ctypes.c_int, w.HWND, w.LPVOID]
+        u32.DestroyMenu.argtypes = [w.HMENU]
+        u32.SetForegroundWindow.argtypes = [w.HWND]
+        u32.PostMessageW.argtypes = [w.HWND, w.UINT, w.WPARAM, w.LPARAM]
+        u32.GetCursorPos.argtypes = [ctypes.POINTER(w.POINT)]
+        u32.GetMessageW.argtypes = [ctypes.POINTER(w.MSG), w.HWND, w.UINT, w.UINT]
+        u32.TranslateMessage.argtypes = [ctypes.POINTER(w.MSG)]
+        u32.DispatchMessageW.argtypes = [ctypes.POINTER(w.MSG)]
+        s32.Shell_NotifyIconW.argtypes = [w.DWORD, ctypes.POINTER(NOTIFYICONDATAW)]
+        s32.ExtractIconW.restype = w.HICON
+        s32.ExtractIconW.argtypes = [w.HINSTANCE, w.LPCWSTR, w.UINT]
+        k32.GetModuleHandleW.restype = w.HMODULE
+        self.u32, self.s32, self.k32 = u32, s32, k32
+
+    def _icon(self):
+        hicon = None
+        if getattr(sys, 'frozen', False):
+            try:
+                hicon = self.s32.ExtractIconW(None, sys.executable, 0)
+            except Exception:
+                hicon = None
+            if hicon in (None, 0, 1):
+                hicon = None
+        return hicon or self.u32.LoadIconW(None, self.ct.c_void_p(32512))  # IDI_APPLICATION
+
+    def _nid(self, flags):
+        nid = self.NID()
+        nid.cbSize = self.ct.sizeof(self.NID)
+        nid.hWnd = self.hwnd
+        nid.uID = 1
+        nid.uFlags = flags
+        return nid
+
+    def _add(self):
+        nid = self._nid(0x1 | 0x2 | 0x4)  # NIF_MESSAGE | NIF_ICON | NIF_TIP
+        nid.uCallbackMessage = self.WM_TRAY
+        nid.hIcon = self.hicon
+        nid.szTip = self.tip[:127]
+        return bool(self.s32.Shell_NotifyIconW(0, self.ct.byref(nid)))  # NIM_ADD
+
+    def _run(self):
+        try:
+            self._api()
+            hinst = self.k32.GetModuleHandleW(None)
+            self._proc = self.WNDPROC(self._wndproc)   # 保持引用，防止被回收
+            wc = self.WNDCLASSW()
+            wc.lpfnWndProc = self._proc
+            wc.hInstance = hinst
+            wc.lpszClassName = self.CLASS
+            self.u32.RegisterClassW(self.ct.byref(wc))
+            self.msg_taskbar = self.u32.RegisterWindowMessageW('TaskbarCreated')
+            # 普通的隐藏顶层窗口（不显示）：资源管理器重启后能收到 TaskbarCreated 重新加图标，
+            # 第二次启动的助手也能用 FindWindow 找到它
+            self.hwnd = self.u32.CreateWindowExW(0, self.CLASS, APP, 0, 0, 0, 0, 0, None, None, hinst, None)
+            self.hicon = self._icon()
+            if not self.hwnd or not self._add():
+                raise OSError('无法创建托盘图标')
+        except Exception:
+            self.failed = True
+            self.ok.set()
+            return
+        self.ok.set()
+        msg = self.w.MSG()
+        while self.u32.GetMessageW(self.ct.byref(msg), None, 0, 0) > 0:
+            self.u32.TranslateMessage(self.ct.byref(msg))
+            self.u32.DispatchMessageW(self.ct.byref(msg))
+
+    def _wndproc(self, hwnd, msg, wp, lp):
+        try:
+            if msg == self.WM_TRAY:
+                ev = lp & 0xFFFF
+                if ev in (0x0202, 0x0203):        # WM_LBUTTONUP / WM_LBUTTONDBLCLK
+                    self.on_show()
+                elif ev == 0x0205:                # WM_RBUTTONUP
+                    self._menu()
+                return 0
+            if msg == self.WM_SHOW:
+                self.on_show()
+                return 0
+            if msg == self.msg_taskbar:
+                self._add()
+                return 0
+            if msg == 0x0010:                     # WM_CLOSE
+                self.u32.DestroyWindow(hwnd)
+                return 0
+            if msg == 0x0002:                     # WM_DESTROY
+                self.s32.Shell_NotifyIconW(2, self.ct.byref(self._nid(0)))  # NIM_DELETE
+                self.u32.PostQuitMessage(0)
+                return 0
+        except Exception:
+            pass
+        return self.u32.DefWindowProcW(hwnd, msg, wp, lp)
+
+    def _menu(self):
+        m = self.u32.CreatePopupMenu()
+        self.u32.AppendMenuW(m, 0, self.ID_SHOW, '打开窗口')
+        self.u32.AppendMenuW(m, 0x800, 0, None)   # MF_SEPARATOR
+        self.u32.AppendMenuW(m, 0, self.ID_QUIT, '退出助手')
+        pt = self.w.POINT()
+        self.u32.GetCursorPos(self.ct.byref(pt))
+        self.u32.SetForegroundWindow(self.hwnd)
+        cmd = self.u32.TrackPopupMenu(m, 0x0100 | 0x0002, pt.x, pt.y, 0, self.hwnd, None)  # TPM_RETURNCMD|TPM_RIGHTBUTTON
+        self.u32.PostMessageW(self.hwnd, 0, 0, 0)  # WM_NULL，让菜单能正常收起
+        self.u32.DestroyMenu(m)
+        if cmd == self.ID_SHOW:
+            self.on_show()
+        elif cmd == self.ID_QUIT:
+            self.on_quit()
+
+    # --- 给窗口线程用 ---
+    def set_tip(self, s):
+        if self.failed or not self.hwnd:
+            return
+        with self._lock:
+            self.tip = s[:127]
+            nid = self._nid(0x4)  # NIF_TIP
+            nid.szTip = self.tip
+            self.s32.Shell_NotifyIconW(1, self.ct.byref(nid))  # NIM_MODIFY
+
+    def balloon(self, title, text):
+        if self.failed or not self.hwnd:
+            return
+        nid = self._nid(0x10)  # NIF_INFO
+        nid.szInfoTitle = title[:63]
+        nid.szInfo = text[:255]
+        nid.dwInfoFlags = 0x1  # NIIF_INFO
+        self.s32.Shell_NotifyIconW(1, self.ct.byref(nid))
+
+    def close(self):
+        if self.hwnd and not self.failed:
+            self.u32.PostMessageW(self.hwnd, 0x0010, 0, 0)
+
+
+def notify_running_instance():
+    """助手已经在运行（可能藏在托盘里）：让它把窗口打开。"""
+    import ctypes
+    u32 = ctypes.windll.user32
+    u32.FindWindowW.restype = ctypes.c_void_p
+    u32.FindWindowW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p]
+    hwnd = u32.FindWindowW(Tray.CLASS, None)
+    if hwnd:
+        u32.AllowSetForegroundWindow(-1)  # ASFW_ANY：允许它把窗口提到前台
+        u32.PostMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_ssize_t]
+        u32.PostMessageW(hwnd, Tray.WM_SHOW, 0, 0)
 
 
 # ---------------- 找 Mind+ ----------------
@@ -428,8 +650,9 @@ class UI:
         self.v_server = tk.StringVar(value='正在连接…')
         self.v_env = tk.StringVar(value='')
         self.v_state = tk.StringVar(value='等待上传')
-        tk.Label(f, text='平台的图形化编程点“上传”时，用这台电脑上的 Mind+ 编译并写进掌控板。窗口可以最小化，不要关。',
-                 wraplength=530, justify='left', fg='#555').pack(anchor='w')
+        self.hint = tk.Label(f, text='平台的图形化编程点“上传”时，用这台电脑上的 Mind+ 编译并写进掌控板。',
+                             wraplength=530, justify='left', fg='#555')
+        self.hint.pack(anchor='w')
         row = tk.Frame(f)
         row.pack(fill='x', pady=(6, 0))
         tk.Label(row, text='教师机地址').pack(side='left')
@@ -437,7 +660,7 @@ class UI:
         self.e_server.pack(side='left', padx=6)
         tk.Button(row, text='保存', command=self.save_server).pack(side='left')
         self.v_auto = tk.BooleanVar(value=get_autostart())
-        tk.Checkbutton(row, text='开机自动打开', variable=self.v_auto, command=self.toggle_auto).pack(side='left', padx=10)
+        tk.Checkbutton(row, text='开机在后台自动运行', variable=self.v_auto, command=self.toggle_auto).pack(side='left', padx=10)
         tk.Button(row, text='选择 Mind+ 位置', command=self.pick_mindplus).pack(side='left')
         for v in (self.v_server, self.v_env, self.v_state):
             tk.Label(f, textvariable=v, anchor='w', justify='left').pack(fill='x', pady=1)
@@ -445,7 +668,46 @@ class UI:
         self.txt.pack(fill='both', expand=True, pady=(6, 0))
         cfg = load_config()
         self.e_server.insert(0, cfg.get('server', ''))
+        self.v_server_text, self.v_state_text = '', '等待上传'
+        self.told_tray = False
+        # 托盘图标：关窗口只是藏到托盘，右键托盘图标“退出助手”才真正退出
+        self.tray = Tray(on_show=lambda: self.q.put(('show', '')), on_quit=lambda: self.q.put(('quit', '')))
+        if self.tray.failed:
+            self.hint.config(text=self.hint.cget('text') + '窗口可以最小化，不要关。')
+        else:
+            self.hint.config(text=self.hint.cget('text') + '关掉窗口后助手仍在右下角托盘里运行；要退出请右键托盘图标选“退出助手”。')
+            self.root.protocol('WM_DELETE_WINDOW', self.hide)
         self.root.after(200, self.pump)
+
+    def show(self):
+        self.root.deiconify()
+        self.root.state('normal')
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after(300, lambda: self.root.attributes('-topmost', False))
+        self.root.focus_force()
+
+    def hide(self):
+        self.root.withdraw()
+        if not self.told_tray:
+            self.told_tray = True
+            self.tray.balloon(APP, '助手还在后台运行，上传掌控板不受影响。点右下角托盘图标可以再打开窗口。')
+
+    def start_hidden(self):
+        """开机自启：托盘可用就只放托盘图标，否则最小化到任务栏。"""
+        if self.tray.failed:
+            self.root.iconify()
+        else:
+            self.root.withdraw()
+            self.told_tray = True
+
+    def quit(self):
+        self.tray.close()
+        self.root.destroy()
+
+    def update_tip(self):
+        tip = '%s\n%s\n%s' % (APP, self.v_server_text, self.v_state_text)
+        self.tray.set_tip(tip.strip())
 
     def save_server(self):
         cfg = load_config()
@@ -500,10 +762,20 @@ class UI:
                     self.txt.see('end')
                 elif k == 'state':
                     self.v_state.set(s)
+                    self.v_state_text = s
+                    self.update_tip()
                 elif k == 'server':
                     self.v_server.set(s)
+                    if s != self.v_server_text:
+                        self.v_server_text = s
+                        self.update_tip()
                 elif k == 'env':
                     self.v_env.set(s)
+                elif k == 'show':
+                    self.show()
+                elif k == 'quit':
+                    self.quit()
+                    return
         except queue.Empty:
             pass
         self.root.after(200, self.pump)
@@ -524,14 +796,23 @@ def main():
             cfg = load_config()
             cfg['server'] = norm_server(args[i + 1])
             save_config(cfg)
+    background = BACKGROUND_ARG in args
     if not single_instance():
+        # 已经在运行：手动再打开时把那个窗口叫出来；开机自启重复启动就什么都不做
+        if not background:
+            notify_running_instance()
         return
+    refresh_autostart()
     ui = UI()
     w = Worker(ui)
     ui.worker = w
+    # 开机自启时不弹窗口；还没填教师机地址的话照样打开窗口让人填
+    if background and load_config().get('server'):
+        ui.start_hidden()
     threading.Thread(target=w.loop, daemon=True).start()
     ui.root.mainloop()
     w.stop = True
+    ui.tray.close()
 
 
 if __name__ == '__main__':
