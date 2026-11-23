@@ -426,7 +426,7 @@ docker compose up -d --build
 | --- | --- |
 | 普通上课 | 只要浏览器（Chrome / Edge）能访问 `http://服务器IP:8300` |
 | 掌控板编程 · MicroPython 方式 | 以管理员身份运行一次 `scripts/mpython/配置学生机浏览器.bat`：通过 HKLM 策略把平台地址加入 `OverrideSecurityRestrictionsOnInsecureOrigin` 与 `SerialAllowUsbDevicesForUrls`，让 HTTP 局域网地址也能用 Web Serial |
-| 图形化编程 · Mind+ 方式 | 学生机装好 Mind+（含掌控板与网络扩展），运行「ITtools 掌控板助手」并填写教师机地址，见 [`tools/mpagent/README.md`](tools/mpagent/README.md) |
+| 图形化编程 · Mind+ 方式 | 学生机装好 Mind+（含掌控板与网络扩展），运行「ITtools 掌控板助手」，填写教师机地址并勾选「开机在后台自动运行」（之后开机只在托盘显示图标，不占前台），见 [`tools/mpagent/README.md`](tools/mpagent/README.md) |
 | 机房开断网 | 另需部署网络控制器（CTR，默认 `:8770`），并在「系统设置 → 网络控制器」或机房上配置地址与令牌 |
 
 ---

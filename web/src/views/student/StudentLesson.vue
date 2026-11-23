@@ -29,13 +29,23 @@
         <el-button class="refresh" size="small" @click="loadPages">刷新</el-button>
       </el-card>
 
-      <el-card shadow="never" class="content">
+      <el-card ref="contentCard" shadow="never" class="content">
         <el-empty v-if="!page" description="请从左侧选择学习环节" />
         <template v-else>
           <h2 class="ptitle">{{ page.title }}</h2>
           <PageContent :page="page" />
           <component :is="pageTypes[page.pageType]?.student" v-if="pageTypes[page.pageType]?.student"
             :lesson-id="lesson.id" :page="page" :lesson="lesson" />
+          <!-- 页面很长时（如任务单），做完不用滚回顶部找左边的环节列表 -->
+          <div v-if="prevPage || nextPage" class="pager">
+            <el-button v-if="prevPage" class="pager-prev" @click="openPage(prevPage.id)">
+              ← 上一个：{{ prevPage.title }}
+            </el-button>
+            <span class="grow" />
+            <el-button v-if="nextPage" type="primary" class="pager-next" @click="openPage(nextPage.id)">
+              下一个：{{ nextPage.title }}<span class="pager-type">（{{ pageTypes[nextPage.pageType]?.label }}）</span> →
+            </el-button>
+          </div>
         </template>
       </el-card>
 
@@ -51,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api, errMsg } from '../../api/client'
@@ -92,11 +102,24 @@ async function loadPages() {
   if (page.value && !pages.value.some(p => p.id === page.value.id)) page.value = null
 }
 
+const contentCard = ref<any>(null)
+const pageIndex = computed(() => pages.value.findIndex(p => p.id === page.value?.id))
+const prevPage = computed(() => pageIndex.value > 0 ? pages.value[pageIndex.value - 1] : null)
+const nextPage = computed(() => pageIndex.value >= 0 && pageIndex.value < pages.value.length - 1 ? pages.value[pageIndex.value + 1] : null)
+
 async function openPage(pageId: number) {
+  const switching = page.value != null && page.value.id !== pageId
   try {
     page.value = await api.get(`/student/lessons/${id}/pages/${pageId}`)
   } catch (err) {
     ElMessage.error(errMsg(err))
+    return
+  }
+  // 从长页面底部切到别的环节时，回到新页面的开头
+  if (switching) {
+    await nextTick()
+    const el: HTMLElement | undefined = contentCard.value?.$el
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }
 }
 
@@ -148,8 +171,19 @@ onBeforeUnmount(() => { window.clearInterval(timer); window.clearInterval(hbTime
 .type { font-size: 12px; color: var(--el-text-color-secondary); }
 .refresh { margin-top: 8px; width: 100%; }
 .ptitle { margin-top: 0; }
+.content { scroll-margin-top: 12px; }
+.pager { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 24px; padding-top: 14px; border-top: 1.5px dashed var(--el-border-color); }
+.pager .grow { flex: 1; }
+.pager .el-button { max-width: 100%; white-space: normal; height: auto; min-height: 36px; text-align: left; line-height: 1.4; }
+.pager-type { opacity: .8; font-size: 12px; }
+/* 两栏时右侧工具栏排到下一行；左边“学习环节”占满两行，固定在屏幕上时不会盖住工具栏 */
 .body.wide { grid-template-columns: 200px 1fr; }
-.body.wide .tools { grid-column: 1 / -1; }
-@media (max-width: 1200px) { .body { grid-template-columns: 200px 1fr; } .tools { grid-column: 1 / -1; } }
-@media (max-width: 760px) { .body { grid-template-columns: 1fr; } }
+.body.wide .nav { grid-row: span 2; }
+.body.wide .tools { grid-column: 2; }
+/* 左边“学习环节”跟着屏幕走：页面再长也能直接点到别的环节 */
+@media (min-width: 761px) {
+  .nav { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+}
+@media (max-width: 1200px) { .body { grid-template-columns: 200px 1fr; } .nav { grid-row: span 2; } .tools { grid-column: 2; } }
+@media (max-width: 760px) { .body { grid-template-columns: 1fr; } .nav { grid-row: auto; } .tools { grid-column: auto; } .pager .grow { display: none; } .pager .el-button { width: 100%; margin-left: 0; } }
 </style>
