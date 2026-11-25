@@ -43,9 +43,10 @@
                 <el-option v-for="s in students" :key="s.id" :label="s.name" :value="s.name" />
               </el-select>
             </el-form-item>
-            <el-form-item label="密码" prop="password">
-              <el-input v-model="studentNameForm.password" type="password" show-password placeholder="请输入密码" />
+            <el-form-item v-if="!noPassword" label="密码" prop="password">
+              <el-input v-model="studentNameForm.password" type="password" show-password placeholder="请输入密码" @keyup.enter="submitStudentName" />
             </el-form-item>
+            <div v-else class="nopwd-tip">选好自己的名字，直接点登录 ✏️</div>
             <el-button type="primary" class="full-width" :loading="loading" @click="submitStudentName">登录</el-button>
           </el-form>
         </el-tab-pane>
@@ -132,12 +133,14 @@ const studentNameForm = reactive({
   name: '',
   password: ''
 })
-const studentNameRules: FormRules = {
+// 管理员开启“班级姓名免密登录”时不显示密码框
+const noPassword = ref(false)
+const studentNameRules = computed<FormRules>(() => ({
   yearId: [{ required: true, message: '请选择学年', trigger: 'change' }],
   classId: [{ required: true, message: '请选择班级', trigger: 'change' }],
   name: [{ required: true, message: '请选择姓名', trigger: 'change' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-}
+  password: noPassword.value ? [] : [{ required: true, message: '请输入密码', trigger: 'blur' }]
+}))
 
 // 工作模式（系统设置）：学号模式只显示学号入口，其余模式显示班级+姓名入口；未取得设置时全部显示
 const schoolName = ref('信息科技教学辅助平台')
@@ -155,6 +158,7 @@ onMounted(async () => {
       document.title = data.data.schoolName
       notice.value = data.data.notice || ''
       loginMode.value = data.data.loginMode
+      noPassword.value = data.data.studentNoPassword === 'true'
       if (loginMode.value === 'XJH') activeTab.value = 'student-xjh'
     }
   } catch {
@@ -232,7 +236,7 @@ async function submitStudentName() {
     yearCode: year?.yearCode,
     className: klass?.name,
     name: studentNameForm.name,
-    password: studentNameForm.password
+    password: noPassword.value ? '' : studentNameForm.password
   })
 }
 
@@ -305,6 +309,9 @@ async function submitAdmin() {
   background: linear-gradient(transparent 55%, var(--hb-marker) 55%);
 }
 .login-alert { margin-bottom: 16px; }
+.nopwd-tip {
+  text-align: center; font-size: 13px; color: var(--hb-ink); margin: -4px 0 14px;
+}
 .full-width { width: 100%; }
 .login-notice {
   white-space: pre-wrap; background: #fff8e1; border: 1.5px dashed var(--hb-line);

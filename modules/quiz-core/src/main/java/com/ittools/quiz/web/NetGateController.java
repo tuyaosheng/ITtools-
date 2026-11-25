@@ -52,6 +52,7 @@ public class NetGateController {
         gate.save(CurrentUser.id(), lessonId, testId, pass, b.intv("maxTries", 1), b.bool("enabled", true),
                 b.longs("pageIds"), homeworkPass == null ? 100 : homeworkPass, b.bool("requireGroup", false), b.bool("groupPrograms", false),
                 b.bool("requirePair", false));
+        gate.setClosedMode(lessonId, b.str("closedMode"));
         return ApiResponse.ok(null);
     }
 

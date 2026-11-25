@@ -11,10 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,7 @@ import java.util.stream.Stream;
 import static com.ittools.platform.db.Sql.p;
 
 /**
- * 课件包（原 storyline：Storyline 发布包 / 打包的网站，rar 改为 zip）。
+ * 课件包（原 storyline：Storyline 发布包 / 打包的网站，rar 改为 zip；也可直接上传单个 html 网页）。
  * 解压到 storage/courseware/{包编号}/，由 /courseware/{包编号}/** 公开提供（编号不可猜测，响应带 CSP sandbox）。
  */
 @Service
@@ -33,6 +35,8 @@ public class CoursewareService {
     public static final Pattern PACKAGE_ID = Pattern.compile("[0-9a-f]{32}");
     static final long MAX_TOTAL = 500L * 1024 * 1024;
     static final int MAX_ENTRIES = 20000;
+    /** 上传单个 html 时在包内保存的文件名。 */
+    static final String SINGLE_ENTRY = "index.html";
     private static final List<String> ENTRY_CANDIDATES = Arrays.asList("story.html", "story_html5.html", "index.html", "index.htm", "index_lms.html");
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -89,15 +93,30 @@ public class CoursewareService {
         courses.requireOwner(teacherId, ((Number) pg.get("courseId")).longValue());
         if (!"STORYLINE".equals(pg.get("pageType"))) throw new IllegalArgumentException("只有课件包页面可以上传课件包");
         String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
-        if (!name.toLowerCase().endsWith(".zip")) throw new IllegalArgumentException("请上传 zip 格式的课件包");
+        String lower = name.toLowerCase();
+        // 单个网页（自己做的互动网页等）：直接存成只有一个 index.html 的课件包，播放、全屏、沙箱与 zip 包完全相同
+        boolean single = lower.endsWith(".html") || lower.endsWith(".htm");
+        if (!lower.endsWith(".zip") && !single) throw new IllegalArgumentException("请上传 zip 格式的课件包，或单个 html 网页文件");
         String id = UUID.randomUUID().toString().replace("-", "");
         Path dir = base().resolve(id);
         File tmp = null;
         try {
-            tmp = File.createTempFile("courseware", ".zip");
-            file.transferTo(tmp);
-            List<String> files = ZipPackage.extract(tmp, dir, MAX_TOTAL, MAX_ENTRIES).files;
-            String start = findEntry(files, entry);
+            List<String> files;
+            String start;
+            if (single) {
+                if (file.getSize() > MAX_TOTAL) throw new IllegalArgumentException("网页文件过大");
+                Files.createDirectories(dir);
+                try (InputStream in = file.getInputStream()) {
+                    Files.copy(in, dir.resolve(SINGLE_ENTRY));
+                }
+                files = Collections.singletonList(SINGLE_ENTRY);
+                start = SINGLE_ENTRY;
+            } else {
+                tmp = File.createTempFile("courseware", ".zip");
+                file.transferTo(tmp);
+                files = ZipPackage.extract(tmp, dir, MAX_TOTAL, MAX_ENTRIES).files;
+                start = findEntry(files, entry);
+            }
             Map<String, Object> cfg = config(pageId);
             Object old = cfg.get("package");
             cfg.put("package", id);
@@ -109,7 +128,7 @@ public class CoursewareService {
             return cfg;
         } catch (IOException e) {
             ZipPackage.deleteDir(dir);
-            throw new IllegalArgumentException("课件包解压失败：" + e.getMessage());
+            throw new IllegalArgumentException((single ? "网页保存失败：" : "课件包解压失败：") + e.getMessage());
         } catch (RuntimeException e) {
             ZipPackage.deleteDir(dir);
             throw e;

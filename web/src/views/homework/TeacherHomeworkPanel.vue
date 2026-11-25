@@ -43,10 +43,16 @@
           </template>
         </template>
       </el-table-column>
-      <el-table-column label="自动分" width="90">
+      <el-table-column label="自动分" min-width="170">
         <template #default="{ row }: { row: any }">
           <el-popover v-if="row.autoDetail" trigger="hover" :width="520">
-            <template #reference><el-link>{{ row.autoScore }}/{{ row.autoMax }}</el-link></template>
+            <template #reference>
+              <span class="auto-cell">
+                <b :class="autoClass(row)">{{ row.autoScore }}/{{ row.autoMax }}</b>
+                <span v-if="failedItems(row).length" class="failed">缺：{{ failedItems(row).join('、') }}</span>
+                <span v-else class="allok">全部通过</span>
+              </span>
+            </template>
             <AutoDetail :detail="row.autoDetail" />
           </el-popover>
           <span v-else>—</span>
@@ -145,6 +151,18 @@ const rows = computed(() => {
   if (filter.value === 'ungraded') return all.filter((s: any) => s.id && s.teacherScore == null)
   return all
 })
+// 自动分一眼看懂：满分绿色、不到六成红色，下面直接列出没通过的评分点
+function failedItems(row: any): string[] {
+  try {
+    return (JSON.parse(row.autoDetail) as any[]).filter(d => !d.passed).map(d => d.name)
+  } catch {
+    return []
+  }
+}
+function autoClass(row: any) {
+  const r = row.autoMax ? row.autoScore / row.autoMax : 0
+  return r >= 0.999 ? 'sc-full' : r < 0.6 ? 'sc-low' : 'sc-mid'
+}
 const rubricTotal = computed(() => Object.values(rubricScores).reduce((a, b) => a + (Number(b) || 0), 0))
 const base = () => `/teacher/homework/lessons/${props.lessonId}/pages/${props.page.id}`
 // Mind+ / 平台图形化编程交的 .mpcode：在图形化编程里只读打开
@@ -251,6 +269,11 @@ onMounted(load)
 .batch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 8px; background: var(--el-color-primary-light-9); border-radius: 6px; font-size: 13px; }
 .w90 { width: 90px; } .w110 { width: 110px; } .w200 { width: 200px; }
 .ml { margin-left: 6px; }
+.auto-cell { display: inline-flex; flex-direction: column; cursor: default; line-height: 1.4; }
+.auto-cell b { font-size: 15px; }
+.sc-full { color: var(--el-color-success); } .sc-mid { color: var(--el-color-warning); } .sc-low { color: var(--el-color-danger); }
+.failed { font-size: 12px; color: var(--el-color-danger); }
+.allok { font-size: 12px; color: var(--el-color-success); }
 .w-title { font-weight: 600; font-size: 13px; }
 .rating { margin-left: 6px; font-size: 12px; color: var(--el-color-warning); }
 </style>

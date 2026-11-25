@@ -4,12 +4,12 @@
     <el-form-item label="上传课件包">
       <div class="col">
         <div class="row">
-          <el-upload :show-file-list="false" accept=".zip" :http-request="upload">
-            <el-button size="small" :loading="uploading">{{ info.url ? '重新上传' : '选择 zip 文件' }}</el-button>
+          <el-upload :show-file-list="false" accept=".zip,.html,.htm" :http-request="upload">
+            <el-button size="small" :loading="uploading">{{ info.url ? '重新上传' : '选择 zip 或 html 文件' }}</el-button>
           </el-upload>
           <span v-if="info.fileName" class="muted">当前：{{ info.fileName }}</span>
         </div>
-        <div><Hint block>Storyline 发布（HTML5）后的文件夹打包成 zip 上传；也可以上传自己制作的网站。系统自动识别 story.html / index.html 作为主页。</Hint></div>
+        <div><Hint block>Storyline 发布（HTML5）后的文件夹打包成 zip 上传；也可以上传自己制作的网站。系统自动识别 story.html / index.html 作为主页。单个网页（所有内容都在一个 html 文件里的互动网页）可以直接上传 html 文件，不用压缩。</Hint></div>
       </div>
     </el-form-item>
     <el-form-item v-if="info.htmlFiles?.length" label="主页文件">
