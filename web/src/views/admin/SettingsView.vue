@@ -53,6 +53,11 @@
       <el-form-item label="登录页公告">
         <el-input v-model="form['site.notice']" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="显示在登录页" />
       </el-form-item>
+      <el-form-item label="班级姓名免密登录">
+        <el-switch v-model="studentNoPassword" />
+        <Hint>开启后，学生在登录页选学年、班级、姓名，直接点登录，不用输密码；适合机房上课快速登录。
+          只放开“班级姓名”这一种方式，学号登录、教师、管理员仍要密码。学生能冒用同学的名字登录，必要时配合“学生单处登录”和课堂考勤核对。</Hint>
+      </el-form-item>
       <el-form-item label="学生改密码">
         <el-switch v-model="studentPassword" />
       </el-form-item>
@@ -147,6 +152,7 @@ const bool = (k: string) => computed({
 })
 const studentPassword = bool('student.allowPasswordChange')
 const studentAvatar = bool('student.allowAvatarChange')
+const studentNoPassword = bool('login.studentNoPassword')
 const ssoEnabled = bool('sso.enabled')
 const origin = window.location.origin
 const netEnabled = bool('net.enabled')

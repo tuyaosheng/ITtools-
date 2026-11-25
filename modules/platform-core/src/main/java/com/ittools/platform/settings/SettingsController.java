@@ -34,6 +34,7 @@ public class SettingsController {
         m.put("schoolName", svc.get(SystemSettingService.SCHOOL_NAME));
         m.put("loginMode", svc.get(SystemSettingService.LOGIN_MODE));
         m.put("notice", svc.get(SystemSettingService.SITE_NOTICE));
+        m.put("studentNoPassword", svc.get(SystemSettingService.STUDENT_NO_PASSWORD));
         return ApiResponse.ok(m);
     }
 }

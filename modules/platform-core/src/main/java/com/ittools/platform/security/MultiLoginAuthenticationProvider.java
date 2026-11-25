@@ -4,6 +4,7 @@ import com.ittools.platform.domain.Role;
 import com.ittools.platform.domain.User;
 import com.ittools.platform.repository.KlassRepository;
 import com.ittools.platform.repository.UserRepository;
+import com.ittools.platform.settings.SystemSettingService;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
@@ -19,8 +20,11 @@ public class MultiLoginAuthenticationProvider {
     private final UserRepository users;
     private final KlassRepository classes;
     private final PasswordEncoder encoder;
+    private final SystemSettingService settings;
 
-    public MultiLoginAuthenticationProvider(UserRepository users, KlassRepository classes, PasswordEncoder encoder) {
+    public MultiLoginAuthenticationProvider(UserRepository users, KlassRepository classes, PasswordEncoder encoder,
+                                            SystemSettingService settings) {
+        this.settings = settings;
         this.users = users;
         this.classes = classes;
         this.encoder = encoder;
@@ -44,7 +48,9 @@ public class MultiLoginAuthenticationProvider {
         if (u.getRole() == Role.STUDENT && u.isGraduated()) {
             throw new DisabledException("学生已毕业");
         }
-        if (!encoder.matches(req.password(), u.getPasswordHash())) {
+        // 管理员开启“班级姓名免密登录”后，学生选班级、点姓名即可登录（只放开这一种方式，学号/教师/管理员仍要密码）
+        boolean noPassword = "STUDENT_NAME".equals(req.loginType()) && settings.getBool(SystemSettingService.STUDENT_NO_PASSWORD);
+        if (!noPassword && (req.password() == null || !encoder.matches(req.password(), u.getPasswordHash()))) {
             throw new BadCredentialsException("密码错误");
         }
         String uname = u.getLoginName() != null ? u.getLoginName()

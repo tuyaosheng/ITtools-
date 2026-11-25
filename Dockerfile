@@ -30,6 +30,8 @@ RUN mvn -q -DskipTests -Dskip.frontend.build=true package
 
 # ---- Stage 3: runtime -------------------------------------------------------
 FROM eclipse-temurin:8-jre
+# 课件在线显示：LibreOffice 把 PPT 转成带动画的演示；中文字体让 PPT 图片模式、Word 转换不出现方框
+RUN apt-get update  && apt-get install -y --no-install-recommends libreoffice-impress fonts-noto-cjk  && rm -rf /var/lib/apt/lists/*
 COPY --from=build /src/ittools-app/target/ittools-app-*.jar /app.jar
 EXPOSE 8300
 ENTRYPOINT ["java","-jar","/app.jar"]

@@ -35,6 +35,8 @@ public class SystemSettingService {
     /** 学生可自行修改密码 / 上传头像 */
     public static final String STUDENT_PASSWORD = "student.allowPasswordChange";
     public static final String STUDENT_AVATAR = "student.allowAvatarChange";
+    /** 学生按“班级 + 姓名”登录时不用输密码（机房快速登录） */
+    public static final String STUDENT_NO_PASSWORD = "login.studentNoPassword";
     /** 第三方程序登录（原 weblogin.aspx）：开关与签名密钥 */
     public static final String SSO_ENABLED = "sso.enabled";
     public static final String SSO_SECRET = "sso.secret";
@@ -66,6 +68,7 @@ public class SystemSettingService {
         DEFAULTS.put(SITE_NOTICE, "");
         DEFAULTS.put(STUDENT_PASSWORD, "true");
         DEFAULTS.put(STUDENT_AVATAR, "false");
+        DEFAULTS.put(STUDENT_NO_PASSWORD, "false");
         DEFAULTS.put(SSO_ENABLED, "false");
         DEFAULTS.put(SSO_SECRET, "");
         DEFAULTS.put(SITE_MAX_MB, "20");
