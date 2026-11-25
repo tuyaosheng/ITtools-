@@ -161,5 +161,19 @@ class CoursewareIT extends AbstractPostgresIT {
         upload(t, up, zip(utf8, "index.html", "<p>v3</p>"), "v3.zip");
         assertThat(rest.getForEntity(java.net.URI.create("http://localhost:" + port + new java.net.URI(null, null, url2, null).toASCIIString()), String.class).getStatusCode())
                 .as("副本仍引用旧包").isEqualTo(HttpStatus.OK);
+
+        // 单个 html 网页直接上传：存成 index.html，同样走沙箱公开地址
+        String page8 = "<!doctype html><meta charset=utf-8><title>第8课</title><body>单页互动网页</body>";
+        ResponseEntity<String> one = upload(t, up, page8.getBytes(utf8), "第8课-互动课堂.html");
+        assertThat(one.getStatusCode()).as(one.getBody()).isEqualTo(HttpStatus.OK);
+        JsonNode oneCfg = om.readTree(one.getBody()).get("data");
+        String url3 = oneCfg.get("url").asText();
+        assertThat(url3).matches("/courseware/[0-9a-f]{32}/index\\.html");
+        assertThat(oneCfg.get("fileName").asText()).isEqualTo("第8课-互动课堂.html");
+        ResponseEntity<byte[]> f3 = rest.getForEntity(url3, byte[].class);
+        assertThat(new String(f3.getBody(), utf8)).contains("单页互动网页");
+        assertThat(f3.getHeaders().getFirst("Content-Security-Policy")).startsWith("sandbox allow-scripts");
+        assertThat(upload(t, up, page8.getBytes(utf8), "x.HTM").getStatusCode()).as("大写扩展名也可以").isEqualTo(HttpStatus.OK);
+        assertThat(upload(t, up, "x".getBytes(utf8), "a.txt").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }

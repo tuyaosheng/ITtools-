@@ -84,7 +84,7 @@ export const pageTypes: Record<string, PageTypeDef> = {
   },
   STORYLINE: {
     label: '课件包',
-    desc: '上传 Storyline 等发布的 HTML5 课件包（zip），课堂中直接播放',
+    desc: '上传 Storyline 等发布的 HTML5 课件包（zip）或单个网页（html），课堂中直接播放、可全屏',
     student: defineAsyncComponent(() => import('../views/activity/CoursewareFrame.vue')),
     teacher: defineAsyncComponent(() => import('../views/activity/CoursewareFrame.vue')),
     settings: defineAsyncComponent(() => import('../views/activity/CoursewareSettings.vue'))
