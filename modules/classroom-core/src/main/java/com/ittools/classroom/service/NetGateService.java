@@ -48,11 +48,18 @@ public class NetGateService {
     public Map<String, Object> rule(Long lessonId) {
         List<Map<String, Object>> l = jdbc.queryForList("SELECT g.lesson_id AS \"lessonId\", g.test_id AS \"testId\", t.page_id AS \"pageId\", "
                 + "t.title AS \"title\", g.pass_score AS \"passScore\", g.max_tries AS \"maxTries\", g.enabled, g.homework_pass AS \"homeworkPass\", "
-                + "g.require_group AS \"requireGroup\", g.group_programs AS \"groupPrograms\", g.require_pair AS \"requirePair\" "
+                + "g.require_group AS \"requireGroup\", g.group_programs AS \"groupPrograms\", g.require_pair AS \"requirePair\", g.closed_mode AS \"closedMode\" "
                 + "FROM lesson_net_gate g JOIN quiz_test t ON t.id = g.test_id WHERE g.lesson_id = :l", p("l", lessonId));
         if (l.isEmpty()) return null;
         l.get(0).put("pages", requiredPages(lessonId));
         return l.get(0);
+    }
+
+    /** 没达标的学生是断网（DISCONNECT）还是白名单（WHITELIST）；保存规则后调用，立即对账。 */
+    @Transactional
+    public void setClosedMode(Long lessonId, String mode) {
+        String m = "DISCONNECT".equalsIgnoreCase(mode) ? "DISCONNECT" : "WHITELIST";
+        jdbc.update("UPDATE lesson_net_gate SET closed_mode = :m WHERE lesson_id = :l", p("m", m, "l", lessonId));
     }
 
     /** 本堂课规则要求的页面（id、标题、类型）：作品页要达标，任务单要提交过。按课程页面顺序。 */
@@ -632,10 +639,13 @@ public class NetGateService {
             if (st == null) return;
             // 要求全组或本对完成时，一个人的变化会影响别人，全部重新对一遍
             boolean requireGroup = !jdbc.queryForList("SELECT 1 FROM lesson_net_gate WHERE lesson_id = :l AND (require_group OR require_pair)", p("l", lessonId)).isEmpty();
+            List<String> cm = jdbc.queryForList("SELECT closed_mode FROM lesson_net_gate WHERE lesson_id = :l", p("l", lessonId), String.class);
+            boolean whitelist = cm.isEmpty() || "WHITELIST".equals(cm.get(0));
             for (Map<String, Object> r : decisions(lessonId)) {
                 // 要求全组完成时，一个人的变化会影响同组所有人
                 if (r.get("ip") == null || (onlyStudent != null && !requireGroup && !onlyStudent.equals(((Number) r.get("studentId")).longValue()))) continue;
-                apply(st, (String) r.get("ip"), Boolean.TRUE.equals(r.get("open")));
+                // 老师手动“断网”的学生（override = CUT）始终是断网，白名单只用于“还没达标”的学生
+                apply(st, (String) r.get("ip"), Boolean.TRUE.equals(r.get("open")), whitelist && !"CUT".equals(r.get("override")));
             }
         } catch (RuntimeException e) {
             log.debug("成绩开网对账失败（课堂 {}）：{}", lessonId, e.getMessage());
@@ -656,14 +666,34 @@ public class NetGateService {
         }
     }
 
-    /** 只在电脑在线且实际状态与期望不同时下发指令（CTR 的 normal = 网络正常）。 */
     private void apply(Map<String, Map<String, Object>> st, String ip, boolean wantOpen) {
+        apply(st, ip, wantOpen, false);
+    }
+
+    /**
+     * 只在电脑在线且实际状态与期望不同时下发指令（CTR 的 normal = 网络正常）。
+     * 没达标时：whitelist = true 走白名单（CTR 白名单为空或没有这个接口时退回断网），否则断网。
+     */
+    private void apply(Map<String, Map<String, Object>> st, String ip, boolean wantOpen, boolean whitelist) {
         Map<String, Object> agent = st.get(ip);
         if (agent == null || !Boolean.TRUE.equals(agent.get("online"))) return;
-        boolean open = "normal".equals(agent.get("netState"));
-        if (open == wantOpen) return;
+        String cur = String.valueOf(agent.get("netState"));
+        boolean open = "normal".equals(cur);
         try {
-            network.setIp(ip, wantOpen);
+            if (wantOpen) {
+                if (!open) network.setIp(ip, true);
+            } else if (whitelist) {
+                if ("whitelist".equals(cur)) return;
+                try {
+                    network.setIpWhitelist(ip);
+                } catch (IllegalArgumentException e) {
+                    // 白名单用不了（为空 / 旧版 CTR）：退回断网，避免没达标的学生反而能上网
+                    log.warn("白名单模式失败，{} 改为断网：{}", ip, e.getMessage());
+                    if (open) network.setIp(ip, false);
+                }
+            } else if (open || "whitelist".equals(cur)) {
+                network.setIp(ip, false);
+            }
         } catch (RuntimeException e) {
             log.debug("{} {} 失败：{}", wantOpen ? "开网" : "断网", ip, e.getMessage());
         }

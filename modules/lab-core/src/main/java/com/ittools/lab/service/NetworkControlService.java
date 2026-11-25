@@ -83,6 +83,20 @@ public class NetworkControlService {
                 p("ip", ip, "on", on));
     }
 
+    /**
+     * 让某台电脑进入白名单模式（只放行 CTR“规则管理 → 白名单”里已启用的网站）。CTR 的白名单为空时它返回 409、不会下发，
+     * 这里抛出带说明的异常，调用方可以退回断网。记录的“最后指令”按未开网算。
+     */
+    public void setIpWhitelist(String ip) {
+        Ctr ctr = ctrOf(ip);
+        requireEnabled();
+        if (ip == null || !ip.matches("\\d{1,3}(\\.\\d{1,3}){3}")) throw new IllegalArgumentException("没有这台电脑的 IP（" + ip + "）");
+        statusCache.remove(ctr);
+        call(ctr, "/api/network/whitelist_ip?ip=" + enc(ip));
+        jdbc.update("INSERT INTO lab_net_state(ip_address, enabled) VALUES (:ip, FALSE) ON CONFLICT (ip_address) DO UPDATE SET enabled = FALSE, updated_at = now()",
+                p("ip", ip));
+    }
+
     /** 各被控端状态（ip → {online, netState, hostname}），合并所有 CTR 的结果；全都连不上才返回 null。 */
     public Map<String, Map<String, Object>> statusByIp() {
         if (!enabled()) return null;
@@ -293,6 +307,8 @@ public class NetworkControlService {
             String body = in == null ? "" : read(in);
             if (code == 401) throw new IllegalArgumentException("网络控制器拒绝：令牌不正确");
             if (code == 403) throw new IllegalArgumentException("网络控制器拒绝了请求（403），请在网络控制器设置令牌，并在这里填写相同的令牌");
+            if (code == 409) throw new IllegalArgumentException("网络控制器的白名单是空的：请在主控端“规则管理 → 白名单”里添加并启用要放行的网站");
+            if (code == 404 && path.contains("whitelist")) throw new IllegalArgumentException("这个版本的网络控制器没有白名单接口，请升级主控端到 V2.0.0 或更新版本");
             if (code >= 400) throw new IllegalArgumentException("网络控制器返回错误 " + code);
             return json.readTree(body.isEmpty() ? "{}" : body);
         } catch (IOException e) {

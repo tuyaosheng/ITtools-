@@ -3,6 +3,10 @@
     <el-empty v-if="!list.length" description="本课程没有作品提交页" />
     <el-table v-else :data="list" stripe>
       <el-table-column prop="title" label="作品页" />
+      <el-table-column label="对象" width="80">
+        <template #default="{ row }: { row: any }"><el-tag v-if="row.visibleRoles" size="small">{{ row.visibleRoles }}组</el-tag><span v-else class="muted">全班</span></template>
+      </el-table-column>
+      <el-table-column label="满分" width="70"><template #default="{ row }: { row: any }">{{ row.fullScore || '—' }}</template></el-table-column>
       <el-table-column label="提交" width="110">
         <template #default="{ row }: { row: any }">
           <el-progress :percentage="row.studentCount ? Math.round(row.submitted * 100 / row.studentCount) : 0" :format="() => `${row.submitted}/${row.studentCount}`" />
@@ -55,3 +59,7 @@ onMounted(async () => {
   if (groups.value.every((g: any) => !g.groupNo)) groups.value = []
 })
 </script>
+
+<style scoped>
+.muted { color: var(--el-text-color-secondary); font-size: 12px; }
+</style>

@@ -35,6 +35,13 @@
         <el-form-item v-if="form.requireGroup && form.pageIds.length" label="作品组内有人交就算">
           <el-switch v-model="form.groupPrograms" :disabled="saving" />
         </el-form-item>
+        <el-form-item label="没达标时">
+          <el-radio-group v-model="form.closedMode" :disabled="saving">
+            <el-radio-button value="WHITELIST">白名单（只能上放行的网站）</el-radio-button>
+            <el-radio-button value="DISCONNECT">断网</el-radio-button>
+          </el-radio-group>
+          <div class="unit">白名单用网络控制器主控端“规则管理 → 白名单”里已启用的网站；名单是空的时自动改为断网。你手动“断网”的学生始终是断网。</div>
+        </el-form-item>
         <el-form-item label="本对各组都完成才开网">
           <el-switch v-model="form.requirePair" :disabled="saving" />
         </el-form-item>
@@ -43,7 +50,7 @@
           <el-button v-if="rule" :disabled="!active" @click="remove">取消并恢复网络</el-button>
         </el-form-item>
       </el-form>
-      <Hint>启用后，没达标的学生会被断网，交卷分数 ≥ 达标分数、所选作品每个都达标就自动开网（作品得分优先用老师打的分，否则用自动评分；被发回的不算）；每人可交卷的次数 = 每人机会 + 你额外给的。
+      <Hint>启用后，没达标的学生会进入白名单（或断网，看上面的选择），交卷分数 ≥ 达标分数、所选作品每个都达标就自动开网（作品得分优先用老师打的分，否则用自动评分；被发回的不算）；每人可交卷的次数 = 每人机会 + 你额外给的。
         没达标且还有机会的学生，在测验页点“重新作答”重做；机会用完需要你加机会或直接放行。下课后会自动恢复所有人的网络。需要先启用网络控制器。
         任务单（课堂调查页）只看交没交，不看对错。
         打开“小组全员完成才开网”后，同组出席的同学都达标才一起开网，没进组的不开网，学生进组后不能自己退出或换组；手动放行的学生算已完成，但只开他自己的网。
@@ -133,7 +140,7 @@ const surveyPages = computed<any[]>(() => (props.lesson.pages || []).filter((p: 
 const rule = ref<any>(null)
 const students = ref<any[]>([])
 const saving = ref(false)
-const form = reactive<{ pageId?: number; passScore?: number; maxTries: number; pageIds: number[]; sheetIds: number[]; homeworkPass: number; requireGroup: boolean; groupPrograms: boolean; requirePair: boolean }>({ pageId: undefined, passScore: undefined, maxTries: 2, pageIds: [], sheetIds: [], homeworkPass: 100, requireGroup: false, groupPrograms: false, requirePair: false })
+const form = reactive<{ pageId?: number; passScore?: number; maxTries: number; pageIds: number[]; sheetIds: number[]; homeworkPass: number; requireGroup: boolean; groupPrograms: boolean; requirePair: boolean; closedMode: string }>({ pageId: undefined, passScore: undefined, maxTries: 2, pageIds: [], sheetIds: [], homeworkPass: 100, requireGroup: false, groupPrograms: false, requirePair: false, closedMode: 'WHITELIST' })
 const pairs = ref<any[]>([])
 const hasRoles = computed(() => students.value.some((s: any) => s.role))
 const papers = ref<any[]>([])
@@ -176,6 +183,7 @@ async function load() {
     form.requireGroup = !!d.rule.requireGroup
     form.groupPrograms = !!d.rule.groupPrograms
     form.requirePair = !!d.rule.requirePair
+    form.closedMode = d.rule.closedMode === 'DISCONNECT' ? 'DISCONNECT' : 'WHITELIST'
   }
   // 只有一个测验页时直接选上
   if (!d.rule && form.pageId === undefined && quizPages.value.length === 1) form.pageId = quizPages.value[0].id
@@ -184,8 +192,8 @@ async function load() {
 async function save() {
   saving.value = true
   try {
-    await api.put(`/teacher/quiz/lessons/${lessonId}/net-gate`, { pageId: form.pageId, passScore: form.passScore, maxTries: form.maxTries, enabled: true, pageIds: [...form.pageIds, ...form.sheetIds], homeworkPass: form.homeworkPass, requireGroup: form.requireGroup, groupPrograms: form.requireGroup && form.groupPrograms, requirePair: form.requirePair })
-    ElMessage.success('已启用，没达标的学生马上断网')
+    await api.put(`/teacher/quiz/lessons/${lessonId}/net-gate`, { pageId: form.pageId, passScore: form.passScore, maxTries: form.maxTries, enabled: true, pageIds: [...form.pageIds, ...form.sheetIds], homeworkPass: form.homeworkPass, requireGroup: form.requireGroup, groupPrograms: form.requireGroup && form.groupPrograms, requirePair: form.requirePair, closedMode: form.closedMode })
+    ElMessage.success(form.closedMode === 'WHITELIST' ? '已启用，没达标的学生马上进入白名单模式' : '已启用，没达标的学生马上断网')
     await load()
   } catch (err) {
     ElMessage.error(errMsg(err))
@@ -206,6 +214,7 @@ async function remove() {
     form.requireGroup = false
     form.groupPrograms = false
     form.requirePair = false
+    form.closedMode = 'WHITELIST'
     await load()
     ElMessage.success('已取消，正在恢复网络')
   } catch (err) {

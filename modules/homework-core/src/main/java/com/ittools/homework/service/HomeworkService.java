@@ -332,7 +332,7 @@ public class HomeworkService {
         Map<String, Object> out = new HashMap<>();
         out.put("config", config(pageId));
         out.put("rubric", rubricItemsFor(pageId));
-        out.put("students", jdbc.queryForList(
+        List<Map<String, Object>> studentRows = jdbc.queryForList(
                 "SELECT st.id AS \"studentId\", st.name AS \"studentName\", st.student_no AS \"studentNo\", s.id, s.file_name AS \"fileName\", "
                         + "s.file_size AS \"fileSize\", s.description, s.pc_name AS \"pcName\", s.submitted_at AS \"submittedAt\", "
                         + "s.submit_count AS \"submitCount\", s.late, s.auto_score AS \"autoScore\", s.auto_max AS \"autoMax\", "
@@ -341,7 +341,17 @@ public class HomeworkService {
                         + "(SELECT ROUND(AVG(pr.score), 1) FROM peer_review pr WHERE pr.submission_id = s.id) AS \"peerAvg\" "
                         + "FROM lesson l JOIN users st ON st.class_id = l.class_id AND st.role = 'STUDENT' AND NOT st.graduated "
                         + "LEFT JOIN submission s ON s.lesson_id = l.id AND s.page_id = :p AND s.student_id = st.id "
-                        + "WHERE l.id = :l ORDER BY st.student_no NULLS LAST, st.name", p("l", lessonId, "p", pageId)));
+                        + "WHERE l.id = :l ORDER BY st.student_no NULLS LAST, st.name", p("l", lessonId, "p", pageId));
+        // 页面按角色显示（如门铃组/显示组）时，只列本角色学生，其他角色的人不算“未交”；已交的作品无论如何保留
+        List<String> vr = jdbc.queryForList("SELECT COALESCE(visible_roles, '') FROM course_page WHERE id = :p", p("p", pageId), String.class);
+        String visibleRoles = vr.isEmpty() ? "" : vr.get(0);
+        if (!visibleRoles.trim().isEmpty()) {
+            studentRows = studentRows.stream()
+                    .filter(r -> r.get("id") != null
+                            || LessonService.visibleToRole(visibleRoles, lessons.roleOf(lessonId, ((Number) r.get("studentId")).longValue())))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        out.put("students", studentRows);
         return out;
     }
 
@@ -451,8 +461,30 @@ public class HomeworkService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> lessonSummary(Long teacherId, Long lessonId) {
         lessons.requireTeacher(teacherId, lessonId);
+        List<Map<String, Object>> rows = lessonSummaryRows(lessonId);
+        // 全班人数 → 本页面应交人数（按角色显示的页只算该角色的学生）
+        List<Long> studentIds = jdbc.queryForList("SELECT st.id FROM lesson l JOIN users st ON st.class_id = l.class_id AND st.role = 'STUDENT' AND NOT st.graduated WHERE l.id = :l",
+                p("l", lessonId), Long.class);
+        Map<Long, String> roleCache = new HashMap<>();
+        for (Map<String, Object> r : rows) {
+            Object vr = r.get("visibleRoles");
+            if (vr == null || String.valueOf(vr).trim().isEmpty()) continue;
+            long n = 0;
+            for (Long sid : studentIds) {
+                String role = roleCache.computeIfAbsent(sid, k -> {
+                    String x = lessons.roleOf(lessonId, k);
+                    return x == null ? "" : x;
+                });
+                if (LessonService.visibleToRole(vr, role.isEmpty() ? null : role)) n++;
+            }
+            r.put("studentCount", n);
+        }
+        return rows;
+    }
+
+    private List<Map<String, Object>> lessonSummaryRows(Long lessonId) {
         return jdbc.queryForList(
-                "SELECT pg.id AS \"pageId\", pg.title, pg.score AS \"fullScore\", "
+                "SELECT pg.id AS \"pageId\", pg.title, pg.score AS \"fullScore\", pg.visible_roles AS \"visibleRoles\", "
                         + "(SELECT COUNT(*) FROM submission s WHERE s.lesson_id = l.id AND s.page_id = pg.id) AS \"submitted\", "
                         + "(SELECT COUNT(*) FROM submission s WHERE s.lesson_id = l.id AND s.page_id = pg.id AND s.teacher_score IS NOT NULL) AS \"graded\", "
                         + "(SELECT COUNT(*) FROM submission s WHERE s.lesson_id = l.id AND s.page_id = pg.id AND s.essence) AS \"essence\", "

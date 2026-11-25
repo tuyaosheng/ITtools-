@@ -729,12 +729,10 @@
 
   // ---------------- 启动 ----------------
   if (READONLY) { $('btnNew').hidden = true; $('btnOpen').hidden = true; }
-  // 嵌在课堂页面里比较窄：代码区先收起来，积木区宽一些（点“代码区”可以打开）
-  if (window.innerWidth < 1100) {
-    $('codePane').classList.add('hidden');
-    $('btnCode').classList.remove('on');
-    setTimeout(function () { Blockly.svgResize(workspace); }, 0);
-  }
+  // 代码区默认收起来（老师定 2026-11-24），积木区宽一些；点“代码区”可以打开
+  $('codePane').classList.add('hidden');
+  $('btnCode').classList.remove('on');
+  setTimeout(function () { Blockly.svgResize(workspace); }, 0);
   checkAgent();
   setInterval(checkAgent, 15000);
   async function boot() {
